@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ============================================================================
+   BragBit — "engineering logbook" design tokens, reconciled with shadcn/ui.
+   Light-only for v1 (PLAN.md §4). The brand accent is shadcn's `--primary`
+   (overridable per-workspace at the root layout); shadcn's `--accent` is the
+   subtle warm hover surface. Palette + 8 category colors from design-mockup.html.
+   ========================================================================== */
+
+@theme {
+  /* logbook palette (token names shadcn doesn't own) */
+  --color-paper: #f6f2e9;
+  --color-paper-deep: #efe9da;
+  --color-ink: #221d16;
+  --color-ink-soft: #5d5547;
+  --color-ink-faint: #948a78;
+  --color-line: #ddd5c4;
+  --color-line-soft: #e8e1d1;
+
+  /* the 8 category colors */
+  --color-cat-shipped: #5c8a58;
+  --color-cat-technical: #4f6d9e;
+  --color-cat-collaboration: #8b5e83;
+  --color-cat-recognition: #b08a2e;
+  --color-cat-glue: #927e63;
+  --color-cat-leadership: #9a5b3b;
+  --color-cat-skills: #3f8a82;
+  --color-cat-other: #6f6757;
+
+  --shadow-card: 0 1px 2px rgba(34, 29, 22, 0.04), 0 6px 24px -12px rgba(34, 29, 22, 0.18);
+  --shadow-card-hover: 0 2px 3px rgba(34, 29, 22, 0.05), 0 14px 36px -14px rgba(34, 29, 22, 0.28);
+}
+
+/* shadcn semantic tokens, bound to the logbook palette. Per-workspace branding
+   overrides --primary and --ring here at runtime. */
+:root {
+  --radius: 0.7rem;
+
+  --background: #f6f2e9; /* paper */
+  --foreground: #221d16; /* ink */
+  --card: #fffdf7;
+  --card-foreground: #221d16;
+  --popover: #fffdf7;
+  --popover-foreground: #221d16;
+
+  --primary: #e8590c; /* brand accent — themeable per workspace */
+  --primary-foreground: #ffffff;
+  --secondary: #efe9da; /* paper-deep */
+  --secondary-foreground: #221d16;
+  --muted: #efe9da;
+  --muted-foreground: #857a64;
+  --accent: #efe9da; /* subtle warm hover surface (shadcn "accent") */
+  --accent-foreground: #221d16;
+  --destructive: #b23a2e;
+  --destructive-foreground: #ffffff;
+
+  --border: #ddd5c4; /* line */
+  --input: #ddd5c4;
+  --ring: #e8590c;
+
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  /* re-establish a default border + outline color for shadcn primitives */
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+
+  body {
+    background-color: var(--color-paper);
+    background-image: radial-gradient(rgba(34, 29, 22, 0.07) 1px, transparent 1px);
+    background-size: 26px 26px;
+    color: var(--color-ink);
+    font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* warm atmospheric wash that follows the accent */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 70%),
+      radial-gradient(700px 500px at -10% 100%, rgba(34, 29, 22, 0.05), transparent 70%);
+  }
+}

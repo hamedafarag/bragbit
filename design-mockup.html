@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BragBit — Design Concept · Engineering Logbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,450;0,9..144,550;0,9..144,650;1,9..144,450;1,9..144,550&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #e8590c;
+    --accent-soft: rgba(232, 89, 12, 0.08);
+    --paper: #f6f2e9;
+    --paper-deep: #efe9da;
+    --card: #fffdf7;
+    --ink: #221d16;
+    --ink-soft: #5d5547;
+    --ink-faint: #948a78;
+    --line: #ddd5c4;
+    --line-soft: #e8e1d1;
+    --dot: rgba(34, 29, 22, 0.07);
+    --c-shipped: #5c8a58;
+    --c-technical: #4f6d9e;
+    --c-recognition: #b08a2e;
+    --c-collab: #8b5e83;
+    --c-glue: #927e63;
+    --c-leadership: #9a5b3b;
+    --c-skills: #3f8a82;
+    --c-other: #6f6757;
+    --shadow: 0 1px 2px rgba(34,29,22,.04), 0 6px 24px -12px rgba(34,29,22,.18);
+    --shadow-hover: 0 2px 3px rgba(34,29,22,.05), 0 14px 36px -14px rgba(34,29,22,.28);
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background-color: var(--paper);
+    background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+    background-size: 26px 26px;
+    color: var(--ink);
+    font-size: 14.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* warm atmospheric wash, follows the accent */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%),
+      radial-gradient(700px 500px at -10% 100%, rgba(34,29,22,.05), transparent 70%);
+    z-index: 0;
+    transition: background .5s ease;
+  }
+
+  .mono { font-family: var(--mono); }
+
+  kbd {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: var(--card);
+    color: var(--ink-soft);
+  }
+
+  /* ============ TOP BAR (org-branded) ============ */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 60px;
+    padding: 0 22px;
+    background: color-mix(in srgb, var(--paper) 86%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .org {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .org-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-family: var(--serif);
+    font-weight: 650;
+    font-size: 17px;
+    box-shadow: inset 0 -8px 14px rgba(0,0,0,.18);
+    transition: background .35s ease;
+  }
+
+  .org-name {
+    font-family: var(--serif);
+    font-weight: 650;
+    font-size: 17.5px;
+    letter-spacing: .01em;
+  }
+
+  .org-sub {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-top: -2px;
+  }
+
+  .topbar-spacer { flex: 1; }
+
+  .search-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 99px;
+    padding: 6px 13px;
+    color: var(--ink-faint);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .search-pill:hover { border-color: var(--ink-faint); }
+  .search-pill svg { width: 13px; height: 13px; stroke: currentColor; }
+
+  /* white-label accent switcher */
+  .wl {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border-left: 1px solid var(--line);
+    padding-left: 16px;
+  }
+  .wl-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+    outline: 1px solid var(--line);
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .swatch:hover { transform: scale(1.2); }
+  .swatch.active { outline: 2px solid var(--ink); }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--paper-deep), var(--line));
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  /* ============ LAYOUT ============ */
+  .shell {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    padding: 28px 18px;
+    border-right: 1px solid var(--line-soft);
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
+
+  .nav-group-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 0 10px 8px;
+  }
+
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background .15s, color .15s;
+  }
+  .nav a:hover { background: var(--paper-deep); color: var(--ink); }
+  .nav a.active {
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line-soft);
+  }
+  .nav a svg { width: 15px; height: 15px; stroke: currentColor; flex-shrink: 0; }
+
+  .doc-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 6px 14px;
+    border-left: 2px solid var(--line);
+    margin-left: 14px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color .15s, border-color .15s;
+  }
+  .doc-list a:hover { color: var(--ink); }
+  .doc-list a.current {
+    border-left-color: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .doc-count {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .role-chip {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ink-faint);
+  }
+
+  .sidebar-foot {
+    margin-top: auto;
+    padding: 14px 10px 4px;
+    border-top: 1px dashed var(--line);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    line-height: 1.9;
+  }
+  .sidebar-foot a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
+
+  /* ============ MAIN ============ */
+  .main {
+    padding: 36px 44px 90px;
+    min-width: 0;
+  }
+
+  /* document header */
+  .doc-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  .doc-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .doc-eyebrow::after {
+    content: "";
+    width: 48px;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .doc-title {
+    font-family: var(--serif);
+    font-weight: 550;
+    font-size: 54px;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 6px 0 2px;
+  }
+  .doc-title em {
+    font-style: italic;
+    font-weight: 450;
+    color: var(--ink-soft);
+    font-size: 0.55em;
+    letter-spacing: 0;
+    margin-left: 10px;
+  }
+
+  .doc-goals {
+    max-width: 520px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin-top: 8px;
+  }
+  .doc-goals b { color: var(--ink); font-weight: 600; }
+
+  .doc-stats {
+    display: flex;
+    gap: 18px;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  .doc-stats span b { color: var(--ink); font-weight: 500; }
+  .doc-stats span { display: flex; gap: 6px; align-items: baseline; }
+
+  .doc-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .action-row { display: flex; gap: 9px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .15s ease, box-shadow .2s ease, background .3s;
+  }
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; }
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000), var(--shadow);
+  }
+  .btn-primary:hover { box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 70%, #000), var(--shadow-hover); }
+
+  .btn-ghost {
+    background: var(--card);
+    border-color: var(--line);
+    color: var(--ink-soft);
+  }
+  .btn-ghost:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+  .share-state {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .share-state .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--c-shipped);
+    box-shadow: 0 0 0 3px rgba(92,138,88,.15);
+  }
+
+  /* quick add */
+  .quick-add {
+    margin: 30px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 13px 16px;
+    box-shadow: var(--shadow);
+    animation: rise .55s .08s cubic-bezier(.2,.7,.2,1) both;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .quick-add:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+  }
+  .qa-plus {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background .3s, color .3s;
+  }
+  .quick-add input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .quick-add input::placeholder { color: var(--ink-faint); }
+  .qa-hint { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .qa-hint .btn { padding: 6px 14px; font-size: 12.5px; }
+
+  .qa-doctrine {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin: 8px 4px 0;
+    animation: rise .55s .12s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .qa-doctrine i { color: var(--accent); font-style: normal; transition: color .3s; }
+
+  /* filters */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin: 26px 0 4px;
+    flex-wrap: wrap;
+    animation: rise .55s .16s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    border-radius: 99px;
+    padding: 5px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--ink-faint); color: var(--ink); }
+  .chip.on {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .chip .cdot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ============ TIMELINE ============ */
+  .timeline {
+    position: relative;
+    margin-top: 18px;
+    padding-bottom: 10px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 92px;
+    top: 18px;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--line) 85%, transparent);
+  }
+
+  .month-head {
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 16px 0 14px;
+    background: linear-gradient(to bottom, var(--paper) 78%, transparent);
+  }
+  .month-name {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 550;
+    font-size: 21px;
+    min-width: 78px;
+  }
+  .month-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .month-rule { flex: 1; height: 1px; background: var(--line-soft); }
+
+  .entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 66px 1fr;
+    gap: 0 40px;
+    padding: 7px 0;
+    animation: rise .6s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .entry:nth-child(2) { animation-delay: .20s; }
+  .entry:nth-child(3) { animation-delay: .28s; }
+  .entry:nth-child(4) { animation-delay: .36s; }
+
+  /* node on the spine — encodes STATUS only; visibility lives on the card */
+  .entry::after {
+    content: "";
+    position: absolute;
+    left: 88.5px;
+    top: 26px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);          /* solid accent center = shipped */
+    border: 2px solid var(--accent);
+    transition: border-color .3s, background .3s;
+  }
+  .entry.inprogress::after { background: var(--paper); }   /* hollow center = in-progress */
+
+  .entry-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    color: var(--ink-soft);
+    text-align: right;
+    padding-top: 22px;
+    text-transform: uppercase;
+  }
+  .entry-date small {
+    display: block;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: .14em;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 17px 20px 15px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .25s ease, transform .25s ease, border-color .25s;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 7px;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    background: var(--paper);
+  }
+  .badge .cdot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .badge-private {
+    border-style: dashed;
+    border-color: var(--ink-faint);
+    color: var(--ink-soft);
+    background: transparent;
+  }
+
+  .card h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 18.5px;
+    letter-spacing: -.01em;
+    line-height: 1.3;
+    margin-bottom: 5px;
+  }
+
+  .card p.desc {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    max-width: 60ch;
+  }
+  .card p.desc code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--paper-deep);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  .impact {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-top: 11px;
+    padding: 8px 12px;
+    background: var(--accent-soft);
+    border-radius: 7px;
+    width: fit-content;
+    transition: background .3s, color .3s;
+  }
+  .impact .arrow { font-size: 13px; }
+
+  .card-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line-soft);
+  }
+
+  .fchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line-soft);
+    background: var(--paper);
+    border-radius: 6px;
+    padding: 3px 9px;
+    text-decoration: none;
+    transition: border-color .15s, color .15s;
+  }
+  .fchip:hover { border-color: var(--ink-faint); color: var(--ink); }
+  .fchip svg { width: 11px; height: 11px; stroke: currentColor; }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+  .tag::before { content: "#"; opacity: .6; }
+
+  .collab {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+  }
+
+  /* private entry */
+  .entry.private .card {
+    border-style: dashed;
+    background-image: repeating-linear-gradient(45deg, transparent 0 9px, rgba(34,29,22,.018) 9px 10px);
+  }
+
+  /* recognition entry */
+  .entry.recognition .card { padding-top: 20px; }
+  .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 450;
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 56ch;
+    position: relative;
+    padding-left: 26px;
+  }
+  .quote::before {
+    content: "“";
+    position: absolute;
+    left: -4px;
+    top: -14px;
+    font-size: 52px;
+    color: var(--accent);
+    opacity: .55;
+    font-style: normal;
+    transition: color .3s;
+  }
+  .attribution {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .attribution b { color: var(--ink); font-weight: 500; }
+
+  /* gap month */
+  .gap {
+    display: grid;
+    grid-template-columns: 66px 1fr;
+    gap: 0 40px;
+    padding: 4px 0 10px;
+  }
+  .gap-body {
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 13px 18px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .gap-body a { color: var(--accent); font-weight: 600; text-decoration: none; transition: color .3s; }
+  .gap-body a:hover { text-decoration: underline; }
+
+  /* end cap */
+  .endcap {
+    display: grid;
+    grid-template-columns: 66px 1fr;
+    gap: 0 40px;
+    padding-top: 26px;
+  }
+  .endcap-body {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    padding: 18px 0;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .endcap-body b { color: var(--ink-soft); font-weight: 500; }
+
+  /* design stamp */
+  .stamp {
+    position: fixed;
+    bottom: 18px;
+    right: 20px;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    backdrop-filter: blur(6px);
+    border-radius: 6px;
+    padding: 6px 11px;
+    transform: rotate(-1.2deg);
+    z-index: 60;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 28px 20px 80px; }
+    .doc-title { font-size: 40px; }
+    .timeline::before { display: none; }
+    .entry, .gap, .endcap { grid-template-columns: 1fr; }
+    .entry::after { display: none; }
+    .entry-date { text-align: left; padding: 4px 0 6px; }
+    .wl-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════ ORG-BRANDED TOP BAR ════════ -->
+<header class="topbar">
+  <div class="org">
+    <div class="org-logo" id="orgLogo">W</div>
+    <div>
+      <div class="org-name">WakeCap</div>
+      <div class="org-sub">Engineering Wins</div>
+    </div>
+  </div>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="search-pill">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    Search all documents
+    <kbd>⌘K</kbd>
+  </div>
+
+  <div class="wl" title="White-label preview — org admin picks the accent color">
+    <span class="wl-label">White-label</span>
+    <div class="swatch active" style="background:#e8590c" data-accent="#e8590c"></div>
+    <div class="swatch" style="background:#0f766e" data-accent="#0f766e"></div>
+    <div class="swatch" style="background:#4338ca" data-accent="#4338ca"></div>
+    <div class="swatch" style="background:#9f1239" data-accent="#9f1239"></div>
+  </div>
+
+  <div class="avatar">HF</div>
+</header>
+
+<div class="shell">
+
+  <!-- ════════ SIDEBAR ════════ -->
+  <aside class="sidebar">
+    <nav class="nav">
+      <div class="nav-group-label">Workspace</div>
+      <a href="#" class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 8v8m-4-4h8"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+        Timeline
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Documents
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        Profile
+      </a>
+      <a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.4 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.4-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></svg>
+        Admin <span class="role-chip">owner</span>
+      </a>
+    </nav>
+
+    <div>
+      <div class="nav-group-label">My Documents</div>
+      <div class="doc-list">
+        <a href="#" class="current">2026 <span class="doc-count">24</span></a>
+        <a href="#">2025 <span class="doc-count">61</span></a>
+        <a href="#">Promo case — Senior <span class="doc-count">9</span></a>
+      </div>
+    </div>
+
+    <div class="sidebar-foot">
+      Powered by <a href="#">BragBit</a> · AGPL-3.0<br>
+      self-hosted · v0.1.0
+    </div>
+  </aside>
+
+  <!-- ════════ MAIN ════════ -->
+  <main class="main">
+
+    <!-- document header -->
+    <div class="doc-head">
+      <div>
+        <div class="doc-eyebrow">Review Period · Jan 01 — Dec 31</div>
+        <h1 class="doc-title">2026 <em>the year of shipping</em></h1>
+        <p class="doc-goals"><b>Goals &amp; focus areas:</b> Own realtime platform reliability · grow toward Staff scope · mentor two juniors to independence.</p>
+        <div class="doc-stats">
+          <span><b>24</b> wins</span>
+          <span><b>9</b> shipped</span>
+          <span><b>4</b> recognitions</span>
+          <span><b>12</b> attachments</span>
+          <span><b>1</b> private</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <div class="action-row">
+          <button class="btn btn-ghost">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Export
+          </button>
+          <button class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 13.5 15 10m-6 4.5 6 3.5M7.5 12a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm14-5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm0 10a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"/></svg>
+            Share · read-only
+          </button>
+        </div>
+        <div class="share-state"><span class="dot"></span> 1 active link · password on · viewed 3d ago</div>
+      </div>
+    </div>
+
+    <!-- quick add -->
+    <div class="quick-add">
+      <div class="qa-plus">+</div>
+      <input id="quickAdd" type="text" placeholder="Log a win — only a title is required, everything else can wait…">
+      <div class="qa-hint">
+        <kbd>N</kbd>
+        <button class="btn btn-primary">Add</button>
+      </div>
+    </div>
+    <p class="qa-doctrine">FORMULA · <i>what you did</i> + <i>why it mattered</i> + <i>the measurable result</i> — “reduced cart abandonment 40% → 28%”, not “worked on checkout”.</p>
+
+    <!-- filters -->
+    <div class="filters">
+      <button class="chip on">All · 24</button>
+      <button class="chip"><span class="cdot" style="background:var(--c-shipped)"></span>Shipped · 9</button>
+      <button class="chip"><span class="cdot" style="background:var(--c-technical)"></span>Technical · 6</button>
+      <button class="chip"><span class="cdot" style="background:var(--c-collab)"></span>Collaboration · 3</button>
+      <button class="chip"><span class="cdot" style="background:var(--c-recognition)"></span>Recognition · 4</button>
+      <button class="chip"><span class="cdot" style="background:var(--c-glue)"></span>Glue work · 2</button>
+    </div>
+
+    <!-- ════════ TIMELINE ════════ -->
+    <div class="timeline">
+
+      <!-- JUNE -->
+      <div class="month-head">
+        <div class="month-name">June</div>
+        <div class="month-meta">2026 — 3 wins</div>
+        <div class="month-rule"></div>
+      </div>
+
+      <article class="entry">
+        <div class="entry-date">Jun 12<small>Fri</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-shipped)"></span>Shipped work</span>
+          </div>
+          <h3>Shipped the real-time crew heatmap to production</h3>
+          <p class="desc">Led rollout across 14 active sites. Re-worked stream ingestion with the data team so positions render in under a second, then ran the staged rollout and on-call for launch week.</p>
+          <div class="impact"><span class="arrow">↗</span> Site managers locate idle crews 4× faster — 22 min → 5 min avg</div>
+          <div class="card-foot">
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14 21 3m0 0h-6m6 0v6M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>PR #1482</a>
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14 21 3m0 0h-6m6 0v6M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>Design doc</a>
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>heatmap-dashboard.png</a>
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>rollout-metrics.pdf</a>
+            <span class="tag">realtime</span>
+            <span class="tag">platform</span>
+            <span class="collab">w/ Data team, N. Osei</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="entry recognition">
+        <div class="entry-date">Jun 09<small>Tue</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-recognition)"></span>Recognition</span>
+          </div>
+          <p class="quote">Hamed unblocked the entire firmware team during the gateway outage — calm, methodical, and unbelievably fast. This is what senior ownership looks like.</p>
+          <p class="attribution">— <b>Sara M.</b>, Director of Engineering · via Slack · saved before it scrolled away</p>
+          <div class="card-foot">
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>slack-praise.png</a>
+            <span class="tag">incident-response</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="entry private">
+        <div class="entry-date">Jun 03<small>Wed</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-technical)"></span>Technical</span>
+            <span class="badge badge-private">⌀ Private — hidden from shared views</span>
+          </div>
+          <h3>Cut CI pipeline from 31 min to 9 min</h3>
+          <p class="desc">Profiled the test suite, parallelized integration jobs, moved image builds to a cached runner. Keeping this one private until the promo packet is drafted.</p>
+          <div class="impact"><span class="arrow">↗</span> 3.4× faster CI · ≈40 engineer-hours/week recovered</div>
+          <div class="card-foot">
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14 21 3m0 0h-6m6 0v6M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>PR #1431</a>
+            <span class="tag">ci</span>
+            <span class="tag">devex</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- MAY — gap -->
+      <div class="month-head">
+        <div class="month-name">May</div>
+        <div class="month-meta">2026 — no entries</div>
+        <div class="month-rule"></div>
+      </div>
+      <div class="gap">
+        <div></div>
+        <div class="gap-body">
+          <span>A quiet month — gaps are visible to future-you (and timelines don't lie).</span>
+          <a href="#">Back-fill a win →</a>
+        </div>
+      </div>
+
+      <!-- APRIL -->
+      <div class="month-head">
+        <div class="month-name">April</div>
+        <div class="month-meta">2026 — 2 wins</div>
+        <div class="month-rule"></div>
+      </div>
+
+      <article class="entry">
+        <div class="entry-date">Apr 24<small>Fri</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-collab)"></span>Collaboration</span>
+          </div>
+          <h3>Onboarded two junior engineers onto the telemetry stack</h3>
+          <p class="desc">Designed a two-week ramp plan with paired debugging sessions and a starter-bug ladder instead of docs-only onboarding.</p>
+          <div class="impact"><span class="arrow">↗</span> Both shipping independently within 3 weeks — prior average was 7</div>
+          <div class="card-foot">
+            <span class="tag">mentoring</span>
+            <span class="tag">onboarding</span>
+            <span class="collab">w/ A. Khalil, J. Mensah</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="entry-date">Apr 08<small>Wed</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-glue)"></span>Glue work</span>
+          </div>
+          <h3>Wrote the incident-response runbook nobody wanted to write</h3>
+          <p class="desc">Consolidated tribal knowledge from six post-mortems into a single on-call runbook with paging decision trees and <code>severity</code> definitions.</p>
+          <div class="impact"><span class="arrow">↗</span> MTTR down 38% across Q2 incidents</div>
+          <div class="card-foot">
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66L9.4 17.4a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>runbook-v2.pdf</a>
+            <span class="tag">reliability</span>
+            <span class="tag">process</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- MARCH -->
+      <div class="month-head">
+        <div class="month-name">March</div>
+        <div class="month-meta">2026 — 1 win</div>
+        <div class="month-rule"></div>
+      </div>
+
+      <article class="entry">
+        <div class="entry-date">Mar 17<small>Tue</small></div>
+        <div class="card">
+          <div class="card-top">
+            <span class="badge"><span class="cdot" style="background:var(--c-shipped)"></span>Shipped work</span>
+          </div>
+          <h3>Migrated the auth service to zero-downtime deploys</h3>
+          <p class="desc">Blue-green deploys with automated session draining; wrote the RFC, got buy-in from platform and security, executed the cutover solo.</p>
+          <div class="impact"><span class="arrow">↗</span> Deploy windows eliminated · 0 auth downtime since cutover</div>
+          <div class="card-foot">
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14 21 3m0 0h-6m6 0v6M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>PR #1290</a>
+            <a class="fchip" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10 14 21 3m0 0h-6m6 0v6M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>RFC-019</a>
+            <span class="tag">infra</span>
+            <span class="tag">auth</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- end cap -->
+      <div class="endcap">
+        <div></div>
+        <div class="endcap-body">
+          <span>⌖</span>
+          <span><b>Start of 2026.</b> &nbsp;Warm-up tip: back-fill three wins from last December — future-you will thank you at review time.</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="stamp">BragBit · design concept 01</div>
+
+<script>
+  // white-label accent switcher — demonstrates org admin's brand color setting
+  const swatches = document.querySelectorAll('.swatch');
+  swatches.forEach(s => s.addEventListener('click', () => {
+    const accent = s.dataset.accent;
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--accent-soft', accent + '14');
+    swatches.forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+  }));
+
+  // quick-add keyboard shortcut, exactly as planned for the real app
+  document.addEventListener('keydown', e => {
+    if (e.key.toLowerCase() === 'n' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+      e.preventDefault();
+      document.getElementById('quickAdd').focus();
+    }
+  });
+</script>
+
+</body>
+</html>

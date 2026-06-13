@@ -1,0 +1,9 @@
+# Replace OWNER/REPO once the repository is published.
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/OWNER/REPO/security/advisories/new
+    about: Please report security issues privately (see SECURITY.md) — never in a public issue.
+  - name: Question / discussion
+    url: https://github.com/OWNER/REPO/discussions
+    about: Ask questions and discuss ideas in Discussions.
