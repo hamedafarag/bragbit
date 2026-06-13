@@ -26,3 +26,5 @@ on `0.x` until the deployment modes and core stabilize.
 - Auth & workspaces: Better Auth (email+password with required verification, organization
   plugin) with the core auth + organization/member/invitation Drizzle schema and first
   migration, plus the DAL guards (`requireSession` / `requireWorkspace` / `requireRole`).
+- First-run setup wizard (`/setup`, private modes): creates the owner + first workspace and
+  signs them in; `sonner` toasts and the shared form↔action Zod validation pattern.

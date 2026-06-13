@@ -310,12 +310,12 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Drizzle + drizzle-kit wired to Postgres; **workspace-scoped schema conventions** established; `docker-compose.dev.yml` (Postgres + MinIO + Mailpit)
 - [x] Email infrastructure: Nodemailer + SMTP env + React Email base template (workspace-brandable)
 - [x] `INSTANCE_MODE` env + a typed config module guarding mode-specific behavior
-- [ ] Zod + shared validation pattern; error/toast conventions — _Zod is wired (`src/lib/env.ts`); the shared form↔action schema pattern and toast (`sonner`) conventions land with the Phase 1 forms_
+- [x] Zod + shared validation pattern; error/toast conventions — _the setup form & action share `setupSchema`; `sonner` toasts wired in the root layout_
 - [x] CI (GitHub Actions): typecheck, lint, build, test; Vitest + Playwright skeletons; **Lighthouse CI + bundle-size budget** (Core Web Vitals gates); markdownlint + link-check (`lychee`)
 
 ### Phase 1 — Workspaces, auth & membership *(v1)*
 - [x] Better Auth + Drizzle adapter + organization plugin; model `workspace` (type `personal`|`organization`) as the tenant umbrella
-- [ ] `/setup` first-run wizard (private modes): `private-org` → org workspace + owner (SMTP test, optional `SETUP_TOKEN`); `private-solo` → personal workspace + owner (no invite UI). Wizard disabled once a workspace exists; all routes redirect to it before then
+- [x] `/setup` first-run wizard (private modes): `private-org` → org workspace + owner (SMTP test, optional `SETUP_TOKEN`); `private-solo` → personal workspace + owner (no invite UI). Wizard disabled once a workspace exists; all routes redirect to it before then
 - [ ] Invitation flow (organizations): admin invites email + role → branded tokenized email (7-day, single-use) → registration bound to invited email → member/admin created
 - [ ] **Required email verification** (satisfied by invite link for invitees); password reset
 - [ ] Optional GitHub/Google OAuth via env — sign-in for existing accounts in private modes; may create a personal workspace in `hosted`

@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { isInstanceSetup } from "@/features/setup/queries";
+import { isPrivate } from "@/lib/instance";
 
 // Phase 0 baseline — the "engineering logbook" component language rendered with
 // the reconciled shadcn + logbook tokens (brand accent = shadcn `--primary`).
@@ -22,7 +26,10 @@ const filters: [string, string | null, boolean][] = [
   ["Glue work · 2", "bg-cat-glue", false],
 ];
 
-export default function Home() {
+export default async function Home() {
+  // First-run (private modes): no workspace yet → send the operator to /setup.
+  if (isPrivate() && !(await isInstanceSetup())) redirect("/setup");
+
   return (
     <div className="relative z-10">
       <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-6 backdrop-blur">
