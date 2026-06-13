@@ -21,3 +21,5 @@ on `0.x` until the deployment modes and core stabilize.
   conventions, plus a local dev stack (`docker-compose.dev.yml` — Postgres + MinIO + Mailpit).
 - Email infrastructure: Nodemailer SMTP transport (`src/lib/email`) + a workspace-brandable
   React Email base layout and first template (`src/emails`), with a typed `sendEmail()` helper.
+- CI (GitHub Actions): typecheck, lint, Prettier check, markdownlint, unit (Vitest) and e2e
+  (Playwright) tests, production build, Lighthouse CI, a bundle-size budget, and a link check.

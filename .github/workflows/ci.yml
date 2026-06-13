@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm lint:md
+      - run: pnpm test
+      - run: pnpm build
+        env:
+          DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
+          BETTER_AUTH_SECRET: ci-build-placeholder-secret
+      - run: pnpm size
+
+  e2e:
+    name: e2e (playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
+          BETTER_AUTH_SECRET: ci-e2e-placeholder-secret
+
+  lighthouse:
+    name: lighthouse (web vitals)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+        env:
+          DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
+          BETTER_AUTH_SECRET: ci-lh-placeholder-secret
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./lighthouserc.json
+
+  links:
+    name: docs link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: "--no-progress README.md 'docs/**/*.md'"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

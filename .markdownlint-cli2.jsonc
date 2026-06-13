@@ -1,0 +1,14 @@
+{
+  // markdownlint-cli2 config — https://github.com/DavidAnson/markdownlint
+  "config": {
+    "default": true,
+    "MD013": false, // line length (prose + wide tables)
+    "MD033": false, // inline HTML (badges, <br>)
+    "MD041": false, // first line need not be a top-level heading (issue templates)
+    "MD024": { "siblings_only": true }, // repeated headings allowed across sections (CHANGELOG)
+    "MD036": false, // bold labels (issue templates) are intentional, not headings
+    "MD040": false, // language tag not required on every fenced code block
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", ".next", "PLAN.md"],
+}

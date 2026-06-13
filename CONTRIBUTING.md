@@ -22,7 +22,8 @@ data-layer step; until then the UI runs against the design baseline.
 | `pnpm build` | Production build           |
 | `pnpm lint`  | ESLint                     |
 
-(Typecheck plus unit (Vitest) and e2e (Playwright) scripts arrive with the CI setup.)
+Also available: `pnpm typecheck`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright),
+`pnpm lint:md`, `pnpm format`, and `pnpm dev:up` / `pnpm dev:down` for the Docker stack.
 
 ## Branch & PR workflow
 
