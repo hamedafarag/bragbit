@@ -50,3 +50,6 @@ on `0.x` until the deployment modes and core stabilize.
   provider button only when configured; account linking lets a verified user attach an
   identity. In the private modes OAuth only signs in existing accounts (it never creates one,
   preserving invitation-only).
+- Phase 1 documentation: the user guide (signing in, OAuth, verification, password reset,
+  profile & account), the admin guide (roles + the invitation model), and the architecture
+  guide's authentication/tenancy + DAL sections.
