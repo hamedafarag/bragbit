@@ -3,7 +3,8 @@
 Every BragBit setting is an environment variable, validated at boot by `src/lib/env.ts`.
 The canonical list with defaults lives in [`.env.example`](../.env.example).
 
-> **Status:** stub — expanded as features land (full reference by Phase 9).
+> **Status:** all current variables are grouped below; the polished per-variable
+> reference (defaults, examples, validation notes) is finalized in Phase 9.
 
 ## Variable groups
 

@@ -1,26 +1,36 @@
 # Architecture
 
-Kept in sync with [PLAN.md](../PLAN.md) §6.
+Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
+full target model and file structure live in PLAN §5–§6.
 
-> **Status:** the foundation — layering, authentication/tenancy, the DAL boundary,
-> and the storage adapter — is documented below. The domain layers (documents,
-> brags, sharing, export) are added here as they land.
+> **Status:** documented through Phase 2 — layering, authentication & tenancy,
+> the DAL boundary, the data model so far, workspace administration & branding,
+> and the storage adapter. The domain layers (documents, brags, attachments,
+> sharing, export) are added here as they land.
 
 ## Layering (a security decision)
 
 1. **`app/` is routing only** — thin files that gate access and delegate to a feature.
-2. **Code lives in feature modules** (`features/brag`, `features/document`, …), grouped by domain.
+2. **Code lives in feature modules** grouped by domain. Built so far: `features/auth`,
+   `features/workspace`, `features/profile`, `features/invitation`, `features/setup`
+   (`features/brag` / `features/document` land in Phase 3).
 3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through
-   guards (`requireSession` / `requireWorkspace` / `requireRole`) that verify session **and**
-   workspace membership. Nothing outside the DAL imports the Drizzle client.
+   guards that verify session **and** workspace membership. Nothing outside the DAL imports
+   the Drizzle client (`import 'server-only'` on `lib/db` keeps it out of client bundles).
 
 Import direction is one-way: `app/` → `features/` → `lib/auth/guards` → `lib/db` · `lib/storage` · `lib/email`.
 
 Authorization lives in the DAL and server components/layouts, never in middleware (which does
-optimistic cookie/mode redirects only). The guards come in two flavors: `requireSession` /
-`requireWorkspace` / `requireRole` (redirecting — for Server Components and Server Actions) and
-`getSessionOrNull` / `getWorkspaceOrNull` / `isWorkspaceMember` (non-redirecting — for Route
-Handlers, which answer with an HTTP status). Both keep every membership lookup inside the DAL.
+optimistic cookie/mode redirects only). The guards come in two flavors:
+
+- **Redirecting** — `requireSession` / `requireWorkspace` / `requireRole` (Server Components,
+  Server Actions).
+- **Non-redirecting** — `getSessionOrNull` / `getWorkspaceOrNull` / `isWorkspaceMember` (Route
+  Handlers, which answer with an HTTP status).
+
+Both keep every membership lookup inside the DAL. Role decisions come from the pure, unit-tested
+`features/workspace/roles` policy (`canAdminister` / `canManageMember` / `canTransferOwnershipTo`),
+shared by the admin gate and the members UI; Better Auth re-enforces them server-side.
 
 ## Authentication & tenancy
 
@@ -41,14 +51,44 @@ capability mapping is a pure function in `lib/instance-modes.ts`, bound to the r
 - **OAuth (optional).** GitHub/Google are enabled per provider via env. Account linking lets a
   verified user attach an identity; in the private modes `disableSignUp` means OAuth only signs in
   already-provisioned accounts — it never creates one, preserving invitation-only.
-- **Credentials.** Password hashes live in Better Auth's `account` table, never on `user`; the
-  Drizzle client is `import 'server-only'` so DB code never reaches a client bundle.
+- **Profiles.** A per-user `profiles` row (display name, role title, team, bio, avatar key; the
+  reminder fields are reserved for Phase 8) is read/written through `features/profile`; the display
+  name mirrors to Better Auth `user.name`.
+- **Credentials.** Password hashes live in Better Auth's `account` table, never on `user`.
 
-## Storage adapter
+## Data model (so far)
 
-One interface — `put` / `get` / `delete` / `stream` — selected by `STORAGE_DRIVER`. `LocalDiskStorage`
-(the default) writes objects under `STORAGE_DIR` and rejects any key that escapes the root;
-`S3Storage` lands in Phase 4. Keys are prefixed per workspace (`{workspaceId}/…`) for isolation and
-quota accounting. Files are never public URLs: uploads go through a Route Handler, and downloads
-stream through an authorizing one (`/api/files/[...key]`) that checks workspace membership — in
-Phase 1 it serves avatars only; attachment and share-token rules arrive in Phases 4 and 6.
+Better Auth owns `user` / `session` / `account` / `verification`. The organization plugin provides
+`organization` (= the workspace, plus BragBit's `type` / `accent_color` / `logo_key`), `member`,
+and `invitation`. BragBit adds `profiles`. The brag-domain tables (`documents`, `brags`, `tags`,
+`brag_links`, `attachments`, `share_links`) and `instance_admins` are Phase 3+ / Phase 10 — see
+[PLAN.md §5](../PLAN.md) for the full target model. Every workspace-scoped query filters by the
+caller's membership through the DAL.
+
+## Workspace administration & branding
+
+- **Admin area** (`/admin`, owner/admin via the role policy): workspace settings — name, accent,
+  logo. For organizations it also has **members management** (`/admin/members`): invite one or more
+  people, resend/revoke pending invitations, change roles, remove members, and **transfer
+  ownership** (owner-only, an atomic role swap that keeps exactly one owner). Personal workspaces
+  have no member surface.
+- **Branding is per-workspace.** A validated hex accent + a logo are applied to the app chrome and
+  the sign-in page through a `--primary` / `--ring` CSS-variable override on the layout wrapper, and
+  to every email template via `lib/branding` — invitations use the inviting org's brand;
+  transactional emails (verify / reset / change-email) use the instance brand. Share-page branding
+  and the "Powered by BragBit" footer land in Phase 6.
+
+## Storage & file routes
+
+One storage interface — `put` / `get` / `delete` / `stream` — selected by `STORAGE_DRIVER`.
+`LocalDiskStorage` (the default) writes objects under `STORAGE_DIR` and rejects any key that escapes
+the root; `S3Storage` lands in Phase 4. Keys are workspace-prefixed (`{workspaceId}/{kind}/…`) for
+isolation and quota accounting.
+
+Files upload through role-checked Route Handlers (`/api/upload/avatar`, `/api/upload/logo`) and are
+served by an authorizing one (`/api/files/[...key]`):
+
+- `branding/` (logos) — **public**, the deliberate exception (rendered on the pre-auth sign-in page,
+  and later on share pages).
+- `avatars/` — **session-gated** to a member of the key's workspace.
+- attachments — gated in Phase 4 (owner session or valid share token).
