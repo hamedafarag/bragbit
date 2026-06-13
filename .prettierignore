@@ -3,6 +3,8 @@ node_modules
 out
 build
 .data
+test-results
+playwright-report
 pnpm-lock.yaml
 LICENSE
 next-env.d.ts
