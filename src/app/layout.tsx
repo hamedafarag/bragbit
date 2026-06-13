@@ -29,9 +29,7 @@ export const metadata: Metadata = {
   description: "Your promotion evidence, on your own Postgres.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"

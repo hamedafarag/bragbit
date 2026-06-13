@@ -7,10 +7,10 @@ security seriously and practice **coordinated disclosure**.
 
 While BragBit is pre-`1.0`, only the latest `0.x` release receives security fixes.
 
-| Version | Supported |
-|---|---|
-| latest `0.x` | ✅ |
-| older | ❌ |
+| Version      | Supported |
+| ------------ | --------- |
+| latest `0.x` | ✅        |
+| older        | ❌        |
 
 ## Reporting a vulnerability
 

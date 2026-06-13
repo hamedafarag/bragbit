@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+.data
+pnpm-lock.yaml
+LICENSE
+next-env.d.ts
+public
+src/lib/db/migrations
+design-mockup.html
+PLAN.md

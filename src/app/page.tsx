@@ -31,8 +31,8 @@ export default function Home() {
             B
           </div>
           <div>
-            <div className="font-serif text-[17.5px] font-semibold leading-none">BragBit</div>
-            <div className="mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-ink-faint">
+            <div className="font-serif text-[17.5px] leading-none font-semibold">BragBit</div>
+            <div className="mt-0.5 font-mono text-[9.5px] tracking-[0.14em] text-ink-faint uppercase">
               Engineering Logbook
             </div>
           </div>
@@ -41,7 +41,7 @@ export default function Home() {
         <div className="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-[13px] text-ink-faint">
           <SearchIcon />
           Search all documents
-          <kbd className="rounded border border-line border-b-2 bg-card px-1.5 py-px font-mono text-[10.5px] text-ink-soft">
+          <kbd className="rounded border border-b-2 border-line bg-card px-1.5 py-px font-mono text-[10.5px] text-ink-soft">
             ⌘K
           </kbd>
         </div>
@@ -50,16 +50,16 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[880px] px-10 pb-24 pt-9">
+      <main className="mx-auto max-w-[880px] px-10 pt-9 pb-24">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+            <div className="flex items-center gap-2.5 font-mono text-[10px] tracking-[0.16em] text-ink-faint uppercase">
               Review Period · Jan 01 — Dec 31
               <span className="h-px w-12 bg-line" />
             </div>
-            <h1 className="mb-0.5 mt-1.5 font-serif text-[54px] font-medium leading-[1.05] tracking-[-0.015em]">
+            <h1 className="mt-1.5 mb-0.5 font-serif text-[54px] leading-[1.05] font-medium tracking-[-0.015em]">
               2026
-              <em className="ml-2.5 text-[0.55em] font-normal italic text-ink-soft">
+              <em className="ml-2.5 text-[0.55em] font-normal text-ink-soft italic">
                 the year of shipping
               </em>
             </h1>
@@ -97,16 +97,16 @@ export default function Home() {
             placeholder="Log a win — only a title is required, everything else can wait…"
           />
           <div className="flex items-center gap-2">
-            <kbd className="rounded border border-line border-b-2 bg-card px-1.5 py-px font-mono text-[10.5px] text-ink-soft">
+            <kbd className="rounded border border-b-2 border-line bg-card px-1.5 py-px font-mono text-[10.5px] text-ink-soft">
               N
             </kbd>
             <Button size="sm">Add</Button>
           </div>
         </div>
         <p className="mx-1 mt-2 font-mono text-[10px] text-ink-faint">
-          FORMULA · <i className="not-italic text-primary">what you did</i> +{" "}
-          <i className="not-italic text-primary">why it mattered</i> +{" "}
-          <i className="not-italic text-primary">the measurable result</i>
+          FORMULA · <i className="text-primary not-italic">what you did</i> +{" "}
+          <i className="text-primary not-italic">why it mattered</i> +{" "}
+          <i className="text-primary not-italic">the measurable result</i>
         </p>
 
         <div className="mt-[26px] flex flex-wrap gap-2">
@@ -124,11 +124,11 @@ export default function Home() {
         </div>
 
         <div className="relative mt-[18px]">
-          <div className="pointer-events-none absolute bottom-0 left-[92px] top-4 w-px bg-line" />
+          <div className="pointer-events-none absolute top-4 bottom-0 left-[92px] w-px bg-line" />
 
           <div className="sticky top-[60px] z-10 flex items-baseline gap-3.5 bg-[linear-gradient(to_bottom,var(--color-paper)_78%,transparent)] py-4">
             <div className="min-w-[78px] font-serif text-[21px] font-medium italic">June</div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
+            <div className="font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
               2026 — 3 wins
             </div>
             <div className="h-px flex-1 bg-line-soft" />
@@ -141,7 +141,7 @@ export default function Home() {
                 Shipped work
               </Badge>
             </div>
-            <h3 className="mb-[5px] font-serif text-[18.5px] font-semibold leading-snug tracking-[-0.01em]">
+            <h3 className="mb-[5px] font-serif text-[18.5px] leading-snug font-semibold tracking-[-0.01em]">
               Shipped the real-time crew heatmap to production
             </h3>
             <p className="max-w-[60ch] text-[13.5px] text-ink-soft">
@@ -167,8 +167,8 @@ export default function Home() {
                 Recognition
               </Badge>
             </div>
-            <p className="relative max-w-[56ch] pl-6 font-serif text-[18px] italic leading-[1.5]">
-              <span className="absolute -left-1 -top-3.5 font-serif text-[52px] not-italic text-primary opacity-55">
+            <p className="relative max-w-[56ch] pl-6 font-serif text-[18px] leading-[1.5] italic">
+              <span className="absolute -top-3.5 -left-1 font-serif text-[52px] text-primary not-italic opacity-55">
                 &ldquo;
               </span>
               Hamed unblocked the entire firmware team during the gateway outage — calm, methodical,
@@ -189,7 +189,7 @@ export default function Home() {
                 ⌀ Private — hidden from shared views
               </Badge>
             </div>
-            <h3 className="mb-[5px] font-serif text-[18.5px] font-semibold leading-snug tracking-[-0.01em]">
+            <h3 className="mb-[5px] font-serif text-[18.5px] leading-snug font-semibold tracking-[-0.01em]">
               Cut CI pipeline from 31 min to 9 min
             </h3>
             <p className="max-w-[60ch] text-[13.5px] text-ink-soft">
@@ -225,13 +225,13 @@ function Entry({
   return (
     <article className="relative grid grid-cols-[66px_1fr] gap-x-10 py-[7px]">
       {/* spine node — STATUS only (solid = shipped); visibility lives on the card */}
-      <span className="absolute left-[88.5px] top-[26px] h-2 w-2 rounded-full border-2 border-primary bg-primary" />
-      <div className="pt-[22px] text-right font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+      <span className="absolute top-[26px] left-[88.5px] h-2 w-2 rounded-full border-2 border-primary bg-primary" />
+      <div className="pt-[22px] text-right font-mono text-[11px] font-medium tracking-[0.08em] text-ink-soft uppercase">
         {date}
         <small className="block text-[9px] tracking-[0.14em] text-ink-faint">{dow}</small>
       </div>
       <div
-        className={`rounded-xl border bg-card px-5 pb-[15px] pt-[17px] shadow-card transition-shadow hover:shadow-card-hover ${
+        className={`rounded-xl border bg-card px-5 pt-[17px] pb-[15px] shadow-card transition-shadow hover:shadow-card-hover ${
           privateCard
             ? "border-dashed border-line bg-[repeating-linear-gradient(45deg,transparent_0_9px,rgba(34,29,22,0.018)_9px_10px)]"
             : "border-line"

@@ -8,6 +8,7 @@ labels: question, self-hosting
 **What are you trying to do?**
 
 **Instance details**
+
 - `INSTANCE_MODE`:
 - Deployment target (Dokploy / Docker Compose / Vercel):
 - Storage driver (local / s3):

@@ -119,7 +119,11 @@
     z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(900px 420px at 85% -5%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 70%),
+      radial-gradient(
+        900px 420px at 85% -5%,
+        color-mix(in srgb, var(--primary) 7%, transparent),
+        transparent 70%
+      ),
       radial-gradient(700px 500px at -10% 100%, rgba(34, 29, 22, 0.05), transparent 70%);
   }
 }

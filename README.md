@@ -14,11 +14,11 @@ Career evidence — promotion cases, praise, salary arguments — is sensitive. 
 
 ## Deployment modes
 
-| Mode | Who runs it | Accounts | Ships |
-|---|---|---|---|
-| `private-org` | a company self-hosting | setup wizard + invitations | v1 |
-| `private-solo` | a freelancer self-hosting | setup wizard | v1 |
-| `hosted` | a shared multi-tenant instance | open signup + user-created orgs | v1.1 |
+| Mode           | Who runs it                    | Accounts                        | Ships |
+| -------------- | ------------------------------ | ------------------------------- | ----- |
+| `private-org`  | a company self-hosting         | setup wizard + invitations      | v1    |
+| `private-solo` | a freelancer self-hosting      | setup wizard                    | v1    |
+| `hosted`       | a shared multi-tenant instance | open signup + user-created orgs | v1.1  |
 
 ## Highlights
 

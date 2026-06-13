@@ -16,11 +16,11 @@ data-layer step; until then the UI runs against the design baseline.
 
 ### Scripts
 
-| Command | Purpose |
-|---|---|
-| `pnpm dev` | Run the app in development |
-| `pnpm build` | Production build |
-| `pnpm lint` | ESLint |
+| Command      | Purpose                    |
+| ------------ | -------------------------- |
+| `pnpm dev`   | Run the app in development |
+| `pnpm build` | Production build           |
+| `pnpm lint`  | ESLint                     |
 
 (Typecheck plus unit (Vitest) and e2e (Playwright) scripts arrive with the CI setup.)
 
