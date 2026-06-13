@@ -59,8 +59,8 @@ on `0.x` until the deployment modes and core stabilize.
   (avatars remain session-gated).
 - Members management for organizations (`/admin/members`): list members with role, join date,
   and last activity; invite one or more people with a role; resend or revoke pending invitations;
-  and change a member's role (owner protection is enforced). Personal workspaces have no member
-  surface.
+  change a member's role; remove a member; and transfer ownership (owner only, atomic). Owner
+  protection is enforced throughout, and personal workspaces have no member surface.
 - Branded email templates: invitations carry the inviting organization's brand, and the
   transactional emails (verification, password reset, email-change confirmation) carry the
   instance brand.

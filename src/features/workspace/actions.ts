@@ -1,12 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 import { requireRole } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { invitation, organization } from "@/lib/db/schema";
+import { invitation, member, organization } from "@/lib/db/schema";
 
 import {
   brandingSchema,
@@ -141,4 +141,68 @@ export async function changeMemberRole(memberId: string, role: string): Promise<
   } catch (err) {
     return { ok: false, error: errorMessage(err, "Could not change the role.") };
   }
+}
+
+/**
+ * Remove a member from the active workspace. The owner can't be removed and you
+ * can't remove yourself; Better Auth re-checks permissions. This purges the
+ * membership — the complete workspace removal for now. The export-then-delete
+ * bundle and full account offboard join when export ships (Phase 7); there's no
+ * brag data to export until Phase 3.
+ */
+export async function removeMember(memberId: string): Promise<ActionResult> {
+  const { workspaceId, user } = await requireRole("owner", "admin");
+
+  const [target] = await db
+    .select({
+      userId: member.userId,
+      role: member.role,
+      organizationId: member.organizationId,
+    })
+    .from(member)
+    .where(eq(member.id, memberId))
+    .limit(1);
+  if (!target || target.organizationId !== workspaceId) {
+    return { ok: false, error: "Member not found." };
+  }
+  if (target.userId === user.id) return { ok: false, error: "You can't remove yourself." };
+  if (target.role === "owner") return { ok: false, error: "The owner can't be removed." };
+
+  try {
+    await auth.api.removeMember({ body: { memberIdOrEmail: memberId }, headers: await headers() });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorMessage(err, "Could not remove the member.") };
+  }
+}
+
+/**
+ * Transfer ownership to another member (owner only). Atomic so the workspace
+ * always has exactly one owner (PLAN §5): the target becomes owner and the
+ * current owner steps down to admin in a single transaction.
+ */
+export async function transferOwnership(memberId: string): Promise<ActionResult> {
+  const { workspaceId, user } = await requireRole("owner");
+
+  const [target] = await db
+    .select({
+      userId: member.userId,
+      organizationId: member.organizationId,
+    })
+    .from(member)
+    .where(eq(member.id, memberId))
+    .limit(1);
+  if (!target || target.organizationId !== workspaceId) {
+    return { ok: false, error: "Member not found." };
+  }
+  if (target.userId === user.id) return { ok: false, error: "You're already the owner." };
+
+  await db.transaction(async (tx) => {
+    await tx.update(member).set({ role: "owner" }).where(eq(member.id, memberId));
+    await tx
+      .update(member)
+      .set({ role: "admin" })
+      .where(and(eq(member.organizationId, workspaceId), eq(member.userId, user.id)));
+  });
+  return { ok: true };
 }

@@ -2,26 +2,25 @@ import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { InviteForm } from "@/features/workspace/components/invite-form";
+import { MemberActions } from "@/features/workspace/components/member-actions";
 import { MemberRoleSelect } from "@/features/workspace/components/member-role-select";
 import { PendingInvitationActions } from "@/features/workspace/components/pending-invitation-actions";
 import {
   getActiveWorkspace,
   listMembers,
   listPendingInvitations,
-  type MemberRow,
 } from "@/features/workspace/queries";
+import { canManageMember, canTransferOwnershipTo } from "@/features/workspace/roles";
 
 const fmtDate = (d: Date | string) =>
   new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 export default async function MembersPage() {
-  const { user, workspace } = await getActiveWorkspace();
+  const { user, workspace, role: viewerRole } = await getActiveWorkspace();
   // Personal workspaces have no member/invite surface (PLAN §3).
   if (workspace.type !== "organization") redirect("/admin");
 
   const [members, pending] = await Promise.all([listMembers(), listPendingInvitations()]);
-
-  const editable = (m: MemberRow) => m.role !== "owner" && m.userId !== user.id;
 
   return (
     <div className="flex flex-col gap-8">
@@ -56,33 +55,52 @@ export default async function MembersPage() {
               <th className="px-6 py-2.5 text-left font-medium">Role</th>
               <th className="px-6 py-2.5 text-left font-medium">Joined</th>
               <th className="px-6 py-2.5 text-left font-medium">Last active</th>
+              <th className="px-6 py-2.5 text-right font-medium">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
-            {members.map((m) => (
-              <tr key={m.memberId} className="border-b border-line-soft last:border-0">
-                <td className="px-6 py-3">
-                  <div className="font-medium text-ink">{m.name}</div>
-                  <div className="font-mono text-[11px] text-ink-faint">{m.email}</div>
-                </td>
-                <td className="px-6 py-3">
-                  {editable(m) ? (
-                    <MemberRoleSelect memberId={m.memberId} role={m.role} />
-                  ) : (
-                    <Badge variant="outline" className="capitalize">
-                      {m.role}
-                      {m.userId === user.id ? " · you" : ""}
-                    </Badge>
-                  )}
-                </td>
-                <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
-                  {fmtDate(m.joinedAt)}
-                </td>
-                <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
-                  {m.lastActiveAt ? fmtDate(m.lastActiveAt) : "—"}
-                </td>
-              </tr>
-            ))}
+            {members.map((m) => {
+              const isSelf = m.userId === user.id;
+              const manage = canManageMember(viewerRole, m.role, isSelf);
+              const transfer = canTransferOwnershipTo(viewerRole, m.role, isSelf);
+              return (
+                <tr key={m.memberId} className="border-b border-line-soft last:border-0">
+                  <td className="px-6 py-3">
+                    <div className="font-medium text-ink">{m.name}</div>
+                    <div className="font-mono text-[11px] text-ink-faint">{m.email}</div>
+                  </td>
+                  <td className="px-6 py-3">
+                    {manage ? (
+                      <MemberRoleSelect memberId={m.memberId} role={m.role} />
+                    ) : (
+                      <Badge variant="outline" className="capitalize">
+                        {m.role}
+                        {isSelf ? " · you" : ""}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
+                    {fmtDate(m.joinedAt)}
+                  </td>
+                  <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
+                    {m.lastActiveAt ? fmtDate(m.lastActiveAt) : "—"}
+                  </td>
+                  <td className="px-6 py-3 text-right">
+                    {manage || transfer ? (
+                      <MemberActions
+                        memberId={m.memberId}
+                        memberName={m.name}
+                        workspaceName={workspace.name}
+                        canRemove={manage}
+                        canTransfer={transfer}
+                      />
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>

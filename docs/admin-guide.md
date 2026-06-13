@@ -1,8 +1,9 @@
 # Admin guide
 
 For workspace **owners** and **admins** (organizations), plus the hosted
-**instance superadmin**. Workspace branding and member management are live;
-member removal and ownership transfer are the next Phase 2 slice.
+**instance superadmin**. Workspace administration — branding, members,
+invitations, roles, removal, and ownership transfer — is complete for the
+self-hosted modes; the hosted superadmin console is Phase 10.
 
 ## Workspace branding
 
@@ -59,13 +60,19 @@ member surface) an owner/admin can:
 - **Invite** one or more people at once (paste several addresses) with a role of
   Member or Admin.
 - **Resend or revoke** a pending invitation.
-- **Change a member's role.** Better Auth enforces the rules: only the owner can
-  promote someone to owner or change the owner's role; admins can move people
-  between Member and Admin but can never demote or remove the owner.
+- **Change a member's role** between Member and Admin.
+- **Remove a member** — they lose workspace access immediately.
+- **Transfer ownership** (owner only) — hand ownership to another member; you
+  atomically step down to admin, so the workspace always has exactly one owner.
 
-**Removing a member** (export-then-delete) and **ownership transfer** are the
-next Phase 2 slice. (The removal export bundle fills in once export ships in
-Phase 7; there is no brag data to export until Phase 3.)
+Owner protection is enforced everywhere: admins can never demote, remove, or be
+handed past the owner; only the owner can change the owner's role or transfer
+ownership. You can't remove yourself through these controls.
+
+> **Removal today purges the membership** (the complete workspace removal while
+> there's no brag data). The full _export-then-delete_ — a portable Markdown +
+> JSON + attachments bundle handed to the member before their data is purged —
+> attaches once export ships in **Phase 7** (brag data arrives in Phase 3).
 
 ## Hosted: instance superadmin
 
