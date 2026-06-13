@@ -18,7 +18,8 @@ The canonical list with defaults lives in [`.env.example`](../.env.example).
   with the provider: `{APP_URL}/api/auth/callback/{github|google}`. In the private modes OAuth
   only signs in already-provisioned accounts (it links to an existing email-verified account and
   never creates a new one).
-- **Uploads** — `MAX_UPLOAD_MB` (attachments; avatars are independently capped at 5 MB)
+- **Uploads** — `MAX_UPLOAD_MB` (attachments; avatars are capped at 5 MB and workspace logos at
+  2 MB, independent of this)
 - **Hosted abuse controls** — `BLOCK_DISPOSABLE_EMAIL`, `WORKSPACE_QUOTA_MB`
 - **Reminders** — `CRON_SECRET`
 

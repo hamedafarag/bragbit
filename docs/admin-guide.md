@@ -1,9 +1,22 @@
 # Admin guide
 
 For workspace **owners** and **admins** (organizations), plus the hosted
-**instance superadmin**. This page documents the membership model that's in place
-today; the in-app administration UI (branding, member management, the invite
-console) lands in Phase 2.
+**instance superadmin**. Workspace branding is live; member management and the
+invite console are the next Phase 2 slice.
+
+## Workspace branding
+
+At **`/admin`** (owner/admin only) you can set the workspace's:
+
+- **Name** — shown in the app header, on the sign-in page, and on shared documents.
+- **Accent color** — a validated hex with a live preview; it tints buttons,
+  highlights, and links throughout BragBit, applied through a `--primary` CSS
+  variable so the whole app re-themes at once.
+- **Logo** — replaces the wordmark in the header and on the sign-in page (and,
+  later, share pages). Logos are public assets; other uploads are not.
+
+A **personal** workspace has the same branding controls (useful for a
+freelancer's client-facing share pages) but no member/invite surface.
 
 ## Roles & permissions
 

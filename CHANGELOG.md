@@ -53,3 +53,7 @@ on `0.x` until the deployment modes and core stabilize.
 - Phase 1 documentation: the user guide (signing in, OAuth, verification, password reset,
   profile & account), the admin guide (roles + the invitation model), and the architecture
   guide's authentication/tenancy + DAL sections.
+- Workspace administration (`/admin`, owner/admin only): set the workspace name, accent color
+  (validated hex with a live preview), and logo. The accent and logo are applied to the app
+  chrome and the sign-in page; logos upload through a role-gated route and are served publicly
+  (avatars remain session-gated).

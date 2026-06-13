@@ -1,8 +1,20 @@
+import type { CSSProperties } from "react";
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Inline style overriding the accent CSS variables for a per-workspace brand.
+ * Returns undefined for a missing/invalid hex so the default palette stands.
+ * Applied on a layout wrapper, it cascades to all `--primary` / `--ring` users.
+ */
+export function accentVars(hex?: string | null): CSSProperties | undefined {
+  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return undefined;
+  return { "--primary": hex, "--ring": hex } as CSSProperties;
 }
 
 /** Up to two uppercase initials from a name, for avatar fallbacks. */
