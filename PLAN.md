@@ -320,6 +320,7 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] **Required email verification** (satisfied by invite link for invitees); password reset — _verification enforced + sign-in / forgot-password / reset / verify-email pages; the invitee-link-satisfies-verification part lands with invitations_
 - [ ] Optional GitHub/Google OAuth via env — sign-in for existing accounts in private modes; may create a personal workspace in `hosted`
 - [x] Membership-guard helper for workspace-scoped queries (the isolation foundation)
+- [ ] Resolve the active workspace on sign-in — set `session.activeOrganizationId` so `requireWorkspace` works after a plain sign-in (trivial for `private-solo`: the user's sole membership). _Found in slice 4: plain sign-in doesn't restore the active org; only setup/accept set it._
 - [ ] Profile: display name, role title, team, bio, avatar upload (build `LocalDiskStorage` here)
 - [ ] Account settings: change email/password (re-verify on email change), delete account (cascades own data)
 - [ ] Tests: invitation expiry/reuse, registration impossible without a valid token (private-org), personal mode exposes no invite/member surface
