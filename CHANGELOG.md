@@ -33,3 +33,16 @@ on `0.x` until the deployment modes and core stabilize.
 - Organization invitations: a branded 7-day single-use invite email + the accept flow
   (`/accept-invitation/[id]`) — a new invitee registers bound to the invited email and joins
   the workspace as a member.
+- Active-workspace resolution on sign-in: a Better Auth session hook pins the caller's
+  workspace as the active organization, so `requireWorkspace()` works after a plain
+  email+password sign-in (not only after setup / invite acceptance).
+- Storage adapter with a `LocalDiskStorage` driver (path-traversal-guarded `put/get/delete/stream`,
+  workspace-prefixed keys); `S3Storage` is selected by `STORAGE_DRIVER` but lands in Phase 4.
+- Profile (`/profile`): display name, role title, team, bio, and avatar upload — saved to a new
+  `profiles` table; the display name mirrors to the account name. Avatars stream through an
+  authorizing `/api/files/[…]` route (members only), never a public URL.
+- Account settings (`/settings`): change email (verified accounts confirm from their current
+  inbox before it applies), change password (signs out other sessions), and delete account
+  (cascades the user's data and drops a sole-member personal workspace and its avatar).
+- The authenticated `(app)` shell: a workspace-branded header with profile/settings nav and
+  sign-out, wrapping the new profile and settings pages.

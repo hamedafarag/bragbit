@@ -4,19 +4,48 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { organization } from "better-auth/plugins/organization";
+import { and, asc, eq, ne } from "drizzle-orm";
 
+import { ChangeEmailConfirmation } from "@/emails/change-email";
 import { InvitationEmail } from "@/emails/invitation";
 import { ResetPasswordEmail } from "@/emails/reset-password";
 import { VerifyEmail } from "@/emails/verify-email";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { member, organization as organizationTable, profile } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
+import { getStorage } from "@/lib/storage";
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL ?? env.APP_URL,
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),
+
+  databaseHooks: {
+    session: {
+      create: {
+        // Resolve the active workspace on every session creation: pick the
+        // caller's earliest membership and pin it as the session's active
+        // organization. Without this, a plain email/password sign-in leaves
+        // activeOrganizationId null and requireWorkspace() bounces to "/"
+        // (only setup/accept-invite set it explicitly). In private-solo the
+        // user has exactly one membership; multi-workspace selection (hosted)
+        // refines this later. During setup/invite the membership doesn't exist
+        // yet at session-create time, so this no-ops and those flows set it.
+        before: async (session) => {
+          const [m] = await db
+            .select({ organizationId: member.organizationId })
+            .from(member)
+            .where(eq(member.userId, session.userId))
+            .orderBy(asc(member.createdAt))
+            .limit(1);
+          if (!m) return;
+          return { data: { ...session, activeOrganizationId: m.organizationId } };
+        },
+      },
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -39,6 +68,57 @@ export const auth = betterAuth({
         subject: "Verify your email",
         template: VerifyEmail({ url }),
       });
+    },
+  },
+
+  user: {
+    changeEmail: {
+      enabled: true,
+      // Email is verified (required), so Better Auth sends the confirmation to
+      // the CURRENT address; the change only applies once the user clicks it.
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        await sendEmail({
+          to: user.email,
+          subject: "Confirm your new BragBit email",
+          template: ChangeEmailConfirmation({ url, newEmail }),
+        });
+      },
+    },
+    deleteUser: {
+      enabled: true,
+      // The user table cascades to its sessions, accounts, members and profile.
+      // What it does NOT cascade is the workspace itself or the avatar file, so
+      // clean those up first: drop any workspace the user is the sole member of
+      // (always true for a personal workspace; also reaps an org they were the
+      // last member of), and delete their avatar object from storage.
+      beforeDelete: async (deletingUser) => {
+        const [p] = await db
+          .select({ avatarKey: profile.avatarKey })
+          .from(profile)
+          .where(eq(profile.userId, deletingUser.id))
+          .limit(1);
+        if (p?.avatarKey)
+          await getStorage()
+            .delete(p.avatarKey)
+            .catch(() => {});
+
+        const memberships = await db
+          .select({ organizationId: member.organizationId })
+          .from(member)
+          .where(eq(member.userId, deletingUser.id));
+        for (const { organizationId } of memberships) {
+          const [other] = await db
+            .select({ id: member.id })
+            .from(member)
+            .where(
+              and(eq(member.organizationId, organizationId), ne(member.userId, deletingUser.id)),
+            )
+            .limit(1);
+          if (!other) {
+            await db.delete(organizationTable).where(eq(organizationTable.id, organizationId));
+          }
+        }
+      },
     },
   },
 

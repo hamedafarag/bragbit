@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -52,9 +53,13 @@ export default async function Home() {
             ⌘K
           </kbd>
         </div>
-        <div className="grid h-[30px] w-[30px] place-items-center rounded-full border border-line bg-paper-deep font-mono text-[11px] font-medium text-ink-soft">
+        <Link
+          href="/profile"
+          aria-label="Your profile"
+          className="grid h-[30px] w-[30px] place-items-center rounded-full border border-line bg-paper-deep font-mono text-[11px] font-medium text-ink-soft no-underline hover:border-ink-faint hover:text-ink"
+        >
           HF
-        </div>
+        </Link>
       </header>
 
       <main className="mx-auto max-w-[880px] px-10 pt-9 pb-24">
