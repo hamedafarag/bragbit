@@ -19,3 +19,5 @@ on `0.x` until the deployment modes and core stabilize.
   `.env.example`, and the `INSTANCE_MODE` config module (`src/lib/env.ts`, `src/lib/instance.ts`).
 - Data layer: Drizzle ORM + postgres.js client (`src/lib/db`), drizzle-kit config and schema
   conventions, plus a local dev stack (`docker-compose.dev.yml` — Postgres + MinIO + Mailpit).
+- Email infrastructure: Nodemailer SMTP transport (`src/lib/email`) + a workspace-brandable
+  React Email base layout and first template (`src/emails`), with a typed `sendEmail()` helper.
