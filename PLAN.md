@@ -324,6 +324,7 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [ ] Profile: display name, role title, team, bio, avatar upload (build `LocalDiskStorage` here)
 - [ ] Account settings: change email/password (re-verify on email change), delete account (cascades own data)
 - [ ] Tests: invitation expiry/reuse, registration impossible without a valid token (private-org), personal mode exposes no invite/member surface
+- [ ] Write up the Phase 1 `/docs` before closing the phase: `user-guide` (sign-up / verify / sign-in / password reset), `admin-guide` (invitations), `architecture` (auth + the DAL guards) — currently still Phase-0 stubs
 
 ### Phase 2 — Workspace administration & white-labeling *(v1)*
 - [ ] Admin area (`/admin`, owner+admin): workspace settings — name, logo upload, accent color picker (validated hex, live preview)
