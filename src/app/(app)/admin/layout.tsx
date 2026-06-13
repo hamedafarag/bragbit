@@ -1,9 +1,20 @@
-import { requireRole } from "@/lib/auth/guards";
+import { redirect } from "next/navigation";
 
-// Workspace administration is owner/admin only; the role gate lives in the DAL.
-// Members are redirected to the app root. (In a personal workspace the sole
-// member is the owner, so the owner reaches their own workspace settings.)
+import { AdminNav } from "@/features/workspace/components/admin-nav";
+import { getActiveWorkspace } from "@/features/workspace/queries";
+
+// Workspace administration is owner/admin only. getActiveWorkspace runs the DAL
+// membership guard; we additionally require an administering role here. (In a
+// personal workspace the sole member is the owner, so the owner reaches their
+// own workspace settings; the Members tab is hidden for personal workspaces.)
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireRole("owner", "admin");
-  return children;
+  const { workspace, role } = await getActiveWorkspace();
+  if (role !== "owner" && role !== "admin") redirect("/");
+
+  return (
+    <div className="flex flex-col gap-6">
+      <AdminNav isOrg={workspace.type === "organization"} />
+      {children}
+    </div>
+  );
 }

@@ -10,6 +10,7 @@ import { ChangeEmailConfirmation } from "@/emails/change-email";
 import { InvitationEmail } from "@/emails/invitation";
 import { ResetPasswordEmail } from "@/emails/reset-password";
 import { VerifyEmail } from "@/emails/verify-email";
+import { emailBrandFromOrg, instanceEmailBrand } from "@/lib/branding";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { member, organization as organizationTable, profile } from "@/lib/db/schema";
@@ -59,7 +60,7 @@ export const auth = betterAuth({
       await sendEmail({
         to: user.email,
         subject: "Reset your BragBit password",
-        template: ResetPasswordEmail({ url }),
+        template: ResetPasswordEmail({ url, brand: await instanceEmailBrand() }),
       });
     },
   },
@@ -71,7 +72,7 @@ export const auth = betterAuth({
       await sendEmail({
         to: user.email,
         subject: "Verify your email",
-        template: VerifyEmail({ url }),
+        template: VerifyEmail({ url, brand: await instanceEmailBrand() }),
       });
     },
   },
@@ -85,7 +86,7 @@ export const auth = betterAuth({
         await sendEmail({
           to: user.email,
           subject: "Confirm your new BragBit email",
-          template: ChangeEmailConfirmation({ url, newEmail }),
+          template: ChangeEmailConfirmation({ url, newEmail, brand: await instanceEmailBrand() }),
         });
       },
     },
@@ -166,6 +167,8 @@ export const auth = betterAuth({
     organization({
       // workspace = Better Auth organization, with a `type` discriminator.
       invitationExpiresIn: 60 * 60 * 24 * 7, // 7 days (PLAN)
+      // Re-inviting an address revokes its prior pending invite (PLAN §6).
+      cancelPendingInvitationsOnReInvite: true,
       schema: {
         organization: {
           additionalFields: {
@@ -184,6 +187,7 @@ export const auth = betterAuth({
             organizationName: data.organization.name,
             inviterName: data.inviter.user.name,
             acceptUrl: `${base}/accept-invitation/${data.id}`,
+            brand: emailBrandFromOrg(data.organization),
           }),
         });
       },

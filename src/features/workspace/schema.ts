@@ -9,3 +9,19 @@ export const brandingSchema = z.object({
 });
 
 export type BrandingInput = z.infer<typeof brandingSchema>;
+
+// Invitable roles (the owner role is assigned at creation / via transfer, never invited).
+export const INVITE_ROLES = ["admin", "member"] as const;
+export const roleSchema = z.enum(INVITE_ROLES);
+export type InviteRole = (typeof INVITE_ROLES)[number];
+
+// Invite one or more people at once. The form parses its textarea into this array.
+export const inviteSchema = z.object({
+  emails: z
+    .array(z.email("Enter valid email addresses"))
+    .min(1, "Enter at least one email address")
+    .max(50, "Invite up to 50 people at a time"),
+  role: roleSchema,
+});
+
+export type InviteInput = z.infer<typeof inviteSchema>;

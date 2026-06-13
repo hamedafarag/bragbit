@@ -57,3 +57,10 @@ on `0.x` until the deployment modes and core stabilize.
   (validated hex with a live preview), and logo. The accent and logo are applied to the app
   chrome and the sign-in page; logos upload through a role-gated route and are served publicly
   (avatars remain session-gated).
+- Members management for organizations (`/admin/members`): list members with role, join date,
+  and last activity; invite one or more people with a role; resend or revoke pending invitations;
+  and change a member's role (owner protection is enforced). Personal workspaces have no member
+  surface.
+- Branded email templates: invitations carry the inviting organization's brand, and the
+  transactional emails (verification, password reset, email-change confirmation) carry the
+  instance brand.

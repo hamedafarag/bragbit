@@ -1,8 +1,8 @@
 # Admin guide
 
 For workspace **owners** and **admins** (organizations), plus the hosted
-**instance superadmin**. Workspace branding is live; member management and the
-invite console are the next Phase 2 slice.
+**instance superadmin**. Workspace branding and member management are live;
+member removal and ownership transfer are the next Phase 2 slice.
 
 ## Workspace branding
 
@@ -49,17 +49,23 @@ invitation is:
 Opening the link lands the invitee on an accept page where they set a name and
 password; accepting creates their membership and signs them in.
 
-> The flow above — invite email → accept → member created — is in place and
-> tested. The admin UI to **send and manage** invitations from inside the app
-> (list, resend, revoke, change role) lands in **Phase 2**, together with
-> workspace branding and member management. **Removing a member** is
-> _export-then-delete_: the member receives a portable export, then their data is
-> purged from the workspace — also Phase 2.
+## Managing members
 
-## Ownership transfer
+From **`/admin/members`** (organizations only — personal workspaces have no
+member surface) an owner/admin can:
 
-Owner-only, and atomic; an admin can never demote or remove the owner. Lands in
-Phase 2.
+- **See the team** — each member's role, when they joined, and when they were
+  last active.
+- **Invite** one or more people at once (paste several addresses) with a role of
+  Member or Admin.
+- **Resend or revoke** a pending invitation.
+- **Change a member's role.** Better Auth enforces the rules: only the owner can
+  promote someone to owner or change the owner's role; admins can move people
+  between Member and Admin but can never demote or remove the owner.
+
+**Removing a member** (export-then-delete) and **ownership transfer** are the
+next Phase 2 slice. (The removal export bundle fills in once export ships in
+Phase 7; there is no brag data to export until Phase 3.)
 
 ## Hosted: instance superadmin
 

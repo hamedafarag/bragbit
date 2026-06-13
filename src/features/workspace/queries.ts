@@ -1,11 +1,12 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-import { requireWorkspace } from "@/lib/auth/guards";
+import { isAcceptableInvitation } from "@/features/invitation/validity";
+import { requireRole, requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
-import { organization } from "@/lib/db/schema";
+import { invitation, member, organization, session, user } from "@/lib/db/schema";
 import { isHosted } from "@/lib/instance";
 
 export type Workspace = typeof organization.$inferSelect;
@@ -16,9 +17,26 @@ export type WorkspaceBrand = {
   logoKey: string | null;
 };
 
+export type MemberRow = {
+  memberId: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: Date;
+  lastActiveAt: Date | null;
+};
+
+export type PendingInvitationRow = {
+  id: string;
+  email: string;
+  role: string;
+  expiresAt: Date;
+};
+
 /** The caller, their active workspace, and their role in it (membership pre-verified). */
 export async function getActiveWorkspace() {
-  const { user, workspaceId, member } = await requireWorkspace();
+  const { user: caller, workspaceId, member: membership } = await requireWorkspace();
   const [workspace] = await db
     .select()
     .from(organization)
@@ -26,7 +44,7 @@ export async function getActiveWorkspace() {
     .limit(1);
   // requireWorkspace proved membership (FK-backed), so the row exists; guard anyway.
   if (!workspace) redirect("/");
-  return { user, workspace, role: member.role };
+  return { user: caller, workspace, role: membership.role };
 }
 
 /**
@@ -46,4 +64,64 @@ export async function getInstanceBranding(): Promise<WorkspaceBrand | null> {
     .from(organization)
     .limit(1);
   return row ?? null;
+}
+
+/** Members of the active workspace with role, join date, and last activity (owner/admin only). */
+export async function listMembers(): Promise<MemberRow[]> {
+  const { workspaceId } = await requireRole("owner", "admin");
+
+  const rows = await db
+    .select({
+      memberId: member.id,
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: member.role,
+      joinedAt: member.createdAt,
+    })
+    .from(member)
+    .innerJoin(user, eq(user.id, member.userId))
+    .where(eq(member.organizationId, workspaceId))
+    .orderBy(member.createdAt);
+
+  if (rows.length === 0) return [];
+
+  // Last activity = the most recent session per member's user.
+  const activity = await db
+    .select({
+      userId: session.userId,
+      lastActiveAt: sql<Date>`max(${session.updatedAt})`,
+    })
+    .from(session)
+    .where(
+      inArray(
+        session.userId,
+        rows.map((r) => r.userId),
+      ),
+    )
+    .groupBy(session.userId);
+  const lastActive = new Map(activity.map((a) => [a.userId, a.lastActiveAt]));
+
+  return rows.map((r) => ({ ...r, lastActiveAt: lastActive.get(r.userId) ?? null }));
+}
+
+/** Still-valid (pending, unexpired) invitations for the active workspace (owner/admin only). */
+export async function listPendingInvitations(): Promise<PendingInvitationRow[]> {
+  const { workspaceId } = await requireRole("owner", "admin");
+
+  const rows = await db
+    .select({
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt,
+    })
+    .from(invitation)
+    .where(and(eq(invitation.organizationId, workspaceId), eq(invitation.status, "pending")))
+    .orderBy(desc(invitation.createdAt));
+
+  return rows
+    .filter((r) => isAcceptableInvitation({ status: r.status, expiresAt: r.expiresAt }))
+    .map((r) => ({ id: r.id, email: r.email, role: r.role ?? "member", expiresAt: r.expiresAt }));
 }
