@@ -30,3 +30,6 @@ on `0.x` until the deployment modes and core stabilize.
   signs them in; `sonner` toasts and the shared form↔action Zod validation pattern.
 - Auth UI: sign-in, forgot-password, password-reset, and email-verification pages (a gated
   `(auth)` route group on the typed Better Auth client).
+- Organization invitations: a branded 7-day single-use invite email + the accept flow
+  (`/accept-invitation/[id]`) — a new invitee registers bound to the invited email and joins
+  the workspace as a member.
