@@ -28,3 +28,5 @@ on `0.x` until the deployment modes and core stabilize.
   migration, plus the DAL guards (`requireSession` / `requireWorkspace` / `requireRole`).
 - First-run setup wizard (`/setup`, private modes): creates the owner + first workspace and
   signs them in; `sonner` toasts and the shared form↔action Zod validation pattern.
+- Auth UI: sign-in, forgot-password, password-reset, and email-verification pages (a gated
+  `(auth)` route group on the typed Better Auth client).
