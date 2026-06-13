@@ -15,7 +15,12 @@ import * as schema from "@/lib/db/schema";
 import { member, organization as organizationTable, profile } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
+import { isHosted } from "@/lib/instance";
 import { getStorage } from "@/lib/storage";
+
+// Social providers, configured only when both an id and secret are present.
+const githubConfigured = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
+const googleConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL ?? env.APP_URL,
@@ -119,6 +124,41 @@ export const auth = betterAuth({
           }
         }
       },
+    },
+  },
+
+  // Optional GitHub/Google sign-in (PLAN.md §4/§6). In the private modes OAuth
+  // only signs in already-provisioned accounts — `disableSignUp` blocks creating
+  // a new user from an unrecognized OAuth identity, which would otherwise defeat
+  // invitation-only. Hosted may create an account (its personal-workspace
+  // provisioning lands in Phase 10).
+  socialProviders: {
+    ...(githubConfigured
+      ? {
+          github: {
+            clientId: env.GITHUB_CLIENT_ID!,
+            clientSecret: env.GITHUB_CLIENT_SECRET!,
+            disableSignUp: !isHosted(),
+          },
+        }
+      : {}),
+    ...(googleConfigured
+      ? {
+          google: {
+            clientId: env.GOOGLE_CLIENT_ID!,
+            clientSecret: env.GOOGLE_CLIENT_SECRET!,
+            disableSignUp: !isHosted(),
+          },
+        }
+      : {}),
+  },
+
+  account: {
+    accountLinking: {
+      // Let an existing (email-verified) account attach a GitHub/Google identity
+      // by matching email, so OAuth works as a sign-in method for invited users.
+      enabled: true,
+      trustedProviders: ["github", "google"],
     },
   },
 

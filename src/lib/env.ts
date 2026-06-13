@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { INSTANCE_MODES } from "./instance-modes";
+
 /**
  * Validated, typed access to `process.env`. Imported on the server only; a
  * misconfigured environment fails fast at boot with a readable error.
@@ -17,7 +19,7 @@ const bool = (def: boolean) =>
 
 const schema = z.object({
   // Instance shape
-  INSTANCE_MODE: z.enum(["private-org", "private-solo", "hosted"]).default("private-solo"),
+  INSTANCE_MODE: z.enum(INSTANCE_MODES).default("private-solo"),
   SETUP_TOKEN: z.string().optional(),
 
   // Core

@@ -1,30 +1,35 @@
 import { env } from "./env";
+import { modeCapabilities, type InstanceMode } from "./instance-modes";
 
 /**
  * Helpers around `INSTANCE_MODE` — the single switch that decides which routes
  * mount and which setup path runs. The same codebase serves all three modes;
- * mode only gates behavior (see PLAN.md §3).
+ * mode only gates behavior (see PLAN.md §3). The pure mode → capability logic
+ * lives in `instance-modes.ts` (unit-tested there); this module binds it to the
+ * runtime mode.
  */
 
-export type InstanceMode = (typeof env)["INSTANCE_MODE"];
+export type { InstanceMode };
 
 export const instanceMode: InstanceMode = env.INSTANCE_MODE;
 
-export const isHosted = () => instanceMode === "hosted";
-export const isPrivateOrg = () => instanceMode === "private-org";
-export const isPrivateSolo = () => instanceMode === "private-solo";
+const caps = modeCapabilities(instanceMode);
+
+export const isHosted = () => caps.isHosted;
+export const isPrivateOrg = () => caps.isPrivateOrg;
+export const isPrivateSolo = () => caps.isPrivateSolo;
 
 /** Either self-hosted single-workspace mode. */
-export const isPrivate = () => isPrivateOrg() || isPrivateSolo();
+export const isPrivate = () => caps.isPrivate;
 
 /** Open, self-service signup exists only on the hosted instance. */
-export const allowsSignup = () => isHosted();
+export const allowsSignup = () => caps.allowsSignup;
 
 /** Any user may create an organization workspace only on the hosted instance. */
-export const allowsOrgCreation = () => isHosted();
+export const allowsOrgCreation = () => caps.allowsOrgCreation;
 
 /** The first-run /setup wizard runs only in the two private (self-host) modes. */
-export const hasSetupWizard = () => isPrivate();
+export const hasSetupWizard = () => caps.hasSetupWizard;
 
 /** private-solo provisions one personal workspace; org/member/invite UI is hidden. */
-export const isSoloWorkspaceMode = () => isPrivateSolo();
+export const isSoloWorkspaceMode = () => caps.isSoloWorkspaceMode;

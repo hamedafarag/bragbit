@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { invitation, organization } from "@/lib/db/schema";
 
+import { isAcceptableInvitation } from "./validity";
+
 export type PendingInvitation = {
   id: string;
   email: string;
@@ -32,7 +34,7 @@ export async function getPendingInvitation(id: string): Promise<PendingInvitatio
     .where(eq(invitation.id, id))
     .limit(1);
 
-  if (!row || row.status !== "pending" || row.expiresAt.getTime() < Date.now()) {
+  if (!row || !isAcceptableInvitation({ status: row.status, expiresAt: row.expiresAt })) {
     return null;
   }
 

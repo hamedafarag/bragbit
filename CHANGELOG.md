@@ -46,3 +46,7 @@ on `0.x` until the deployment modes and core stabilize.
   (cascades the user's data and drops a sole-member personal workspace and its avatar).
 - The authenticated `(app)` shell: a workspace-branded header with profile/settings nav and
   sign-out, wrapping the new profile and settings pages.
+- Optional GitHub/Google sign-in, enabled per provider via env. The sign-in page shows a
+  provider button only when configured; account linking lets a verified user attach an
+  identity. In the private modes OAuth only signs in existing accounts (it never creates one,
+  preserving invitation-only).
