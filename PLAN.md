@@ -298,17 +298,20 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 *Definition of done for every phase: user-facing changes are reflected in `/docs` and the `CHANGELOG.md [Unreleased]` section before the phase is considered complete.*
 
 ### Phase 0 — Foundation
-- [ ] `git init`, **AGPL-3.0 `LICENSE`**, and the root documentation skeleton: `README` stub, `CHANGELOG.md` (`[Unreleased]`), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `.github/` issue + PR templates
-- [ ] `/docs` skeleton — stub pages: `self-hosting/`, `configuration.md`, `instance-modes.md`, `admin-guide.md`, `user-guide.md`, `architecture.md` (filled in per-phase as features land)
-- [ ] Conventional Commits enforcement: `commitlint` + a `lefthook`/Husky git hook
-- [ ] Scaffold Next.js (TypeScript, App Router, Tailwind v4), ESLint + Prettier
-- [ ] shadcn/ui setup (lucide-react for all icons), base layout, **light-only paper palette** (dark variant deferred — see Design system §4), accent-color CSS-variable theming, all **8 category color tokens**
-- [ ] Adopt the "engineering logbook" design language from `design-mockup.html` (Fraunces + IBM Plex, paper palette, month-grouped timeline) as the component baseline
-- [ ] Drizzle + drizzle-kit wired to Postgres; **workspace-scoped schema conventions** established; `docker-compose.dev.yml` (Postgres + MinIO + Mailpit)
-- [ ] Email infrastructure: Nodemailer + SMTP env + React Email base template (workspace-brandable)
-- [ ] `INSTANCE_MODE` env + a typed config module guarding mode-specific behavior
-- [ ] Zod + shared validation pattern; error/toast conventions
-- [ ] CI (GitHub Actions): typecheck, lint, build, test; Vitest + Playwright skeletons; **Lighthouse CI + bundle-size budget** (Core Web Vitals gates); markdownlint + link-check (`lychee`)
+
+> **Status: complete (2026-06-13).** Scaffold, design system, repo foundation, data layer, email, dev tooling, and CI are all in place and verified locally. One carry-over: the Zod form↔action validation pattern + toast conventions, which land with the first forms in Phase 1.
+
+- [x] `git init`, **AGPL-3.0 `LICENSE`**, and the root documentation skeleton: `README` stub, `CHANGELOG.md` (`[Unreleased]`), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `.github/` issue + PR templates
+- [x] `/docs` skeleton — stub pages: `self-hosting/`, `configuration.md`, `instance-modes.md`, `admin-guide.md`, `user-guide.md`, `architecture.md` (filled in per-phase as features land)
+- [x] Conventional Commits enforcement: `commitlint` + a `lefthook`/Husky git hook
+- [x] Scaffold Next.js (TypeScript, App Router, Tailwind v4), ESLint + Prettier
+- [x] shadcn/ui setup (lucide-react for all icons), base layout, **light-only paper palette** (dark variant deferred — see Design system §4), accent-color CSS-variable theming, all **8 category color tokens**
+- [x] Adopt the "engineering logbook" design language from `design-mockup.html` (Fraunces + IBM Plex, paper palette, month-grouped timeline) as the component baseline
+- [x] Drizzle + drizzle-kit wired to Postgres; **workspace-scoped schema conventions** established; `docker-compose.dev.yml` (Postgres + MinIO + Mailpit)
+- [x] Email infrastructure: Nodemailer + SMTP env + React Email base template (workspace-brandable)
+- [x] `INSTANCE_MODE` env + a typed config module guarding mode-specific behavior
+- [ ] Zod + shared validation pattern; error/toast conventions — _Zod is wired (`src/lib/env.ts`); the shared form↔action schema pattern and toast (`sonner`) conventions land with the Phase 1 forms_
+- [x] CI (GitHub Actions): typecheck, lint, build, test; Vitest + Playwright skeletons; **Lighthouse CI + bundle-size budget** (Core Web Vitals gates); markdownlint + link-check (`lychee`)
 
 ### Phase 1 — Workspaces, auth & membership *(v1)*
 - [ ] Better Auth + Drizzle adapter + organization plugin; model `workspace` (type `personal`|`organization`) as the tenant umbrella
