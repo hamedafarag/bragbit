@@ -1,13 +1,11 @@
-// Domain schema, split by file and re-exported here for the drizzle client and
-// drizzle-kit. Tables land per-phase:
-//   auth.ts       Better Auth (user / session / account / verification) — Phase 1
-//   workspace.ts  workspaces, members, invitations                      — Phase 1
-//   document.ts   documents                                             — Phase 3
-//   brag.ts       brags, brag_links, attachments, tags, brag_tags       — Phase 3
-//   share.ts      share_links                                           — Phase 6
+// Domain schema, split by file and re-exported for the drizzle client and
+// drizzle-kit.
+//   auth.ts       Better Auth core: user / session / account / verification
+//   workspace.ts  organization (= workspace) / member / invitation
+//   (document / brag / share land in Phase 3 / 6; column helpers in ./columns)
 //
-// Convention (PLAN.md §6): every workspace-scoped table carries `workspaceId`
-// and is only ever read/written through the DAL guards — nothing outside the
-// DAL imports the drizzle client. Shared column helpers live in ./columns.
+// Convention (PLAN.md §6): every workspace-scoped table carries a workspace
+// reference and is only ever read/written through the DAL guards.
 
-export {};
+export * from "./auth";
+export * from "./workspace";

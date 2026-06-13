@@ -314,12 +314,12 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] CI (GitHub Actions): typecheck, lint, build, test; Vitest + Playwright skeletons; **Lighthouse CI + bundle-size budget** (Core Web Vitals gates); markdownlint + link-check (`lychee`)
 
 ### Phase 1 — Workspaces, auth & membership *(v1)*
-- [ ] Better Auth + Drizzle adapter + organization plugin; model `workspace` (type `personal`|`organization`) as the tenant umbrella
+- [x] Better Auth + Drizzle adapter + organization plugin; model `workspace` (type `personal`|`organization`) as the tenant umbrella
 - [ ] `/setup` first-run wizard (private modes): `private-org` → org workspace + owner (SMTP test, optional `SETUP_TOKEN`); `private-solo` → personal workspace + owner (no invite UI). Wizard disabled once a workspace exists; all routes redirect to it before then
 - [ ] Invitation flow (organizations): admin invites email + role → branded tokenized email (7-day, single-use) → registration bound to invited email → member/admin created
 - [ ] **Required email verification** (satisfied by invite link for invitees); password reset
 - [ ] Optional GitHub/Google OAuth via env — sign-in for existing accounts in private modes; may create a personal workspace in `hosted`
-- [ ] Membership-guard helper for workspace-scoped queries (the isolation foundation)
+- [x] Membership-guard helper for workspace-scoped queries (the isolation foundation)
 - [ ] Profile: display name, role title, team, bio, avatar upload (build `LocalDiskStorage` here)
 - [ ] Account settings: change email/password (re-verify on email change), delete account (cascades own data)
 - [ ] Tests: invitation expiry/reuse, registration impossible without a valid token (private-org), personal mode exposes no invite/member surface

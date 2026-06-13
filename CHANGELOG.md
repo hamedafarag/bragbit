@@ -23,3 +23,6 @@ on `0.x` until the deployment modes and core stabilize.
   React Email base layout and first template (`src/emails`), with a typed `sendEmail()` helper.
 - CI (GitHub Actions): typecheck, lint, Prettier check, markdownlint, unit (Vitest) and e2e
   (Playwright) tests, production build, Lighthouse CI, a bundle-size budget, and a link check.
+- Auth & workspaces: Better Auth (email+password with required verification, organization
+  plugin) with the core auth + organization/member/invitation Drizzle schema and first
+  migration, plus the DAL guards (`requireSession` / `requireWorkspace` / `requireRole`).
