@@ -122,6 +122,10 @@ on `0.x` until the deployment modes and core stabilize.
   portable Markdown file — metadata and goals, then wins grouped by month with links, an
   attachment manifest, collaborators, and tags. Private brags are excluded by default, with an
   opt-in to include them in your own copy.
+- Print / PDF export: a print-optimized, workspace-branded view of a document (logo header, clean
+  typography, each month on its own page) reachable from the Export dialog — “Print / Save as PDF”
+  uses your browser's print-to-PDF, so no extra services are required. Honors the same
+  include-private choice, marking private wins so they aren't shared unawares.
 
 ### Security
 

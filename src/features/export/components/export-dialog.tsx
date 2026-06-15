@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,14 +24,21 @@ export function ExportDialog({ documentId }: { documentId: string }) {
   const [open, setOpen] = useState(false);
   const [includePrivate, setIncludePrivate] = useState(false);
 
+  const privateParam = includePrivate ? "1" : "0";
+
   function downloadMarkdown() {
-    const url = `/api/export/${documentId}?format=md&private=${includePrivate ? "1" : "0"}`;
+    const url = `/api/export/${documentId}?format=md&private=${privateParam}`;
     const a = document.createElement("a");
     a.href = url;
     a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
     a.remove();
+    setOpen(false);
+  }
+
+  function openPrintView() {
+    window.open(`/print/${documentId}?private=${privateParam}`, "_blank", "noopener");
     setOpen(false);
   }
 
@@ -66,10 +73,16 @@ export function ExportDialog({ documentId }: { documentId: string }) {
             include them in your own copy.
           </p>
 
-          <Button type="button" onClick={downloadMarkdown} className="self-start">
-            <Download className="size-3.5" aria-hidden />
-            Download Markdown
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={downloadMarkdown}>
+              <Download className="size-3.5" aria-hidden />
+              Download Markdown
+            </Button>
+            <Button type="button" variant="outline" onClick={openPrintView}>
+              <Printer className="size-3.5" aria-hidden />
+              Print / Save as PDF
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

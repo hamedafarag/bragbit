@@ -204,6 +204,13 @@ the document + its brags with relations batched (no N+1); it's scoped **explicit
 `workspaceId + userId` (passed in by the route, like `getOwnedAttachmentByKey`) rather than calling
 a redirecting guard, since export is route-driven. Downloads stream from a Route Handler
 (`GET /api/export/[documentId]`): owner-only via `getWorkspaceOrNull` (→ 401), an unowned/missing id
-404s, `?format=md` (PDF/JSON are later Phase 7 slices), and `?private=1` opts private brags in
-(default off — the same `visibility='shared'` filter the public share uses). The response is an
-attachment, never cached. An Export dialog on the document page triggers it.
+404s, `?format=md` (JSON is a later Phase 7 slice), and `?private=1` opts private brags in (default
+off — the same `visibility='shared'` filter the public share uses). The response is an attachment,
+never cached. An Export dialog on the document page triggers it.
+
+**PDF is the browser's Save-as-PDF** from a print-optimized view (`/print/[documentId]`, a
+standalone route outside the `(app)` chrome, gated by `requireWorkspace`): workspace-branded, the
+document's brags grouped by month with each month on a fresh printed page (`break-before: page`).
+The v1 decision is browser print over a headless-Chromium service — zero extra infra on every
+self-host; since the print view is exactly the render target Chromium would use, adding server-side
+rendering later is additive. `?private=1` includes private brags, each marked "Private".
