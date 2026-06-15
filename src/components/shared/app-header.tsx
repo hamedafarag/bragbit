@@ -25,7 +25,7 @@ export function AppHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-6 backdrop-blur">
-      <Link href="/" className="flex items-center gap-3 no-underline">
+      <Link href="/dashboard" className="flex items-center gap-3 no-underline">
         {logoUrl ? (
           // Authorizing same-origin route, not an optimizable static asset.
           // eslint-disable-next-line @next/next/no-img-element

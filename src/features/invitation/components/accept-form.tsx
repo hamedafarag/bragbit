@@ -49,7 +49,7 @@ export function AcceptForm({
         return;
       }
       toast.success(`Welcome to ${organizationName}.`);
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     });
   }

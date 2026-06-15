@@ -3,17 +3,17 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 2 — layering, authentication & tenancy,
-> the DAL boundary, the data model so far, workspace administration & branding,
-> and the storage adapter. The domain layers (documents, brags, attachments,
-> sharing, export) are added here as they land.
+> **Status:** documented through Phase 3 slice 3.1 — layering, authentication &
+> tenancy, the DAL boundary, the data model so far, workspace administration &
+> branding, the storage adapter, and documents. The remaining domain layers
+> (brags, attachments, sharing, export) are added here as they land.
 
 ## Layering (a security decision)
 
 1. **`app/` is routing only** — thin files that gate access and delegate to a feature.
 2. **Code lives in feature modules** grouped by domain. Built so far: `features/auth`,
-   `features/workspace`, `features/profile`, `features/invitation`, `features/setup`
-   (`features/brag` / `features/document` land in Phase 3).
+   `features/workspace`, `features/profile`, `features/invitation`, `features/setup`,
+   `features/document` (`features/brag` lands in the next Phase 3 slice).
 3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through
    guards that verify session **and** workspace membership. Nothing outside the DAL imports
    the Drizzle client (`import 'server-only'` on `lib/db` keeps it out of client bundles).
@@ -60,10 +60,28 @@ capability mapping is a pure function in `lib/instance-modes.ts`, bound to the r
 
 Better Auth owns `user` / `session` / `account` / `verification`. The organization plugin provides
 `organization` (= the workspace, plus BragBit's `type` / `accent_color` / `logo_key`), `member`,
-and `invitation`. BragBit adds `profiles`. The brag-domain tables (`documents`, `brags`, `tags`,
-`brag_links`, `attachments`, `share_links`) and `instance_admins` are Phase 3+ / Phase 10 — see
+and `invitation`. BragBit adds `profiles` and the brag domain: `documents` (workspace + user
+scoped), `brags` (scoped through their parent document — no direct workspace column), `brag_links`,
+`tags` (unique per user per workspace), and the `brag_tags` join. Still to come: `attachments`
+(Phase 4), `share_links` (Phase 6), and `instance_admins` (Phase 10) — see
 [PLAN.md §5](../PLAN.md) for the full target model. Every workspace-scoped query filters by the
 caller's membership through the DAL.
+
+## Documents
+
+A document is a review period — a year, a half, a promotion case. `features/document` owns the
+domain: a Zod schema shared by the form and the action, DAL-guarded queries (`listDocuments` /
+`listArchivedDocuments` / `getDocument`), and server actions (`createDocument` / `updateDocument` /
+`archiveDocument` / `unarchiveDocument` / `deleteDocument`).
+
+Documents are **private per user** — an admin role doesn't widen access — so the actions gate on
+`requireWorkspace` (membership), not a role, and every read and write is scoped by `workspace_id`
+**and** `user_id`. Mutations enforce ownership _in the query_: the `WHERE` matches the caller's
+workspace + user, so a mismatched id touches no row and reports not-found rather than acting across
+tenants or users. The authenticated home is `/dashboard`, which lists the caller's active documents
+(create/edit in a dialog, reversible archive, and delete — which cascades the document's brags);
+archived documents collapse into a restorable "Archived" disclosure. The brag timeline inside a
+document (`documents/[documentId]`) lands with brags in the next Phase 3 slice.
 
 ## Workspace administration & branding
 

@@ -64,3 +64,11 @@ on `0.x` until the deployment modes and core stabilize.
 - Branded email templates: invitations carry the inviting organization's brand, and the
   transactional emails (verification, password reset, email-change confirmation) carry the
   instance brand.
+- The brag-domain schema (`documents`, `brags`, `brag_links`, `tags`, `brag_tags`, all
+  workspace-scoped) in one migration — documents are scoped per workspace and per user, brags
+  hang off a document, and tags are unique per user per workspace.
+- Documents (`/dashboard`): the authenticated home lists your documents (review periods like
+  “2026” or “H1 2026”). Create and edit in a dialog (title required; optional subtitle, period,
+  and Markdown goals), archive (reversible, in a restorable “Archived” view), and delete
+  (cascading the document's brags). Documents are private per user and guarded through the DAL on
+  every read and write; sign-in, setup, and invitation acceptance now land on the dashboard.

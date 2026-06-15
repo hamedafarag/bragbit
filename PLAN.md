@@ -102,8 +102,9 @@ profiles         user_id PK/FK, display_name, role_title, team, bio, avatar_key,
                  reminder_enabled, reminder_day, timezone
 
 documents        id, workspace_id FK, user_id FK, title, description?,
-                 period_start?, period_end?, goals_md?, created_at, updated_at
+                 period_start?, period_end?, goals_md?, archived_at?, created_at, updated_at
                  -- a document = a review period ("2026", "H1 2026", "Promo case")
+                 -- archived_at: archive drops it from the dashboard without deleting
 
 brags            id, document_id FK, title, description_md?, impact_md?,
                  date (default today), category?, status? (shipped|in_progress),
@@ -341,8 +342,15 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Tests: role-gating on every admin action; member cannot reach admin routes — _slice 2.3: a pure `roles` policy (`canAdminister` / `canManageMember` / `canTransferOwnershipTo`) is unit-tested and drives the admin gate + members UI; the actions enforce it via `requireRole` and Better Auth. A Playwright e2e (DB seeded by `globalSetup` via `better-auth/crypto`) asserts a member is redirected off `/admin` and an owner reaches it. CI now provisions a Postgres service for the e2e + Lighthouse jobs, so they exercise a real database (previously DB-less); the Vitest job stays DB-free for the pure unit tests._
 
 ### Phase 3 — Core domain: documents & brags *(v1)*
-- [ ] Drizzle schema + migrations for `documents`, `brags`, `brag_links`, `tags`, `brag_tags` (all workspace-scoped)
-- [ ] Documents CRUD: create (title + optional period + goals), edit, archive/delete; dashboard listing the workspace's documents for the user
+
+> **Status: in progress.** Slice 3.1 (the whole Phase 3 schema + migration,
+> Documents CRUD, and the `/dashboard` listing) is done and committed. Brags CRUD,
+> the <30s quick-add flow, and the rest of the brag editor (impact / category /
+> status / collaborators / links / Markdown) + the empty-state onboarding are the
+> next slice.
+
+- [x] Drizzle schema + migrations for `documents`, `brags`, `brag_links`, `tags`, `brag_tags` (all workspace-scoped) — _slice 3.1: the full Phase 3 schema shipped in one migration (`0002`). Documents are workspace + user scoped; brags are scoped through their parent document (no direct workspace column); tags are unique per (user, workspace, name). The generated `search` tsvector + its GIN index are deferred to Phase 5 (FTS)._
+- [x] Documents CRUD: create (title + optional period + goals), edit, archive/delete; dashboard listing the workspace's documents for the user — _slice 3.1: `features/document` (Zod schema, DAL-guarded queries, server actions that enforce ownership + workspace in the `WHERE`). `/dashboard` lists the caller's documents with create/edit in a dialog, **reversible** archive (a restorable "Archived" disclosure), and delete (cascades the document's brags). Sign-in / setup / invite-accept now land on `/dashboard`._
 - [ ] Brags CRUD via server actions — ownership + workspace checks on every mutation
 - [ ] **Quick-add flow (the product's soul):** only title required, date defaults to today; everything else optional; target < 30s; keyboard shortcut (`n`) and inline add from timeline
 - [ ] Form placeholders teach the formula: *"What you did + why it mattered + the measurable result"* with the 40%→28% example

@@ -46,7 +46,7 @@ export function SetupForm({
       const result = await completeSetup(parsed.data);
       if (result.ok) {
         toast.success("Workspace created — welcome to BragBit.");
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       } else {
         toast.error(result.error);

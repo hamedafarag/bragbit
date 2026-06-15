@@ -38,7 +38,7 @@ export function SignInForm() {
         return;
       }
       toast.success("Welcome back.");
-      router.push("/");
+      router.push("/dashboard");
       router.refresh();
     });
   }
