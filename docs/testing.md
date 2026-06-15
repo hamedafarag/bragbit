@@ -10,7 +10,9 @@ out of scope here.
   and an **expected** result.
 - Run all **P1** cases before any release — a failing P1 is a release blocker. Run P2/P3 as time
   allows.
-- Record **Pass / Fail / Blocked** plus notes against each ID (copy the IDs into a tracking sheet).
+- Record **Pass / Fail / Blocked** plus notes against each ID. A blank results sheet listing every
+  case is at [`test-results-template.csv`](test-results-template.csv) — copy it per test run (it
+  opens in any spreadsheet and renders as a table on GitHub).
 - **Priority:** P1 = critical · P2 = important · P3 = edge / polish.
 - **Mode:** `solo` = `private-solo` · `org` = `private-org` · `both` = applies to both.
 
