@@ -18,6 +18,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import {
+  AttachmentManager,
+  type AttachmentItem,
+} from "@/features/attachment/components/attachment-manager";
+
 import { createBrag, updateBrag } from "../actions";
 import { BRAG_CATEGORIES, bragSchema } from "../schema";
 import { LinksField, type LinkRow } from "./links-field";
@@ -34,6 +39,7 @@ export type BragFormValues = {
   collaborators: string;
   attribution: string;
   links: LinkRow[];
+  attachments: AttachmentItem[];
 };
 
 function todayLocal(): string {
@@ -224,6 +230,17 @@ export function BragEditor({
             <p className="font-mono text-[10.5px] text-ink-faint">
               A PR, doc, or dashboard — with an optional label.
             </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Attachments</span>
+            {bragId ? (
+              <AttachmentManager bragId={bragId} initial={v?.attachments ?? []} />
+            ) : (
+              <p className="text-[13px] text-ink-faint">
+                Save this brag, then reopen it to attach files.
+              </p>
+            )}
           </div>
 
           <DialogFooter>

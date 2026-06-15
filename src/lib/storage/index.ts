@@ -65,6 +65,26 @@ export const IMAGE_MIME_EXT: Readonly<Record<string, string>> = {
   "image/gif": "gif",
 };
 
+/**
+ * Attachment types accepted on a brag → the stored extension. Images, PDFs, and
+ * common office/text docs (screenshots, praise emails, dashboards). The MIME
+ * type is also persisted on the row and used verbatim when serving.
+ */
+export const ATTACHMENT_MIME_EXT: Readonly<Record<string, string>> = {
+  ...IMAGE_MIME_EXT,
+  "application/pdf": "pdf",
+  "text/plain": "txt",
+  "text/csv": "csv",
+  "text/markdown": "md",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.ms-powerpoint": "ppt",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+  "application/zip": "zip",
+};
+
 const EXT_CONTENT_TYPE: Readonly<Record<string, string>> = {
   png: "image/png",
   jpg: "image/jpeg",

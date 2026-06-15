@@ -100,9 +100,11 @@ and Markdown description/impact). Markdown renders through a shared, safe-by-def
 (react-markdown + remark-gfm — no raw HTML, dangerous URLs stripped): server-side in the brag cards
 (zero client JS) and lazy-loaded for the editor's live preview. Links live in `brag_links`, loaded
 with their brags in one batched query (no N+1) and replaced transactionally on edit; they render as
-external-link chips (new tab, `rel="noopener noreferrer"`), visually distinct from the attachment
-chips arriving in Phase 4. The page lists brags newest-first; the month-grouped timeline, tags,
-filters, and search are Phase 5, and the per-brag visibility toggle is Phase 6.
+external-link chips (new tab, `rel="noopener noreferrer"`), visually distinct from attachment chips
+(paperclip). Attachments (images/PDFs/docs) upload to a saved brag from the editor and load with
+their brags (see [Storage & file routes](#storage--file-routes)). The page lists brags
+newest-first; the month-grouped timeline, tags, filters, and search are Phase 5, and the per-brag
+visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 
@@ -132,4 +134,8 @@ served by an authorizing one (`/api/files/[...key]`):
 - `branding/` (logos) — **public**, the deliberate exception (rendered on the pre-auth sign-in page,
   and later on share pages).
 - `avatars/` — **session-gated** to a member of the key's workspace.
-- attachments — gated in Phase 4 (owner session or valid share token).
+- `attachments/` — the **owner only** (resolved via attachment → brag → document; workspace
+  membership isn't enough, since attachments are private per user). Served with the stored MIME
+  type, an inline `Content-Disposition`, and `Range` → `206` support for large files; uploaded
+  through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`). The
+  valid-share-token path lands in Phase 6.

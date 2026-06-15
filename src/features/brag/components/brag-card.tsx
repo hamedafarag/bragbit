@@ -1,9 +1,9 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Paperclip } from "lucide-react";
 
 import { Markdown } from "@/components/shared/markdown";
 import { Badge } from "@/components/ui/badge";
 
-import type { BragWithLinks } from "../queries";
+import type { BragWithRelations } from "../queries";
 import { BRAG_CATEGORIES } from "../schema";
 import { BragActions } from "./brag-actions";
 import type { BragFormValues } from "./brag-editor";
@@ -20,12 +20,12 @@ function prettyUrl(url: string): string {
 /**
  * One brag in a document. Reverse-chron list rendering (the month-grouped
  * timeline with its spine is Phase 5). Markdown is rendered server-side here, so
- * brag descriptions add no client JS. Links are external (external-link icon,
- * new tab, noreferrer); attachments — a distinct paperclip chip — arrive in
- * Phase 4. The dashed/hatched private treatment is wired on `visibility` for the
- * Phase 6 toggle; nothing sets it yet.
+ * brag descriptions add no client JS. Links (external-link icon) and attachments
+ * (paperclip) are distinct chips, both opening through the authorizing file route
+ * in a new tab. The dashed/hatched private treatment is wired on `visibility` for
+ * the Phase 6 toggle; nothing sets it yet.
  */
-export function BragCard({ brag }: { brag: BragWithLinks }) {
+export function BragCard({ brag }: { brag: BragWithRelations }) {
   const cat = categoryMeta(brag.category);
   const d = new Date(`${brag.date}T00:00:00`);
   const mon = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -43,6 +43,13 @@ export function BragCard({ brag }: { brag: BragWithLinks }) {
     collaborators: collaborators.join(", "),
     attribution: brag.attribution ?? "",
     links: brag.links.map((l) => ({ url: l.url, label: l.label ?? "" })),
+    attachments: brag.attachments.map((a) => ({
+      id: a.id,
+      fileName: a.fileName,
+      mimeType: a.mimeType,
+      sizeBytes: a.sizeBytes,
+      url: `/api/files/${a.storageKey}`,
+    })),
   };
 
   return (
@@ -108,6 +115,23 @@ export function BragCard({ brag }: { brag: BragWithLinks }) {
               >
                 <ExternalLink className="size-3 shrink-0" />
                 <span className="truncate">{link.label || prettyUrl(link.url)}</span>
+              </a>
+            ))}
+          </div>
+        ) : null}
+
+        {brag.attachments.length > 0 ? (
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {brag.attachments.map((att) => (
+              <a
+                key={att.id}
+                href={`/api/files/${att.storageKey}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex max-w-[260px] items-center gap-1.5 rounded-md border border-line-soft bg-paper px-2 py-[3px] font-mono text-[10.5px] text-ink-soft no-underline hover:border-ink-faint hover:text-ink"
+              >
+                <Paperclip className="size-3 shrink-0" />
+                <span className="truncate">{att.fileName}</span>
               </a>
             ))}
           </div>
