@@ -4,26 +4,36 @@ Thanks for your interest! BragBit is AGPL-3.0 and welcomes issues and pull reque
 
 ## Local development
 
-Requirements: **Node 20+**, **pnpm 9+**, and a local **Docker** daemon for the dev stack.
+Requirements: **Node 20+**, **pnpm 10+** (via Corepack), and a local **Docker** daemon for the dev
+stack.
 
 ```bash
 pnpm install
-pnpm dev          # Next.js dev server on http://localhost:3000
+cp .env.example .env
+pnpm dev:up          # Postgres + Mailpit + MinIO (docker-compose.dev.yml)
+pnpm db:migrate      # apply migrations
+pnpm seed:demo       # optional — a sample workspace + a populated "2026" document
+pnpm dev             # Next.js dev server on http://localhost:3000
 ```
 
-The local dev stack (Postgres + MinIO + Mailpit via `docker-compose.dev.yml`) lands in the
-data-layer step; until then the UI runs against the design baseline.
+`pnpm dev:up` starts the local services from `docker-compose.dev.yml`: Postgres, Mailpit (its web UI
+is on `:8025` — dev mail lands there, not a real inbox), and MinIO for S3-compatible storage. Stop
+them with `pnpm dev:down`.
 
 ### Scripts
 
-| Command      | Purpose                    |
-| ------------ | -------------------------- |
-| `pnpm dev`   | Run the app in development |
-| `pnpm build` | Production build           |
-| `pnpm lint`  | ESLint                     |
+| Command           | Purpose                                 |
+| ----------------- | --------------------------------------- |
+| `pnpm dev`        | Run the app in development              |
+| `pnpm build`      | Production build                        |
+| `pnpm lint`       | ESLint                                  |
+| `pnpm typecheck`  | TypeScript                              |
+| `pnpm test`       | Unit tests (Vitest)                     |
+| `pnpm db:migrate` | Apply database migrations (drizzle-kit) |
+| `pnpm seed:demo`  | Seed a demo workspace + document        |
 
-Also available: `pnpm typecheck`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright),
-`pnpm lint:md`, `pnpm format`, and `pnpm dev:up` / `pnpm dev:down` for the Docker stack.
+Also available: `pnpm test:e2e` (Playwright), `pnpm lint:md`, `pnpm format`, `pnpm size`, and
+`pnpm dev:up` / `pnpm dev:down` for the Docker stack.
 
 ## Branch & PR workflow
 

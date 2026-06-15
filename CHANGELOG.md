@@ -147,7 +147,8 @@ on `0.x` until the deployment modes and core stabilize.
   independent of the app (raw SQL + Better Auth's password hasher).
 - Documentation: finalized the self-hosting guides (Docker Compose, the Dokploy reference, and a
   Vercel/Neon variant), the full environment-variable reference, the instance-modes explainer, and
-  backup/restore & upgrade notes; refreshed the admin and user guides to match the shipped product.
+  backup/restore & upgrade notes; refreshed the admin and user guides to match the shipped product;
+  and polished the README (quick starts, highlights, demo credentials) and the contributor guide.
 
 ### Security
 
