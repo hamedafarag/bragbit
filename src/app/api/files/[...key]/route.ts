@@ -17,7 +17,10 @@ import { contentTypeForKey, getStorage, type ByteRange, type Storage } from "@/l
  *   - anything else — 404.
  * URL segments are validated so they can never traverse the storage root.
  */
-export async function GET(request: Request, ctx: RouteContext<"/api/files/[...key]">) {
+// Params are typed explicitly rather than via the build-generated `RouteContext`,
+// so `tsc --noEmit` passes on a clean checkout (before `next build` writes
+// .next/types) — see AGENTS.md.
+export async function GET(request: Request, ctx: { params: Promise<{ key: string[] }> }) {
   const { key: segments } = await ctx.params;
 
   if (segments.length < 3 || segments.some((s) => !s || s === "." || s === "..")) {

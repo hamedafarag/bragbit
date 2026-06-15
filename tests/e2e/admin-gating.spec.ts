@@ -7,8 +7,8 @@ async function signIn(page: Page, email: string) {
   await page.fill("#email", email);
   await page.fill("#password", E2E.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  // The sign-in form redirects to "/" on success.
-  await page.waitForURL((url) => new URL(url).pathname === "/", { timeout: 20_000 });
+  // The sign-in form redirects to "/dashboard" on success.
+  await page.waitForURL((url) => new URL(url).pathname === "/dashboard", { timeout: 20_000 });
 }
 
 test("a member is redirected away from the admin area", async ({ page }) => {
