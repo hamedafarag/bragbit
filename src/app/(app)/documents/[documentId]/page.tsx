@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 
 import { Markdown } from "@/components/shared/markdown";
 import { Button } from "@/components/ui/button";
-import { BragCard } from "@/features/brag/components/brag-card";
 import { QuickAdd } from "@/features/brag/components/quick-add";
 import { listBrags } from "@/features/brag/queries";
+import { Timeline } from "@/features/timeline/components/timeline";
 import {
   DocumentDialog,
   type DocumentFormValues,
@@ -101,11 +101,7 @@ export default async function DocumentPage({
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {brags.map((brag) => (
-            <BragCard key={brag.id} brag={brag} />
-          ))}
-        </ul>
+        <Timeline brags={brags} />
       )}
     </div>
   );

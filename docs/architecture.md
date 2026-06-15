@@ -13,7 +13,7 @@ full target model and file structure live in PLAN §5–§6.
 1. **`app/` is routing only** — thin files that gate access and delegate to a feature.
 2. **Code lives in feature modules** grouped by domain. Built so far: `features/auth`,
    `features/workspace`, `features/profile`, `features/invitation`, `features/setup`,
-   `features/document`, and `features/brag`.
+   `features/document`, `features/brag`, `features/attachment`, and `features/timeline`.
 3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through
    guards that verify session **and** workspace membership. Nothing outside the DAL imports
    the Drizzle client (`import 'server-only'` on `lib/db` keeps it out of client bundles).
@@ -102,9 +102,11 @@ and Markdown description/impact). Markdown renders through a shared, safe-by-def
 with their brags in one batched query (no N+1) and replaced transactionally on edit; they render as
 external-link chips (new tab, `rel="noopener noreferrer"`), visually distinct from attachment chips
 (paperclip). Attachments (images/PDFs/docs) upload to a saved brag from the editor and load with
-their brags (see [Storage & file routes](#storage--file-routes)). The page lists brags
-newest-first; the month-grouped timeline, tags, filters, and search are Phase 5, and the per-brag
-visibility toggle is Phase 6.
+their brags (see [Storage & file routes](#storage--file-routes)). The document page renders the
+brags as a **month-grouped timeline** (`features/timeline`): sticky month headers with per-month
+counts, a vertical spine, and a status-only node on each entry (solid = shipped, hollow =
+in-progress); private is a card treatment, not a node ring. Tags, filters, full-text search, and
+cursor pagination are the rest of Phase 5; the per-brag visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 

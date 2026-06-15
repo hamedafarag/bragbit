@@ -81,6 +81,10 @@ on `0.x` until the deployment modes and core stabilize.
   a managed list (thumbnail/icon, size, delete) in the editor. Files stream through the authorizing
   file route — owner-only, with the stored MIME type and `Range`/206 support — and are never
   publicly addressable.
+- Document timeline: a document's brags render as a month-grouped timeline — sticky month headers
+  with per-month counts, a vertical spine, and a status-only node on each entry (solid = shipped,
+  hollow = in-progress) — replacing the flat list. Category colors, the "In progress" pill, the
+  private card treatment, and link/attachment chips sit along the spine.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

@@ -53,8 +53,15 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
   };
 
   return (
-    <li className="grid grid-cols-[56px_1fr] gap-x-4 sm:grid-cols-[64px_1fr] sm:gap-x-5">
-      <div className="pt-4 text-right font-mono text-[10.5px] font-medium tracking-[0.08em] text-ink-soft uppercase">
+    <li className="relative grid grid-cols-[60px_1fr] gap-x-8 py-1">
+      {/* Status-only spine node: solid = shipped (or unset), hollow = in-progress. */}
+      <span
+        aria-hidden
+        className={`absolute top-[22px] left-[72px] size-2 rounded-full border-2 border-primary ${
+          brag.status === "in_progress" ? "bg-paper" : "bg-primary"
+        }`}
+      />
+      <div className="pt-[18px] text-right font-mono text-[10.5px] font-medium tracking-[0.08em] text-ink-soft uppercase">
         {mon}
         <small className="block text-[9px] tracking-[0.14em] text-ink-faint">{dow}</small>
       </div>
