@@ -412,17 +412,19 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 7 — Export *(v1)*
 
-> **Status: in progress.** Slice 7.1 (Markdown export per document + the
-> "include private brags?" choice) and 7.2 (the print-optimized view + PDF via the
-> browser's Save-as-PDF) are done and committed. Next: JSON export (7.4). The
-> optional headless-Chromium PDF service is **deferred** — browser print is the v1
-> PDF path (decided 2026-06-15); revisit server-side rendering if/when needed.
+> **Status: complete (2026-06-15).** Slices 7.1 (Markdown export per document + the
+> "include private brags?" choice), 7.2 (the print-optimized view + PDF via the
+> browser's Save-as-PDF), and 7.4 (full-data JSON export) are done and committed.
+> The optional headless-Chromium PDF service is **deferred** — browser print is the
+> v1 PDF path (decided 2026-06-15); revisit server-side rendering if/when needed.
+> The member-removal export bundle (Phase 2 carryover — Markdown + JSON +
+> attachments) can now be assembled from these exporters when that flow is built.
 
 - [x] Markdown export per document: metadata + goals, then brags grouped by month (or category), markdown links, attachment manifest — _slice 7.1: `features/export` — a pure `documentToMarkdown` assembler (unit-tested) renders title/period/description/goals, then brags grouped by month newest-first (date · category · status, impact as a blockquote, the user's Markdown description verbatim, Markdown links, a text attachment manifest with sizes, collaborators/attribution/tags). `getDocumentForExport` (owner-scoped by workspace + user, like `getOwnedAttachmentByKey`) loads the doc + brags with relations batched (no N+1). Downloads stream from `GET /api/export/[documentId]?format=md&private=0|1` (owner-only via `getWorkspaceOrNull` → 401; unowned id 404s; `Content-Disposition: attachment`), triggered from an Export dialog on the document page._
 - [x] Print-optimized export view (workspace logo header, clean typography, page breaks between months) — _slice 7.2: a standalone branded route `/print/[documentId]` (outside the `(app)` chrome, gated by `requireWorkspace` via `getActiveWorkspace`): workspace logo + name header, document metadata + goals, brags grouped by month with each month starting a fresh printed page (`break-before: page`), and `break-inside: avoid` per brag. `?private=1` includes private brags, each marked "Private" so the owner doesn't share them unawares. Reached from the Export dialog (opens in a new tab)._
 - [x] PDF export via optional headless-Chromium service; graceful fallback to browser print — _slice 7.2: PDF is the browser's **Save as PDF** from the print view (a `print:hidden` "Print / Save as PDF" button calls `window.print()`). Per the v1 decision (2026-06-15) the **headless-Chromium service is deferred** as a later optional add-on — browser print needs zero extra infra and works on every self-host; the print view is already the render target a Chromium service would use, so adding it later is additive._
 - [x] "Include private brags?" choice (owner-only, default off) — _slice 7.1: a checkbox in the Export dialog maps to `?private=1`; off by default, so an export carries only `visibility='shared'` brags (the same filter the public share uses). Verified live: the seeded private March brag is absent unless the box is checked._
-- [ ] JSON export of all the user's data (full portability)
+- [x] JSON export of all the user's data (full portability) — _slice 7.4: `GET /api/export/data` (owner-only via `getWorkspaceOrNull`) downloads the caller's entire dataset in the active workspace as one JSON file — every document (archived included) and every brag regardless of visibility (it's the owner's own copy), with links + attachment metadata + tags. `getAllDataForExport` loads it with relations batched across all brags (no N+1; the shared `attachRelations` helper); the pure, unit-tested `toDataExport` shaper maps it to a versioned contract that explicitly omits internal columns (the FTS vector, workspace/user FKs). Reached from a "Download JSON" link in `/settings` (Export your data)._
 
 ### Phase 8 — Email reminders *(v1)*
 - [ ] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded

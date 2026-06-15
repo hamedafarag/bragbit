@@ -3,10 +3,11 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 5 — layering, authentication & tenancy, the
+> **Status:** documented through Phase 7 — layering, authentication & tenancy, the
 > DAL boundary, the data model, workspace administration & branding, the storage
-> adapter, attachments, documents, and the brag domain (timeline, tags, full-text
-> search, filters, detail view). Sharing and export are added here as they land.
+> adapter, attachments, documents, the brag domain (timeline, tags, full-text
+> search, filters, detail view), sharing (public links, passwords, the security
+> invariants), and export (Markdown, print/PDF, full-data JSON).
 
 ## Layering (a security decision)
 
@@ -214,3 +215,11 @@ document's brags grouped by month with each month on a fresh printed page (`brea
 The v1 decision is browser print over a headless-Chromium service — zero extra infra on every
 self-host; since the print view is exactly the render target Chromium would use, adding server-side
 rendering later is additive. `?private=1` includes private brags, each marked "Private".
+
+**Full-data JSON** (`GET /api/export/data`, owner-only) downloads the caller's entire dataset in the
+active workspace — every document (archived included) and brag (private included; it's the owner's
+own copy) with links, attachment metadata, and tags. `getAllDataForExport` batches relations across
+all brags at once (no N+1, via the shared `attachRelations`); the pure `toDataExport` shaper maps it
+to a **versioned** contract that explicitly omits internal columns (the FTS vector, the
+workspace/user FKs). A "Download JSON" link in Settings triggers it. Together the Markdown + JSON
+exporters are the building blocks for the Phase 2 member-removal bundle when that flow lands.

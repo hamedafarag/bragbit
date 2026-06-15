@@ -126,6 +126,9 @@ on `0.x` until the deployment modes and core stabilize.
   typography, each month on its own page) reachable from the Export dialog — “Print / Save as PDF”
   uses your browser's print-to-PDF, so no extra services are required. Honors the same
   include-private choice, marking private wins so they aren't shared unawares.
+- Data export (JSON): a “Download JSON” in Settings exports your entire dataset — every document
+  (archived included) and every brag (private included), with links, attachment metadata, and
+  tags — in one portable, versioned JSON file. Your career data is always yours to take.
 
 ### Security
 

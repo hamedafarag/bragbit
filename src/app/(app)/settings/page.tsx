@@ -1,3 +1,6 @@
+import { Download } from "lucide-react";
+
+import { buttonVariants } from "@/components/ui/button";
 import { ChangeEmailForm } from "@/features/account/components/change-email-form";
 import { ChangePasswordForm } from "@/features/account/components/change-password-form";
 import { DeleteAccountForm } from "@/features/account/components/delete-account-form";
@@ -32,6 +35,22 @@ export default async function SettingsPage() {
           Choose a strong password. Changing it signs out your other sessions.
         </p>
         <ChangePasswordForm />
+      </section>
+
+      <section className="rounded-xl border border-line bg-card p-6 shadow-card">
+        <h2 className="mb-1 font-serif text-lg font-semibold">Export your data</h2>
+        <p className="mb-5 text-[13px] text-ink-soft">
+          Download everything you&apos;ve logged — every document and brag, including private and
+          archived ones — as a single JSON file. Your data is always yours to take.
+        </p>
+        <a
+          href="/api/export/data"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+          download
+        >
+          <Download className="size-3.5" aria-hidden />
+          Download JSON
+        </a>
       </section>
 
       <section className="rounded-xl border border-dashed border-destructive/40 bg-card p-6 shadow-card">
