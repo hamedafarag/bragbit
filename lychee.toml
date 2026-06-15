@@ -6,5 +6,5 @@ exclude_loopback = true
 exclude = [
   '^https?://minio',
   '^https://your-domain',
-  '^https://github\.com/bragbit/bragbit',
+  '^https://github\.com/hamedafarag/bragbit',
 ]

@@ -7,7 +7,7 @@ own schema.
 ## Quick start
 
 ```bash
-git clone https://github.com/bragbit/bragbit.git
+git clone https://github.com/hamedafarag/bragbit.git
 cd bragbit
 cp .env.example .env
 # edit .env — at minimum: INSTANCE_MODE, APP_URL, BETTER_AUTH_SECRET, and the SMTP_* block

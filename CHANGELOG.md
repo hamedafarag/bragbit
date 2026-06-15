@@ -8,6 +8,11 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-15
+
+The first release: a self-hostable, white-label brag-document tracker for the two private
+(self-host) deployment modes. The hosted multi-tenant mode is the v1.1 fast-follow.
+
 ### Added
 
 - Initial project scaffold: Next.js 16 (App Router, TypeScript), Tailwind v4, ESLint.

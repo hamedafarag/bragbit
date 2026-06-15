@@ -5,8 +5,8 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 <!-- Add CI + release badges once the repository is public:
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/OWNER/REPO)](https://github.com/OWNER/REPO/releases) -->
+[![CI](https://github.com/hamedafarag/bragbit/actions/workflows/ci.yml/badge.svg)](https://github.com/hamedafarag/bragbit/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/hamedafarag/bragbit)](https://github.com/hamedafarag/bragbit/releases) -->
 
 BragBit is an open-source (AGPL-3.0), self-hostable, white-label **brag-document tracker** for
 developers. Log your wins all year (a "brag" takes under 30 seconds), organize them into documents
@@ -52,7 +52,7 @@ See [Instance modes](docs/instance-modes.md) for the tenancy model.
 With Docker and the Compose plugin installed:
 
 ```bash
-git clone https://github.com/bragbit/bragbit.git
+git clone https://github.com/hamedafarag/bragbit.git
 cd bragbit
 cp .env.example .env
 # edit .env — at minimum: INSTANCE_MODE, APP_URL, BETTER_AUTH_SECRET, and the SMTP_* block

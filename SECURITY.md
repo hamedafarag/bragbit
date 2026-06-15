@@ -18,7 +18,7 @@ While BragBit is pre-`1.0`, only the latest `0.x` release receives security fixe
 
 Report privately via GitHub's [Security Advisories](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
 ("Report a vulnerability" on the repository's **Security** tab), or email
-**[TODO: security contact — set before first public release]**.
+**[hamed@wakecap.com](mailto:hamed@wakecap.com)**.
 
 Please include reproduction steps and impact. We aim to acknowledge within 72 hours and to
 coordinate a fix and disclosure timeline with you.
