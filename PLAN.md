@@ -375,15 +375,14 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 5 — Timeline, tags & search *(v1)*
 
-> **Status: in progress.** Slices 5.1 (timeline), 5.2 (tags), 5.3 (full-text search),
-> and 5.4 (timeline filters — category/tag/date-range + visible gap months) are done
-> and committed. Remaining: cursor pagination, the expand-to-detail view, and
-> responsive/keyboard + loading/empty/error polish.
+> **Status: in progress.** Slices 5.1 (timeline), 5.2 (tags), 5.3 (search), 5.4
+> (filters), and 5.5 (the expand-to-detail view) are done and committed. Remaining:
+> cursor pagination (5.6) and responsive/keyboard + loading/empty/error polish (5.7).
 
 - [x] Document timeline view: reverse-chronological, **grouped by month** with sticky month headers; cards show title, date, category badge, tags, impact highlight, attachment/link indicators — _slice 5.1: `features/timeline` groups a document's brags by month (sticky headers + per-month counts) along a vertical spine; cards show date, category badge, impact highlight, and link/attachment chips. Tag chips landed in slice 5.2._
 - [x] Card rendering details: 8 category colors (label-paired); **timeline node = status only** (solid accent = shipped · hollow = in-progress) + an "In progress" pill; **private = card treatment** (dashed border + hatch + "Private" badge), not a node ring; links (external-link icon) vs attachments (paperclip + filename) as distinct chips (size in the detail view) — _slice 5.1: the status-only node (solid/hollow) sits on the spine; the "In progress" pill, the dashed/hatched private treatment + "Private" badge, the 8 label-paired category colors, and the distinct link/attachment chips are all in (most shipped with the brag card in Phase 3). Attachment size shows in the editor manager; a read-only detail view is later._
 - [ ] Cursor pagination by date (month-windowed loading) so year-long documents stay fast; DB indexes for timeline order + FTS — _the DB indexes are done (timeline `brags(document_id, date)` in 3.1; the FTS GIN in 5.3); cursor pagination is still to come._
-- [ ] Expand card → full brag detail (rendered markdown, attachments, links, collaborators)
+- [x] Expand card → full brag detail (rendered markdown, attachments, links, collaborators) — _slice 5.5: clicking a brag's title opens a read-only detail dialog — full rendered Markdown + impact, attachments with **inline image previews + file sizes** (the timeline keeps dense chips; previews live here per §4), links, collaborators/attribution, and tags._
 - [x] Tags: inline create while editing, scoped per user per workspace, **monochrome `#text` chips** (calm logbook style) — _slice 5.2: a tag input in the editor (type + Enter/comma, removable chips, datalist autocomplete from the caller's existing tags); names normalize to lowercase and are create-or-found per (user, workspace), so the same tag is reused across brags (replace-on-save). Monochrome `#name` chips on the card; brags load their tags alongside links/attachments._
 - [x] Filter timeline by tag, category, date range; visible gap months — _slice 5.4: a URL-driven FilterBar (category, the document's tags, a date range, Clear) re-renders the server timeline; `listBrags` applies the filters (tag via a correlated `EXISTS`). The header keeps the document's total win count; quiet months between entries show a "N quiet months" marker in the unfiltered view._
 - [x] Global search across the user's documents within the workspace (Postgres FTS), deep-linking into documents — _slice 5.3: a generated `search` tsvector on brags (weighted title/impact/description) + GIN index; `searchBrags` runs `websearch_to_tsquery` ranked by `ts_rank`, scoped per workspace + user. A header search box (plain GET form) → `/search` lists results grouped by document, each deep-linking to `/documents/[id]#brag` (a `scroll-mt` clears the sticky header)._

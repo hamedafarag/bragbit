@@ -94,6 +94,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Timeline filters: filter a document's timeline by category, tag, or date range from a filter bar
   (URL-driven, so a filtered view is shareable); quiet months between entries are marked so your
   logging cadence stays visible.
+- Brag detail view: click a brag's title for a focused read view — full rendered Markdown, impact,
+  links, collaborators, tags, and attachments with inline image previews and file sizes (the
+  timeline keeps compact chips).
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import type { BragWithRelations } from "../queries";
 import { BRAG_CATEGORIES } from "../schema";
 import { BragActions } from "./brag-actions";
+import { BragDetail, type BragDetailData } from "./brag-detail";
 import type { BragFormValues } from "./brag-editor";
 
 function categoryMeta(value: string | null) {
@@ -18,12 +19,12 @@ function prettyUrl(url: string): string {
 }
 
 /**
- * One brag in a document. Reverse-chron list rendering (the month-grouped
- * timeline with its spine is Phase 5). Markdown is rendered server-side here, so
- * brag descriptions add no client JS. Links (external-link icon) and attachments
- * (paperclip) are distinct chips, both opening through the authorizing file route
- * in a new tab. The dashed/hatched private treatment is wired on `visibility` for
- * the Phase 6 toggle; nothing sets it yet.
+ * One brag in the timeline. The title opens the full detail view (BragDetail).
+ * Markdown is rendered server-side here, so brag descriptions add no client JS.
+ * Links (external-link icon) and attachments (paperclip) are distinct chips, both
+ * opening through the authorizing file route in a new tab. The dashed/hatched
+ * private treatment is wired on `visibility` for the Phase 6 toggle; nothing sets
+ * it yet.
  */
 export function BragCard({ brag }: { brag: BragWithRelations }) {
   const cat = categoryMeta(brag.category);
@@ -51,6 +52,20 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
       sizeBytes: a.sizeBytes,
       url: `/api/files/${a.storageKey}`,
     })),
+  };
+
+  const detail: BragDetailData = {
+    title: brag.title,
+    date: brag.date,
+    category: brag.category,
+    status: brag.status,
+    descriptionMd: brag.descriptionMd,
+    impactMd: brag.impactMd,
+    collaborators,
+    attribution: brag.attribution,
+    tags: brag.tags,
+    links: brag.links.map((l) => ({ url: l.url, label: l.label })),
+    attachments: initial.attachments,
   };
 
   return (
@@ -96,8 +111,8 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
           />
         </div>
 
-        <h3 className="mt-1 font-serif text-[18px] leading-snug font-semibold tracking-[-0.01em]">
-          {brag.title}
+        <h3 className="mt-1">
+          <BragDetail data={detail} />
         </h3>
 
         {brag.descriptionMd ? (

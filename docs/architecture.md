@@ -111,8 +111,10 @@ search runs over a generated `search` tsvector on brags (weighted title/impact/d
 GIN index: `searchBrags` (`websearch_to_tsquery`, ranked by `ts_rank`, scoped per workspace + user)
 backs a header search box → `/search`, whose results deep-link to `/documents/[id]#brag`. The
 timeline filters by category / tag / date range (a URL-driven `FilterBar`; `listBrags` applies them,
-tag via a correlated `EXISTS`) and marks quiet months between entries. Cursor pagination is the rest
-of Phase 5; the per-brag visibility toggle is Phase 6.
+tag via a correlated `EXISTS`) and marks quiet months between entries. Clicking a brag's title opens
+a read-only detail dialog (`BragDetail`) — full Markdown, attachments with inline image previews +
+sizes, links, collaborators, and tags. Cursor pagination is the rest of Phase 5; the per-brag
+visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 
