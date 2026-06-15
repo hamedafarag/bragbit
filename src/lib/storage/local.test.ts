@@ -43,4 +43,19 @@ describe("LocalDiskStorage", () => {
     );
     await expect(storage.delete("ws1/../../escape.png")).rejects.toThrow(/Illegal storage key/);
   });
+
+  it("stat returns the byte size", async () => {
+    await storage.put("ws1/size.txt", Buffer.from("hello"));
+    expect((await storage.stat("ws1/size.txt")).size).toBe(5);
+  });
+
+  it("streams the whole object, and an inclusive byte range", async () => {
+    await storage.put("ws1/range.txt", Buffer.from("0123456789"));
+    const full = await new Response(await storage.stream("ws1/range.txt")).text();
+    expect(full).toBe("0123456789");
+    const part = await new Response(
+      await storage.stream("ws1/range.txt", { start: 2, end: 5 }),
+    ).text();
+    expect(part).toBe("2345");
+  });
 });

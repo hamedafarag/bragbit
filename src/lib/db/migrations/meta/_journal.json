@@ -22,6 +22,13 @@
       "when": 1781493607505,
       "tag": "0002_wooden_gravity",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781497490261,
+      "tag": "0003_clear_slipstream",
+      "breakpoints": true
     }
   ]
 }

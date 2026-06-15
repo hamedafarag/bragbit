@@ -24,6 +24,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1068.0",
     "@radix-ui/react-dialog": "^1.1.16",
     "@radix-ui/react-label": "^2.1.9",
     "@radix-ui/react-slot": "^1.2.5",

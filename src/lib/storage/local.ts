@@ -1,11 +1,11 @@
 import "server-only";
 
 import { createReadStream } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat as statFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 
-import type { Storage } from "./index";
+import type { ByteRange, Storage } from "./index";
 
 /**
  * Local-disk storage driver (the default). Objects live under STORAGE_DIR as
@@ -45,8 +45,17 @@ export class LocalDiskStorage implements Storage {
     await rm(this.resolve(key), { force: true });
   }
 
-  async stream(key: string): Promise<ReadableStream<Uint8Array>> {
-    const node = createReadStream(this.resolve(key));
+  async stat(key: string): Promise<{ size: number }> {
+    const { size } = await statFile(this.resolve(key));
+    return { size };
+  }
+
+  async stream(key: string, range?: ByteRange): Promise<ReadableStream<Uint8Array>> {
+    // createReadStream's `end` is inclusive, matching HTTP Range semantics.
+    const node = createReadStream(
+      this.resolve(key),
+      range ? { start: range.start, end: range.end } : undefined,
+    );
     return Readable.toWeb(node) as unknown as ReadableStream<Uint8Array>;
   }
 }

@@ -1,5 +1,14 @@
 import { sql } from "drizzle-orm";
-import { date, index, integer, pgTable, primaryKey, text, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  date,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 import { user } from "./auth";
 import { idColumn, timestamps } from "./columns";
@@ -90,4 +99,28 @@ export const bragTag = pgTable(
       .references(() => tag.id, { onDelete: "cascade" }),
   },
   (t) => [primaryKey({ columns: [t.bragId, t.tagId] }), index("brag_tags_tag_idx").on(t.tagId)],
+);
+
+/**
+ * A file attached to a brag (screenshot, PDF, praise email…). The object lives in
+ * the storage adapter under `{workspaceId}/attachments/…`; this row keeps the
+ * storage key plus display metadata. Attachments are immutable once uploaded (no
+ * `updated_at`) and never publicly addressable — the authorizing file route
+ * streams them (PLAN.md §6). The row cascades when its brag is deleted; the
+ * stored object is removed explicitly by the delete action.
+ */
+export const attachment = pgTable(
+  "attachments",
+  {
+    id: idColumn(),
+    bragId: text("brag_id")
+      .notNull()
+      .references(() => brag.id, { onDelete: "cascade" }),
+    storageKey: text("storage_key").notNull(),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("attachments_brag_idx").on(t.bragId)],
 );

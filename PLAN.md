@@ -361,7 +361,14 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Empty-state onboarding: *"Start by back-filling three wins from the past month"* — _slice 3.2: shown on a document with no brags yet._
 
 ### Phase 4 — Attachments & storage adapter *(v1)*
-- [ ] Add `S3Storage` (S3-compatible endpoint, path-style for MinIO); driver via env; per-workspace key prefixes
+
+> **Status: in progress.** Slice 4.1 (the `S3Storage` adapter + the `attachments`
+> schema/migration, with a MinIO adapter test) is done and committed. The upload
+> route, the attachment UI (editor manager + paperclip chips on the card), and the
+> authorizing ranged stream route are slice 4.2; wiring the MinIO adapter test into
+> CI is slice 4.3.
+
+- [x] Add `S3Storage` (S3-compatible endpoint, path-style for MinIO); driver via env; per-workspace key prefixes — _slice 4.1: `S3Storage` (put/get/delete + `stat` + ranged `stream`) via `@aws-sdk/client-s3`, selected by `STORAGE_DRIVER=s3`, path-style on by default for MinIO; the `Storage` interface gained `stat()` and an inclusive byte range on `stream()` (also implemented for local disk). Keys stay workspace-prefixed by callers. The `attachments` table landed in migration `0003`; an integration test exercises the adapter against MinIO (skipped unless `S3_*` is set)._
 - [ ] Upload route handler: multi-file, size/MIME limits from env, image/PDF/doc types
 - [ ] Attachment list on brag (server-generated `next/image` thumbnails for images, file chips otherwise); delete; download
 - [ ] Authorizing download/stream route (owner or valid share token only — never public URLs); ranged responses for large files

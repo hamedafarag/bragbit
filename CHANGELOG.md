@@ -72,6 +72,10 @@ on `0.x` until the deployment modes and core stabilize.
   and Markdown goals), archive (reversible, in a restorable “Archived” view), and delete
   (cascading the document's brags). Documents are private per user and guarded through the DAL on
   every read and write; sign-in, setup, and invitation acceptance now land on the dashboard.
+- S3-compatible storage: an `S3Storage` driver (MinIO/R2/S3, path-style by default) selected by
+  `STORAGE_DRIVER=s3`, alongside the local-disk default. The storage interface gained `stat()` and
+  inclusive byte-range streaming for ranged downloads. Added the `attachments` table (file metadata
+  and storage key) for the brag attachments landing next.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

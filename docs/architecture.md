@@ -62,8 +62,9 @@ Better Auth owns `user` / `session` / `account` / `verification`. The organizati
 `organization` (= the workspace, plus BragBit's `type` / `accent_color` / `logo_key`), `member`,
 and `invitation`. BragBit adds `profiles` and the brag domain: `documents` (workspace + user
 scoped), `brags` (scoped through their parent document — no direct workspace column), `brag_links`,
-`tags` (unique per user per workspace), and the `brag_tags` join. Still to come: `attachments`
-(Phase 4), `share_links` (Phase 6), and `instance_admins` (Phase 10) — see
+`tags` (unique per user per workspace), the `brag_tags` join, and `attachments` (file metadata +
+storage key, scoped through their brag). Still to come: `share_links` (Phase 6) and
+`instance_admins` (Phase 10) — see
 [PLAN.md §5](../PLAN.md) for the full target model. Every workspace-scoped query filters by the
 caller's membership through the DAL.
 
@@ -118,9 +119,11 @@ filters, and search are Phase 5, and the per-brag visibility toggle is Phase 6.
 
 ## Storage & file routes
 
-One storage interface — `put` / `get` / `delete` / `stream` — selected by `STORAGE_DRIVER`.
-`LocalDiskStorage` (the default) writes objects under `STORAGE_DIR` and rejects any key that escapes
-the root; `S3Storage` lands in Phase 4. Keys are workspace-prefixed (`{workspaceId}/{kind}/…`) for
+One storage interface — `put` / `get` / `delete` / `stat` / `stream` (with an optional inclusive
+byte range, for ranged downloads) — selected by `STORAGE_DRIVER`. `LocalDiskStorage` (the default)
+writes objects under `STORAGE_DIR` and rejects any key that escapes the root; `S3Storage`
+(`@aws-sdk/client-s3`) targets any S3-compatible endpoint — MinIO/R2/S3 — with path-style
+addressing on by default for MinIO. Keys are workspace-prefixed (`{workspaceId}/{kind}/…`) for
 isolation and quota accounting.
 
 Files upload through role-checked Route Handlers (`/api/upload/avatar`, `/api/upload/logo`) and are

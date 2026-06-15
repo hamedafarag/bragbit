@@ -3,11 +3,12 @@ import "server-only";
 import { env } from "@/lib/env";
 
 import { LocalDiskStorage } from "./local";
+import { S3Storage } from "./s3";
 
 /**
  * Storage adapter (PLAN.md §6). One interface, two drivers selected by
  * STORAGE_DRIVER: `LocalDiskStorage` (default, a STORAGE_DIR volume) and
- * `S3Storage` (any S3-compatible endpoint, added in Phase 4). Keys are prefixed
+ * `S3Storage` (any S3-compatible endpoint — MinIO/R2/S3). Keys are prefixed
  * per workspace for isolation + quota accounting; attachments stream through an
  * authorizing route, while org logos and avatars are the deliberate public
  * exception.
@@ -17,6 +18,12 @@ export interface PutOptions {
   contentType?: string;
 }
 
+/** An inclusive byte range, per HTTP `Range` semantics (`bytes=start-end`). */
+export interface ByteRange {
+  start: number;
+  end: number;
+}
+
 export interface Storage {
   /** Write (or overwrite) an object at `key`. */
   put(key: string, body: Buffer, opts?: PutOptions): Promise<void>;
@@ -24,8 +31,10 @@ export interface Storage {
   get(key: string): Promise<Buffer>;
   /** Delete an object; a missing key is not an error. */
   delete(key: string): Promise<void>;
-  /** Stream an object for ranged / large downloads (Phase 4 attachments). */
-  stream(key: string): Promise<ReadableStream<Uint8Array>>;
+  /** Object size in bytes — for `Content-Length` and range validation. */
+  stat(key: string): Promise<{ size: number }>;
+  /** Stream an object, optionally a byte range (inclusive), for ranged downloads. */
+  stream(key: string, range?: ByteRange): Promise<ReadableStream<Uint8Array>>;
 }
 
 let cached: Storage | undefined;
@@ -34,13 +43,17 @@ let cached: Storage | undefined;
 export function getStorage(): Storage {
   if (cached) return cached;
   if (env.STORAGE_DRIVER === "s3") {
-    // S3Storage lands in Phase 4 (PLAN.md §8). Fail loudly rather than silently
-    // serving from the local disk.
-    throw new Error(
-      "STORAGE_DRIVER=s3 is not available yet (lands in Phase 4); set STORAGE_DRIVER=local.",
-    );
+    cached = new S3Storage({
+      endpoint: env.S3_ENDPOINT,
+      region: env.S3_REGION,
+      bucket: env.S3_BUCKET,
+      accessKeyId: env.S3_ACCESS_KEY_ID,
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+      forcePathStyle: env.S3_FORCE_PATH_STYLE,
+    });
+  } else {
+    cached = new LocalDiskStorage(env.STORAGE_DIR);
   }
-  cached = new LocalDiskStorage(env.STORAGE_DIR);
   return cached;
 }
 
