@@ -186,4 +186,9 @@ write, so a `documentId` from another workspace or user yields nothing.
   share (`lib/rate-limit`, an in-memory sliding window; a shared store is Phase 9 hardening), and
   the file route's `?token=` path also requires the unlock cookie when a password is set, so
   attachments never bypass the gate.
-- **Still to come this phase:** the security tests (6.5).
+- **Invariants & tests** (6.5): at most one _active_ link per document is enforced by a partial
+  unique index (`share_links(document_id) WHERE revoked_at IS NULL`, migration `0006`), so a
+  create/create race can't produce two — `createShareLink` catches the loser's rejection and
+  returns the winner's link. A DB-gated suite (`features/share/security.test.ts`) asserts the
+  boundaries against real Postgres: revoked/unknown tokens resolve to nothing, private brags never
+  reach a share payload or its attachments, and the password gate locks/unlocks/rate-limits.

@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { idColumn } from "./columns";
 import { document } from "./document";
@@ -11,14 +12,25 @@ import { document } from "./document";
  * `lastAccessedAt` is bumped on each successful view and shown to the owner.
  * Public share queries filter `visibility = 'shared'` so private brags never leak.
  */
-export const shareLink = pgTable("share_links", {
-  id: idColumn(),
-  documentId: text("document_id")
-    .notNull()
-    .references(() => document.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  passwordHash: text("password_hash"),
-  revokedAt: timestamp("revoked_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
-});
+export const shareLink = pgTable(
+  "share_links",
+  {
+    id: idColumn(),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => document.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    passwordHash: text("password_hash"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+  },
+  // At most one *active* (non-revoked) link per document — the invariant the
+  // create/rotate actions assume, enforced at the DB so a create/create race can't
+  // produce two. Revoked rows are exempt, so rotation (revoke + insert) is fine.
+  (t) => [
+    uniqueIndex("share_links_one_active_per_doc")
+      .on(t.documentId)
+      .where(sql`${t.revokedAt} is null`),
+  ],
+);

@@ -43,6 +43,13 @@
       "when": 1781517438227,
       "tag": "0005_wonderful_marvel_zombies",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781524000217,
+      "tag": "0006_faulty_pestilence",
+      "breakpoints": true
     }
   ]
 }

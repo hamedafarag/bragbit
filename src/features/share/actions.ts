@@ -56,9 +56,10 @@ async function activeLinkFor(documentId: string) {
 
 /**
  * Create a share link for a document the caller owns. Idempotent: if an active
- * link already exists it's returned unchanged, so the dialog's "Create" is
- * race-safe and we keep the one-active-link-per-document invariant. Ownership is
- * resolved before any write — a documentId from another workspace/user 404s.
+ * link already exists it's returned unchanged. Ownership is resolved before any
+ * write — a documentId from another workspace/user 404s. The one-active-link
+ * invariant is enforced by a partial unique index, so a create/create race can't
+ * produce two: the loser's insert is rejected, and we return the winner's link.
  */
 export async function createShareLink(documentId: string): Promise<ShareResult> {
   const ownedId = await ownedDocumentId(documentId);
@@ -67,11 +68,19 @@ export async function createShareLink(documentId: string): Promise<ShareResult> 
   const existing = await activeLinkFor(ownedId);
   if (existing) return { ok: true, link: shareLinkToView(existing) };
 
-  const [row] = await db
-    .insert(shareLink)
-    .values({ documentId: ownedId, token: newToken() })
-    .returning();
-  return { ok: true, link: shareLinkToView(row!) };
+  try {
+    const [row] = await db
+      .insert(shareLink)
+      .values({ documentId: ownedId, token: newToken() })
+      .returning();
+    return { ok: true, link: shareLinkToView(row!) };
+  } catch {
+    // Lost a create/create race — the partial unique index rejected this insert.
+    // Return the link the winner created so "Create" stays idempotent.
+    const winner = await activeLinkFor(ownedId);
+    if (winner) return { ok: true, link: shareLinkToView(winner) };
+    return { ok: false, error: "Couldn't create a share link. Try again." };
+  }
 }
 
 /**

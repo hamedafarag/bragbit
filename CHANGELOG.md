@@ -118,6 +118,14 @@ on `0.x` until the deployment modes and core stabilize.
   and reveals nothing about the document until the correct password is entered; success sets an
   httpOnly per-share cookie that's invalidated automatically if the password changes. Unlock
   attempts are rate-limited per share, and password-gated attachments require the unlock too.
+
+### Security
+
+- A document can have at most one active share link, now enforced by a database constraint (a
+  partial unique index), so a create/create race can't produce two; rotating a link still works.
+- Added a database-backed security test suite for sharing — revoked and unknown tokens resolve to
+  nothing, private brags never appear in a share's payload or attachments, and the password gate
+  (lock, unlock, rate limit) behaves — run in CI against Postgres.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,
