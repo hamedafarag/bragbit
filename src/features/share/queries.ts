@@ -18,12 +18,15 @@ import {
 } from "@/lib/db/schema";
 import { env } from "@/lib/env";
 
+import { isShareUnlocked } from "./unlock";
+
 /** The owner-facing view of a document's active share link (the URL is absolute). */
 export type ShareLinkView = {
   token: string;
   url: string;
   createdAt: string;
   lastAccessedAt: string | null;
+  hasPassword: boolean;
 };
 
 /**
@@ -43,6 +46,7 @@ export function shareLinkToView(row: typeof shareLink.$inferSelect): ShareLinkVi
     url: shareUrlForToken(row.token),
     createdAt: row.createdAt.toISOString(),
     lastAccessedAt: row.lastAccessedAt?.toISOString() ?? null,
+    hasPassword: row.passwordHash != null,
   };
 }
 
@@ -78,20 +82,44 @@ export async function getActiveShareLink(documentId: string): Promise<ShareLinkV
 // `visibility = 'shared'` at the query layer, so a private brag — or anything in
 // another document — can never reach a public share. No requireWorkspace here.
 
-/** The workspace brand + document fields shown on a public share page. */
-export type SharedDocument = {
-  token: string;
-  document: {
-    id: string;
-    title: string;
-    description: string | null;
-    periodStart: string | null;
-    periodEnd: string | null;
-    goalsMd: string | null;
-  };
-  brand: { name: string; accentColor: string | null; logoKey: string | null };
-  brags: BragWithRelations[];
+/** The workspace brand on a share page (drives the per-workspace accent/logo/name). */
+export type ShareBrand = { name: string; accentColor: string | null; logoKey: string | null };
+
+export type SharedDocumentFields = {
+  id: string;
+  title: string;
+  description: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  goalsMd: string | null;
 };
+
+/**
+ * What the public page renders. A password-protected share resolves to `locked`
+ * (brand only — no document title or brags leak before unlock); an open or
+ * already-unlocked share resolves to `open` with the full payload.
+ */
+export type SharedView =
+  | { state: "locked"; token: string; brand: ShareBrand }
+  | {
+      state: "open";
+      token: string;
+      brand: ShareBrand;
+      document: SharedDocumentFields;
+      brags: BragWithRelations[];
+    };
+
+/** A non-revoked share's id + password hash, for lock checks (page + file route). */
+export async function getShareCredentials(
+  token: string,
+): Promise<{ id: string; passwordHash: string | null } | null> {
+  const [row] = await db
+    .select({ id: shareLink.id, passwordHash: shareLink.passwordHash })
+    .from(shareLink)
+    .where(and(eq(shareLink.token, token), isNull(shareLink.revokedAt)))
+    .limit(1);
+  return row ?? null;
+}
 
 function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -103,18 +131,55 @@ function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]
   return map;
 }
 
+/** A document's SHARED brags (newest first) with links/attachments/tags batched (no N+1). */
+async function loadSharedBrags(documentId: string): Promise<BragWithRelations[]> {
+  const sharedBrags = await db
+    .select()
+    .from(brag)
+    .where(and(eq(brag.documentId, documentId), eq(brag.visibility, "shared")))
+    .orderBy(desc(brag.date), desc(brag.createdAt));
+
+  const ids = sharedBrags.map((b) => b.id);
+  if (ids.length === 0) return [];
+
+  const [links, attachments, tagRows] = await Promise.all([
+    db.select().from(bragLink).where(inArray(bragLink.bragId, ids)).orderBy(asc(bragLink.position)),
+    db
+      .select()
+      .from(attachment)
+      .where(inArray(attachment.bragId, ids))
+      .orderBy(asc(attachment.createdAt)),
+    db
+      .select({ bragId: bragTag.bragId, name: tag.name })
+      .from(bragTag)
+      .innerJoin(tag, eq(tag.id, bragTag.tagId))
+      .where(inArray(bragTag.bragId, ids))
+      .orderBy(asc(tag.name)),
+  ]);
+  const linksByBrag = groupByBragId(links);
+  const attachmentsByBrag = groupByBragId(attachments);
+  const tagsByBrag = groupByBragId(tagRows);
+  return sharedBrags.map((b) => ({
+    ...b,
+    links: linksByBrag.get(b.id) ?? [],
+    attachments: attachmentsByBrag.get(b.id) ?? [],
+    tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
+  }));
+}
+
 /**
- * The document behind a valid (non-revoked) share token, its workspace brand, and
- * its SHARED brags only (newest first, with links/attachments/tags batch-loaded —
- * no N+1, mirroring listBrags). Returns null if the token is unknown or revoked,
- * which the page turns into a 404. Bumps `last_accessed_at` as a side effect so
- * the owner can see when the link was last opened (PLAN §6); a best-effort write,
- * never blocking the read.
+ * Resolve a public share for rendering. Returns null for an unknown/revoked token
+ * (the page 404s it). A password-protected share without a valid unlock cookie
+ * resolves to `locked` — only the workspace brand, never the document title or any
+ * brag, so nothing leaks before unlock. Otherwise it's `open`: the document, its
+ * SHARED brags only (private ones filtered at the query layer), and a best-effort
+ * `last_accessed_at` bump so the owner sees when it was last opened.
  */
-export async function getSharedDocument(token: string): Promise<SharedDocument | null> {
+export async function getSharedView(token: string): Promise<SharedView | null> {
   const [head] = await db
     .select({
       shareId: shareLink.id,
+      passwordHash: shareLink.passwordHash,
       docId: document.id,
       title: document.title,
       description: document.description,
@@ -132,44 +197,17 @@ export async function getSharedDocument(token: string): Promise<SharedDocument |
     .limit(1);
   if (!head) return null;
 
-  const sharedBrags = await db
-    .select()
-    .from(brag)
-    .where(and(eq(brag.documentId, head.docId), eq(brag.visibility, "shared")))
-    .orderBy(desc(brag.date), desc(brag.createdAt));
+  const brand: ShareBrand = {
+    name: head.brandName,
+    accentColor: head.accentColor,
+    logoKey: head.logoKey,
+  };
 
-  const ids = sharedBrags.map((b) => b.id);
-  let brags: BragWithRelations[] = [];
-  if (ids.length > 0) {
-    const [links, attachments, tagRows] = await Promise.all([
-      db
-        .select()
-        .from(bragLink)
-        .where(inArray(bragLink.bragId, ids))
-        .orderBy(asc(bragLink.position)),
-      db
-        .select()
-        .from(attachment)
-        .where(inArray(attachment.bragId, ids))
-        .orderBy(asc(attachment.createdAt)),
-      db
-        .select({ bragId: bragTag.bragId, name: tag.name })
-        .from(bragTag)
-        .innerJoin(tag, eq(tag.id, bragTag.tagId))
-        .where(inArray(bragTag.bragId, ids))
-        .orderBy(asc(tag.name)),
-    ]);
-    const linksByBrag = groupByBragId(links);
-    const attachmentsByBrag = groupByBragId(attachments);
-    const tagsByBrag = groupByBragId(tagRows);
-    brags = sharedBrags.map((b) => ({
-      ...b,
-      links: linksByBrag.get(b.id) ?? [],
-      attachments: attachmentsByBrag.get(b.id) ?? [],
-      tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
-    }));
+  if (head.passwordHash && !(await isShareUnlocked(head.shareId, head.passwordHash))) {
+    return { state: "locked", token, brand };
   }
 
+  const brags = await loadSharedBrags(head.docId);
   // Record the visit; a failure here must not break the page.
   await db
     .update(shareLink)
@@ -178,7 +216,9 @@ export async function getSharedDocument(token: string): Promise<SharedDocument |
     .catch(() => {});
 
   return {
+    state: "open",
     token,
+    brand,
     document: {
       id: head.docId,
       title: head.title,
@@ -187,7 +227,6 @@ export async function getSharedDocument(token: string): Promise<SharedDocument |
       periodEnd: head.periodEnd,
       goalsMd: head.goalsMd,
     },
-    brand: { name: head.brandName, accentColor: head.accentColor, logoKey: head.logoKey },
     brags,
   };
 }

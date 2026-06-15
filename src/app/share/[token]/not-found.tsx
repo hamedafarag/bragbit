@@ -1,4 +1,4 @@
-// Rendered (with a 404 status) when getSharedDocument 404s an unknown or revoked
+// Rendered (with a 404 status) when getSharedView 404s an unknown or revoked
 // token. A calm, brand-neutral page — we have no workspace context for a token
 // that doesn't resolve, so this uses the default palette.
 export default function ShareNotFound() {

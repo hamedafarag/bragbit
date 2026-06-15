@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 
 import { Markdown } from "@/components/shared/markdown";
 import { PublicBragCard } from "@/features/share/components/public-brag-card";
-import { getSharedDocument } from "@/features/share/queries";
+import { ShareChrome } from "@/features/share/components/share-chrome";
+import { ShareUnlock } from "@/features/share/components/share-unlock";
+import { getSharedView } from "@/features/share/queries";
 import { Timeline } from "@/features/timeline/components/timeline";
-import { accentVars } from "@/lib/utils";
 
 // A share link is a secret URL, not public content: keep it out of search indexes.
 export const metadata: Metadata = {
@@ -24,41 +25,37 @@ function formatPeriod(start: string | null, end: string | null): string | null {
 
 /**
  * The public, read-only share page. PUBLIC — outside the (app)/(auth) groups, no
- * session: getSharedDocument authorizes by the token, returns only the document's
- * SHARED brags (private ones filtered at the query layer), and 404s an unknown or
- * revoked token. The page wears the document's workspace brand (accent + logo +
- * name) and renders a read-only month-grouped timeline. Next 16: params is async.
+ * session: getSharedView authorizes by the token (private brags filtered at the
+ * query layer) and 404s an unknown or revoked token. A password-protected share
+ * resolves to a `locked` view (only the brand) and renders the unlock gate; an
+ * open share renders the document's branded, read-only month-grouped timeline.
+ * Next 16: params is async.
  */
-export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
+export default async function SharePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ e?: string }>;
+}) {
   const { token } = await params;
-  const shared = await getSharedDocument(token);
-  if (!shared) notFound();
+  const view = await getSharedView(token);
+  if (!view) notFound();
 
-  const { document: doc, brand, brags } = shared;
+  if (view.state === "locked") {
+    const { e } = await searchParams;
+    return (
+      <ShareChrome brand={view.brand}>
+        <ShareUnlock token={token} errorCode={e} />
+      </ShareChrome>
+    );
+  }
+
+  const { document: doc, brags } = view;
   const period = formatPeriod(doc.periodStart, doc.periodEnd);
-  const logoUrl = brand.logoKey ? `/api/files/${brand.logoKey}` : null;
 
   return (
-    <div className="relative z-10 flex min-h-screen flex-col" style={accentVars(brand.accentColor)}>
-      <header className="border-b border-line">
-        <div className="mx-auto flex max-w-[760px] items-center gap-3 px-6 py-4">
-          {logoUrl ? (
-            // Authorizing same-origin route, not an optimizable static asset.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt={brand.name}
-              className="h-7 w-auto max-w-[140px] object-contain"
-            />
-          ) : (
-            <div className="grid size-7 place-items-center rounded-md bg-primary font-serif text-sm font-semibold text-primary-foreground shadow-[inset_0_-6px_10px_rgba(0,0,0,0.18)]">
-              {brand.name.slice(0, 1).toUpperCase()}
-            </div>
-          )}
-          <span className="font-serif text-[15px] font-semibold">{brand.name}</span>
-        </div>
-      </header>
-
+    <ShareChrome brand={view.brand}>
       <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-10">
         <div className="flex flex-col gap-7">
           <header className="flex flex-col gap-3">
@@ -98,12 +95,6 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           )}
         </div>
       </main>
-
-      <footer className="border-t border-line">
-        <div className="mx-auto max-w-[760px] px-6 py-5 font-mono text-[10.5px] text-ink-faint">
-          Powered by <span className="font-medium text-ink-soft">BragBit</span>
-        </div>
-      </footer>
-    </div>
+    </ShareChrome>
   );
 }

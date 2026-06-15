@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Link2, RefreshCw } from "lucide-react";
+import { Check, Copy, Link2, Lock, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-import { createShareLink, revokeShareLink, rotateShareLink } from "../actions";
+import {
+  createShareLink,
+  removeSharePassword,
+  revokeShareLink,
+  rotateShareLink,
+  setSharePassword,
+} from "../actions";
 import type { ShareLinkView } from "../queries";
 
 function formatAccessed(iso: string): string {
@@ -46,11 +52,13 @@ export function ShareDialog({
   const [link, setLink] = useState<ShareLinkView | null>(initial);
   const [pending, start] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [pw, setPw] = useState("");
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (next) setLink(initial);
     setCopied(false);
+    setPw("");
   }
 
   function onCreate() {
@@ -72,6 +80,7 @@ export function ShareDialog({
       if (result.ok) {
         setLink(result.link);
         setCopied(false);
+        setPw("");
         toast.success("New link generated — the old one no longer works.");
         router.refresh();
       } else {
@@ -103,6 +112,34 @@ export function ShareDialog({
     } catch {
       toast.error("Couldn't copy — select the link and copy it manually.");
     }
+  }
+
+  function onSetPassword() {
+    start(async () => {
+      const result = await setSharePassword(documentId, pw);
+      if (result.ok) {
+        setLink((l) => (l ? { ...l, hasPassword: true } : l));
+        setPw("");
+        toast.success("Password set. Viewers will need it to open the link.");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
+  function onRemovePassword() {
+    start(async () => {
+      const result = await removeSharePassword(documentId);
+      if (result.ok) {
+        setLink((l) => (l ? { ...l, hasPassword: false } : l));
+        setPw("");
+        toast.success("Password removed.");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
   }
 
   return (
@@ -147,6 +184,51 @@ export function ShareDialog({
                   ? `Last opened ${formatAccessed(link.lastAccessedAt)}`
                   : "Not opened yet."}
               </p>
+            </div>
+
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5 text-[13px] font-medium">
+                  <Lock className="size-3.5 text-ink-faint" aria-hidden />
+                  Password
+                </span>
+                <span className="font-mono text-[10.5px] text-ink-faint">
+                  {link.hasPassword ? "Protected" : "Anyone with the link can view"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="password"
+                  value={pw}
+                  onChange={(e) => setPw(e.target.value)}
+                  placeholder={link.hasPassword ? "New password" : "Set a password"}
+                  aria-label="Share password"
+                  autoComplete="new-password"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={pending || pw.length < 6}
+                  onClick={onSetPassword}
+                >
+                  {link.hasPassword ? "Update" : "Set"}
+                </Button>
+              </div>
+              {link.hasPassword ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="self-start text-destructive"
+                  disabled={pending}
+                  onClick={onRemovePassword}
+                >
+                  Remove password
+                </Button>
+              ) : (
+                <p className="font-mono text-[10.5px] text-ink-faint">At least 6 characters.</p>
+              )}
             </div>
 
             <div className="flex items-center justify-between gap-2 border-t border-line pt-3">

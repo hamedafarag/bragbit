@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getOwnedAttachmentByKey, type AttachmentRow } from "@/features/attachment/queries";
-import { getSharedAttachmentByKey } from "@/features/share/queries";
+import { getShareCredentials, getSharedAttachmentByKey } from "@/features/share/queries";
+import { isShareUnlocked } from "@/features/share/unlock";
 import { getSessionOrNull, isWorkspaceMember } from "@/lib/auth/guards";
 import { contentTypeForKey, getStorage, type ByteRange, type Storage } from "@/lib/storage";
 
@@ -49,11 +50,18 @@ export async function GET(request: Request, ctx: RouteContext<"/api/files/[...ke
       if (att) return serveRanged(request, storage, key, att);
     }
     // Valid-share-token path (public, no session): the attachment's brag must be
-    // SHARED and belong to the token's non-revoked document.
+    // SHARED and belong to the token's non-revoked document — and if that share is
+    // password-protected, the request must carry a valid unlock cookie, so an
+    // attachment never leaks past the password gate.
     const token = new URL(request.url).searchParams.get("token");
     if (token) {
-      const att = await getSharedAttachmentByKey(key, token);
-      if (att) return serveRanged(request, storage, key, att);
+      const cred = await getShareCredentials(token);
+      const unlocked =
+        cred && (!cred.passwordHash || (await isShareUnlocked(cred.id, cred.passwordHash)));
+      if (unlocked) {
+        const att = await getSharedAttachmentByKey(key, token);
+        if (att) return serveRanged(request, storage, key, att);
+      }
     }
     // Don't distinguish "no auth" from "not yours" — a flat 404 leaks nothing.
     return new NextResponse("Not found", { status: 404 });

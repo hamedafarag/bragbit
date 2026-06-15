@@ -176,5 +176,14 @@ write, so a `documentId` from another workspace or user yields nothing.
   the public bundle. Attachments stream through the file route's `?token=` path
   (`getSharedAttachmentByKey`: the brag must be `shared` and belong to the token's non-revoked
   document).
-- **Still to come this phase:** optional argon2 passwords (set/remove, an unlock form, an httpOnly
-  per-share cookie, rate-limited attempts) and the security tests.
+- **Optional password** (6.4): the owner sets/changes/removes a password on the active link from
+  the dialog — argon2id (`@node-rs/argon2`) in `share_links.password_hash`, never clear. A
+  protected share resolves to `getSharedView`'s `locked` state (brand only — no title or brags
+  leak) and renders a **progressive-enhancement unlock form**: a plain `<form>` posting to a bound
+  server action, so it needs no client JS. A correct password sets an httpOnly per-share cookie
+  whose value is an HMAC over `shareId + passwordHash` (keyed by the app secret) — stateless, and
+  auto-invalidated when the password changes or is removed. Unlock attempts are rate-limited per
+  share (`lib/rate-limit`, an in-memory sliding window; a shared store is Phase 9 hardening), and
+  the file route's `?token=` path also requires the unlock cookie when a password is set, so
+  attachments never bypass the gate.
+- **Still to come this phase:** the security tests (6.5).
