@@ -140,6 +140,11 @@ on `0.x` until the deployment modes and core stabilize.
   is available behind a `--profile minio`. The `.env.example` is finalized for both the local-dev and
   Docker paths (Compose auto-wires the database connection and the storage volume), and the pnpm
   version is pinned via `packageManager`.
+- Demo seed (`pnpm seed:demo`): one command populates a fresh database with a sample personal
+  workspace, a ready-to-use owner account (`demo@bragbit.local`), and a "2026" document with a
+  handful of varied brags — shipped and in-progress, shared and private, a recognition quote, links,
+  and tags — so you can sign in and explore a populated timeline immediately. Idempotent and
+  independent of the app (raw SQL + Better Auth's password hasher).
 
 ### Security
 
