@@ -1,0 +1,28 @@
+# Keep the build context small and reproducible. Dependencies are installed fresh
+# inside the image (so native modules like @node-rs/argon2 get the musl build), and
+# the app is compiled in the builder stage — never copy host artifacts in.
+node_modules
+.next
+out
+build
+
+# Local-only state and secrets (the image gets its config at runtime).
+.env
+.env.*
+!.env.example
+.data
+
+# VCS, tests, and tooling output — not needed to build or run.
+.git
+.github
+test-results
+playwright-report
+coverage
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS cruft
+.DS_Store
+.vscode
+.idea

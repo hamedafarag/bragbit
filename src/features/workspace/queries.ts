@@ -2,6 +2,7 @@ import "server-only";
 
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { isAcceptableInvitation } from "@/features/invitation/validity";
 import { requireRole, requireWorkspace } from "@/lib/auth/guards";
@@ -55,6 +56,9 @@ export async function getActiveWorkspace() {
  */
 export async function getInstanceBranding(): Promise<WorkspaceBrand | null> {
   if (isHosted()) return null;
+  // Live per-instance branding — defer out of prerendering (like isInstanceSetup)
+  // so the production image builds with no database reachable.
+  await connection();
   const [row] = await db
     .select({
       name: organization.name,

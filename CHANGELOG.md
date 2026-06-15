@@ -134,6 +134,12 @@ on `0.x` until the deployment modes and core stabilize.
   your own time zone (deduplicated so you never get two), with one-click unsubscribe in every email.
   The standalone server schedules delivery itself (an in-process hourly job); a secured cron endpoint
   (`POST /api/cron/reminders`, guarded by `CRON_SECRET`) is available for serverless hosts.
+- Production Docker stack: a multi-stage `Dockerfile` (Next.js standalone output, a slim non-root
+  runner) and a `docker-compose.yml` that brings up the app + Postgres in one `docker compose up`.
+  Pending database migrations are applied automatically on container start, and S3-compatible storage
+  is available behind a `--profile minio`. The `.env.example` is finalized for both the local-dev and
+  Docker paths (Compose auto-wires the database connection and the storage volume), and the pnpm
+  version is pinned via `packageManager`.
 
 ### Security
 

@@ -3,11 +3,13 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 8 — layering, authentication & tenancy, the
-> DAL boundary, the data model, workspace administration & branding, the storage
-> adapter, attachments, documents, the brag domain (timeline, tags, full-text
-> search, filters, detail view), sharing (public links, passwords, the security
-> invariants), export (Markdown, print/PDF, full-data JSON), and reminders.
+> **Status:** documented through Phase 8, plus the Phase 9 deployment stack —
+> layering, authentication & tenancy, the DAL boundary, the data model, workspace
+> administration & branding, the storage adapter, attachments, documents, the brag
+> domain (timeline, tags, full-text search, filters, detail view), sharing (public
+> links, passwords, the security invariants), export (Markdown, print/PDF, full-data
+> JSON), reminders, and deployment (the standalone Docker image + Compose stack,
+> migrations on container start).
 
 ## Layering (a security decision)
 
@@ -244,3 +246,37 @@ compared; 503 when unconfigured) as the serverless fallback. Running both is saf
 `/unsubscribe/[userId]/[token]` link whose token is a stateless HMAC over the user id (no token
 storage); the page is a no-JS confirm (GET only renders, so a mail-client prefetch can't
 unsubscribe; a POST disables reminders) authorized by the token, no login.
+
+## Deployment
+
+The app builds to a self-contained server via Next.js `output: 'standalone'` (a minimal `server.js`
+plus only the traced files and `node_modules`), shipped as a multi-stage Docker image:
+
+- **`deps`** installs the full dependency set fresh inside the image — so native modules like
+  `@node-rs/argon2` get their musl build — with `--ignore-scripts` to skip the dev-only `prepare`
+  hook (lefthook) and dependency postinstalls.
+- **`builder`** runs `next build` with placeholder `DATABASE_URL` / `BETTER_AUTH_SECRET` (inlined on
+  the build step, not baked into image ENV): `lib/env.ts` validates them, but **no route opens a DB
+  connection during the build**. The setup-state and instance-branding reads (`isInstanceSetup` /
+  `getInstanceBranding`) call `connection()` to defer out of prerendering — so the root page,
+  `/setup`, and the auth pages render dynamically and the placeholders are never used to connect.
+  (Next 16 dropped the route-segment `dynamic` export; `connection()` is its supported replacement.)
+  Real values arrive at runtime.
+- **`runner`** is a slim, non-root (`nextjs:nodejs`) image carrying only the standalone server, the
+  static assets, `public/`, and the DB migrator.
+
+**Migrations run on container start.** The entrypoint (`scripts/docker-entrypoint.sh`) runs
+`scripts/migrate.mjs` — the `drizzle-orm` migrator, not the drizzle-kit CLI, so the image needs no
+dev tooling — then `exec node server.js` so SIGTERM reaches Node for a graceful drain. Because the
+migrator is a plain script outside the app graph, `next.config.ts`'s `outputFileTracingIncludes`
+force-bundles `drizzle-orm` and `postgres` into the standalone output (Next otherwise inlines
+`postgres` into the server chunks, leaving it unresolvable for the script); the `.sql` files are
+copied to `/app/migrations`. Local/dev migrations still go through `pnpm db:migrate` (drizzle-kit).
+
+**`docker-compose.yml`** is the one-command stack: `app` + `postgres` (a named volume each; a health
+check gates the app on a ready database), with `minio` + `minio-init` behind a `--profile minio` for
+S3-compatible storage. Compose injects `DATABASE_URL` (→ the `postgres` service) and `STORAGE_DIR`
+(→ the `bragbit_uploads` volume) over `.env`, so the operator only fills in the secrets and SMTP.
+The in-process reminder scheduler (`src/instrumentation.ts`) runs in this standalone server, so a
+self-host needs no external cron. See [Self-hosting](self-hosting/) and
+[Configuration](configuration.md).

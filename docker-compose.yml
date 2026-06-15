@@ -1,0 +1,101 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# BragBit — production stack. One command brings up the app + Postgres:
+#
+#   cp .env.example .env   # set INSTANCE_MODE, APP_URL, BETTER_AUTH_SECRET, SMTP…
+#   docker compose up -d   # builds the image, runs migrations, starts the app
+#
+# The app is served on http://localhost:${APP_PORT:-3000}. On first run (private
+# modes) it redirects to the /setup wizard.
+#
+# Storage defaults to a local-disk volume. For S3-compatible storage, set
+# STORAGE_DRIVER=s3 + the S3_* vars in .env and start the bundled MinIO with the
+# `minio` profile:  docker compose --profile minio up -d
+# ─────────────────────────────────────────────────────────────────────────────
+name: bragbit
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bragbit:latest
+    restart: unless-stopped
+    init: true # reap the entrypoint shell; Node still gets SIGTERM via `exec`
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Wiring to the in-network services — these override .env so the container
+      # always talks to the compose Postgres and the local-storage volume. Leave
+      # DATABASE_URL / STORAGE_DIR alone in .env for the Docker path.
+      NODE_ENV: production
+      DATABASE_URL: postgres://bragbit:${POSTGRES_PASSWORD:-bragbit}@postgres:5432/bragbit
+      STORAGE_DIR: /app/.data/uploads
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - bragbit_uploads:/app/.data/uploads
+    healthcheck:
+      # Node 22 has global fetch; any non-5xx (incl. the setup redirect) is healthy.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bragbit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bragbit}
+      POSTGRES_DB: bragbit
+    volumes:
+      - bragbit_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bragbit -d bragbit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Optional S3-compatible storage (enable with `--profile minio`) ──────────
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio"]
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minioadmin}
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # web console
+    volumes:
+      - bragbit_minio:/data
+
+  # one-shot: wait for MinIO, then create the bucket
+  minio-init:
+    image: minio/mc:latest
+    profiles: ["minio"]
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minioadmin} ${S3_SECRET_ACCESS_KEY:-minioadmin}; do sleep 1; done &&
+      mc ready local &&
+      mc mb --ignore-existing local/${S3_BUCKET:-bragbit} &&
+      echo 'minio bucket ready';
+      "
+
+volumes:
+  bragbit_pgdata:
+  bragbit_uploads:
+  bragbit_minio:
