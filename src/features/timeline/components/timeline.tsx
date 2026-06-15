@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import { BragCard } from "@/features/brag/components/brag-card";
 import type { BragWithRelations } from "@/features/brag/queries";
 
@@ -19,14 +21,28 @@ function groupByMonth(brags: BragWithRelations[]): MonthGroup[] {
   return groups;
 }
 
+/** Months since year 0, so a gap between two month buckets is a simple subtraction. */
+function monthIndex(key: string): number {
+  const [year, month] = key.split("-").map(Number);
+  return year! * 12 + month!;
+}
+
 /**
  * The document timeline: brags reverse-chronological, grouped by month with
  * sticky month headers and a vertical spine. The per-brag status node lives on
  * BragCard (solid = shipped, hollow = in-progress); private is a card treatment,
- * not a node ring (PLAN §4). Brags arrive already date-desc from listBrags. The
- * month-windowed cursor pagination for very long documents is Phase 5 slice 3.
+ * not a node ring (PLAN §4). Brags arrive already date-desc from listBrags. When
+ * `showGaps` (the unfiltered view), quiet months between entries are marked so
+ * the logging cadence is visible; the month-windowed cursor pagination for very
+ * long documents is Phase 5 slice 5.5.
  */
-export function Timeline({ brags }: { brags: BragWithRelations[] }) {
+export function Timeline({
+  brags,
+  showGaps = false,
+}: {
+  brags: BragWithRelations[];
+  showGaps?: boolean;
+}) {
   const months = groupByMonth(brags);
 
   return (
@@ -36,24 +52,35 @@ export function Timeline({ brags }: { brags: BragWithRelations[] }) {
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-[76px] w-px bg-line"
       />
-      {months.map((month) => (
-        <section key={month.key}>
-          <header className="sticky top-[60px] z-10 flex items-baseline gap-3 bg-[linear-gradient(to_bottom,var(--color-paper)_72%,transparent)] py-3">
-            <h2 className="font-serif text-[20px] leading-none font-medium italic">
-              {month.label}
-            </h2>
-            <span className="font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
-              {month.year} — {month.brags.length} {month.brags.length === 1 ? "win" : "wins"}
-            </span>
-            <span className="h-px flex-1 bg-line-soft" />
-          </header>
-          <ul className="flex flex-col gap-3 pb-2">
-            {month.brags.map((brag) => (
-              <BragCard key={brag.id} brag={brag} />
-            ))}
-          </ul>
-        </section>
-      ))}
+      {months.map((month, i) => {
+        const gap =
+          showGaps && i > 0 ? monthIndex(months[i - 1]!.key) - monthIndex(month.key) - 1 : 0;
+        return (
+          <Fragment key={month.key}>
+            {gap > 0 ? (
+              <div className="py-1.5 pl-[92px] font-mono text-[10px] text-ink-faint italic">
+                · {gap} quiet {gap === 1 ? "month" : "months"} ·
+              </div>
+            ) : null}
+            <section>
+              <header className="sticky top-[60px] z-10 flex items-baseline gap-3 bg-[linear-gradient(to_bottom,var(--color-paper)_72%,transparent)] py-3">
+                <h2 className="font-serif text-[20px] leading-none font-medium italic">
+                  {month.label}
+                </h2>
+                <span className="font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
+                  {month.year} — {month.brags.length} {month.brags.length === 1 ? "win" : "wins"}
+                </span>
+                <span className="h-px flex-1 bg-line-soft" />
+              </header>
+              <ul className="flex flex-col gap-3 pb-2">
+                {month.brags.map((brag) => (
+                  <BragCard key={brag.id} brag={brag} />
+                ))}
+              </ul>
+            </section>
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

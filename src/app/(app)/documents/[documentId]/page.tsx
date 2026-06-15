@@ -4,15 +4,23 @@ import { notFound } from "next/navigation";
 import { Markdown } from "@/components/shared/markdown";
 import { Button } from "@/components/ui/button";
 import { QuickAdd } from "@/features/brag/components/quick-add";
-import { listBrags } from "@/features/brag/queries";
-import { Timeline } from "@/features/timeline/components/timeline";
+import {
+  countDocumentBrags,
+  listBrags,
+  listDocumentTags,
+  type BragFilters,
+} from "@/features/brag/queries";
+import { BRAG_CATEGORY_VALUES } from "@/features/brag/schema";
 import {
   DocumentDialog,
   type DocumentFormValues,
 } from "@/features/document/components/document-dialog";
 import { getDocument } from "@/features/document/queries";
+import { FilterBar } from "@/features/timeline/components/filter-bar";
+import { Timeline } from "@/features/timeline/components/timeline";
 
 const dateFmt: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+const datePat = /^\d{4}-\d{2}-\d{2}$/;
 
 function formatPeriod(start: string | null, end: string | null): string | null {
   if (!start && !end) return null;
@@ -21,18 +29,42 @@ function formatPeriod(start: string | null, end: string | null): string | null {
   return start ? `From ${fmt(start)}` : `Until ${fmt(end!)}`;
 }
 
-// A document and its brags. getDocument runs the DAL guard and scopes to the
-// caller; an id they don't own (or that doesn't exist) 404s. Next 16: params is async.
+type RawParams = { category?: string; tag?: string; from?: string; to?: string };
+
+/** Validate URL params into filters; anything malformed is dropped. */
+function parseFilters(sp: RawParams): BragFilters {
+  const categoryOk =
+    sp.category && (BRAG_CATEGORY_VALUES as readonly string[]).includes(sp.category);
+  return {
+    category: categoryOk ? sp.category : undefined,
+    tag: sp.tag?.trim() || undefined,
+    from: sp.from && datePat.test(sp.from) ? sp.from : undefined,
+    to: sp.to && datePat.test(sp.to) ? sp.to : undefined,
+  };
+}
+
+// A document and its (optionally filtered) brags. getDocument runs the DAL guard
+// and scopes to the caller; an unowned/missing id 404s. Next 16: params + searchParams are async.
 export default async function DocumentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ documentId: string }>;
+  searchParams: Promise<RawParams>;
 }) {
   const { documentId } = await params;
   const doc = await getDocument(documentId);
   if (!doc) notFound();
 
-  const brags = await listBrags(documentId);
+  const filters = parseFilters(await searchParams);
+  const filtersActive = Boolean(filters.category || filters.tag || filters.from || filters.to);
+
+  const [total, brags, documentTags] = await Promise.all([
+    countDocumentBrags(documentId),
+    listBrags(documentId, filters),
+    listDocumentTags(documentId),
+  ]);
+
   const period = formatPeriod(doc.periodStart, doc.periodEnd);
   const editValues: DocumentFormValues = {
     title: doc.title,
@@ -83,14 +115,13 @@ export default async function DocumentPage({
           </div>
         ) : null}
         <div className="font-mono text-[11.5px] text-ink-soft">
-          <b className="font-medium text-ink">{brags.length}</b>{" "}
-          {brags.length === 1 ? "win" : "wins"}
+          <b className="font-medium text-ink">{total}</b> {total === 1 ? "win" : "wins"}
         </div>
       </header>
 
       <QuickAdd documentId={doc.id} />
 
-      {brags.length === 0 ? (
+      {total === 0 ? (
         <div className="rounded-xl border border-dashed border-line bg-card/60 px-6 py-12 text-center shadow-card">
           <h2 className="font-serif text-[18px] font-semibold">No wins logged yet</h2>
           <p className="mx-auto mt-1.5 max-w-[48ch] text-[13.5px] text-ink-soft">
@@ -101,7 +132,16 @@ export default async function DocumentPage({
           </p>
         </div>
       ) : (
-        <Timeline brags={brags} />
+        <div className="flex flex-col gap-5">
+          <FilterBar tags={documentTags} />
+          {brags.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-line bg-card/60 px-6 py-10 text-center text-[13.5px] text-ink-soft shadow-card">
+              No brags match these filters.
+            </div>
+          ) : (
+            <Timeline brags={brags} showGaps={!filtersActive} />
+          )}
+        </div>
       )}
     </div>
   );

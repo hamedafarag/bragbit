@@ -109,8 +109,10 @@ in-progress); private is a card treatment, not a node ring. Tags are scoped per 
 create-or-found on save and reused across brags, shown as monochrome `#name` chips. Full-text
 search runs over a generated `search` tsvector on brags (weighted title/impact/description) with a
 GIN index: `searchBrags` (`websearch_to_tsquery`, ranked by `ts_rank`, scoped per workspace + user)
-backs a header search box → `/search`, whose results deep-link to `/documents/[id]#brag`. Filters
-and cursor pagination are the rest of Phase 5; the per-brag visibility toggle is Phase 6.
+backs a header search box → `/search`, whose results deep-link to `/documents/[id]#brag`. The
+timeline filters by category / tag / date range (a URL-driven `FilterBar`; `listBrags` applies them,
+tag via a correlated `EXISTS`) and marks quiet months between entries. Cursor pagination is the rest
+of Phase 5; the per-brag visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 

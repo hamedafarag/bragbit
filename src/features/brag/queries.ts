@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, gte, inArray, lte, sql } from "drizzle-orm";
 
 import type { AttachmentRow } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -13,6 +13,14 @@ export type BragWithRelations = BragRow & {
   links: BragLinkRow[];
   attachments: AttachmentRow[];
   tags: string[];
+};
+
+/** Timeline filters (from the URL); empty fields are ignored. Dates are "YYYY-MM-DD". */
+export type BragFilters = {
+  category?: string;
+  tag?: string;
+  from?: string;
+  to?: string;
 };
 
 function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]> {
@@ -32,19 +40,38 @@ function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]
  * nothing. Links and attachments load in batched queries keyed by the
  * already-scoped brag ids (no per-brag N+1).
  */
-export async function listBrags(documentId: string): Promise<BragWithRelations[]> {
+export async function listBrags(
+  documentId: string,
+  filters: BragFilters = {},
+): Promise<BragWithRelations[]> {
   const { workspaceId, user } = await requireWorkspace();
+
+  const conditions = [
+    eq(brag.documentId, documentId),
+    eq(document.workspaceId, workspaceId),
+    eq(document.userId, user.id),
+  ];
+  if (filters.category) conditions.push(eq(brag.category, filters.category));
+  if (filters.from) conditions.push(gte(brag.date, filters.from));
+  if (filters.to) conditions.push(lte(brag.date, filters.to));
+  if (filters.tag) {
+    // The brag carries the chosen tag (its tags are the owner's, so name alone scopes it).
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(bragTag)
+          .innerJoin(tag, eq(tag.id, bragTag.tagId))
+          .where(and(eq(bragTag.bragId, brag.id), eq(tag.name, filters.tag))),
+      ),
+    );
+  }
+
   const rows = await db
     .select()
     .from(brag)
     .innerJoin(document, eq(document.id, brag.documentId))
-    .where(
-      and(
-        eq(brag.documentId, documentId),
-        eq(document.workspaceId, workspaceId),
-        eq(document.userId, user.id),
-      ),
-    )
+    .where(and(...conditions))
     .orderBy(desc(brag.date), desc(brag.createdAt));
   const brags = rows.map((r) => r.brags);
   if (brags.length === 0) return [];
@@ -74,6 +101,43 @@ export async function listBrags(documentId: string): Promise<BragWithRelations[]
     attachments: attachmentsByBrag.get(b.id) ?? [],
     tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
   }));
+}
+
+/** Total brags in a document the caller owns (the unfiltered header stat). */
+export async function countDocumentBrags(documentId: string): Promise<number> {
+  const { workspaceId, user } = await requireWorkspace();
+  const [row] = await db
+    .select({ n: count() })
+    .from(brag)
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(
+      and(
+        eq(brag.documentId, documentId),
+        eq(document.workspaceId, workspaceId),
+        eq(document.userId, user.id),
+      ),
+    );
+  return row?.n ?? 0;
+}
+
+/** Distinct tag names used by brags in a document the caller owns (for the filter UI). */
+export async function listDocumentTags(documentId: string): Promise<string[]> {
+  const { workspaceId, user } = await requireWorkspace();
+  const rows = await db
+    .selectDistinct({ name: tag.name })
+    .from(tag)
+    .innerJoin(bragTag, eq(bragTag.tagId, tag.id))
+    .innerJoin(brag, eq(brag.id, bragTag.bragId))
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(
+      and(
+        eq(brag.documentId, documentId),
+        eq(document.workspaceId, workspaceId),
+        eq(document.userId, user.id),
+      ),
+    )
+    .orderBy(asc(tag.name));
+  return rows.map((r) => r.name);
 }
 
 export type SearchResult = {
