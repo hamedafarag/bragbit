@@ -148,6 +148,17 @@ on `0.x` until the deployment modes and core stabilize.
 - Added a database-backed security test suite for sharing — revoked and unknown tokens resolve to
   nothing, private brags never appear in a share's payload or attachments, and the password gate
   (lock, unlock, rate limit) behaves — run in CI against Postgres.
+- Security headers on every response (`next.config.ts`): `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, a `Permissions-Policy`
+  that drops unused device APIs, HSTS, and a conservative `Content-Security-Policy`
+  (`base-uri`/`frame-ancestors`/`object-src`) — closing off clickjacking, MIME-sniffing, and
+  share-token Referer leakage app-wide.
+- Rate limiting on the auth and invitation surfaces: Better Auth's limiter is explicitly enabled in
+  production (strict built-in rules — 3 requests/10s on sign-in/sign-up, 3/60s on password-reset and
+  verification email), and the invitation-accept entry point adds an in-house per-invite limit
+  (reusing the share-unlock limiter).
+- Dependency audit: the `pnpm audit` advisories are all build/dev tooling absent from the production
+  standalone image; `postcss` and `js-yaml` are pinned to patched versions via pnpm overrides.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

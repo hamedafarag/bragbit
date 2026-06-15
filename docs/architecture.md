@@ -280,3 +280,29 @@ S3-compatible storage. Compose injects `DATABASE_URL` (→ the `postgres` servic
 The in-process reminder scheduler (`src/instrumentation.ts`) runs in this standalone server, so a
 self-host needs no external cron. See [Self-hosting](self-hosting/) and
 [Configuration](configuration.md).
+
+## Security headers & rate limiting
+
+Every response carries an app-wide hardening baseline set in `next.config.ts` `headers()`:
+`X-Content-Type-Options: nosniff` (matters for the user files streamed through `/api/files`),
+`X-Frame-Options: DENY` plus a `Content-Security-Policy` of `base-uri 'self'; frame-ancestors 'none';
+object-src 'none'` (clickjacking / base-tag / plugin vectors), `Referrer-Policy:
+strict-origin-when-cross-origin` (so a share token in the path never leaks cross-origin via Referer),
+a `Permissions-Policy` dropping unused device APIs, and HSTS (honored once seen over TLS). A full
+`script-src` CSP is deferred — Next's inline hydration needs per-request nonces.
+
+Rate limiting guards the credential surfaces:
+
+- **Auth** — Better Auth's built-in limiter, explicitly enabled in production (`lib/auth`), keeps its
+  strict default rules for the sensitive paths (3 requests / 10s on `/sign-in`, `/sign-up`,
+  `/change-password`, `/change-email`; 3 / 60s on password-reset + verification email), backed by an
+  in-memory store.
+- **Invitation** — `registerInvitee` adds the in-house sliding-window limiter (`lib/rate-limit`, 8
+  attempts / 10 min per invitation), since an invalid invitation id is rejected before any Better
+  Auth endpoint is reached.
+- **Share unlock** — already per-share rate-limited (Phase 6).
+
+All three share the single-process in-memory limiter, consistent with the single-container v1
+deployment; a shared store (Better Auth's `secondaryStorage` / a Redis-backed `lib/rate-limit`) is
+the multi-instance upgrade for hosted mode. Behind the reference reverse proxy, forward the real
+client IP so per-client auth limiting stays accurate.

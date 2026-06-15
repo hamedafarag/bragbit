@@ -1,3 +1,12 @@
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Force patched versions of transitive build/dev-tooling deps flagged by
+# `pnpm audit` (none ship in the production standalone image; these are
+# defence-in-depth for the build/CI surface). The esbuild advisory under
+# drizzle-kit's deprecated @esbuild-kit chain can't be patched without breaking
+# the migration CLI, so it's tracked for an upstream drizzle-kit bump instead.
+overrides:
+  postcss: "^8.5.10"
+  js-yaml: "^4.2.0"

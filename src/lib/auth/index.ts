@@ -28,6 +28,17 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: "pg", schema }),
 
+  // Brute-force protection for the auth endpoints. Better Auth's limiter ships
+  // strict built-in rules for the sensitive paths — 3 requests / 10s on
+  // /sign-in, /sign-up, /change-password, /change-email, and 3 / 60s on
+  // password-reset + verification-email — backed by an in-memory store. We enable
+  // it explicitly (it's production-only by default; left off in dev/test so local
+  // flows and the e2e suite aren't throttled). A shared store (secondaryStorage)
+  // is the multi-instance upgrade for the hosted mode (Phase 10).
+  rateLimit: {
+    enabled: env.NODE_ENV === "production",
+  },
+
   databaseHooks: {
     session: {
       create: {

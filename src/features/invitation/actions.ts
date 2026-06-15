@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/db/schema";
+import { hitRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 import { getPendingInvitation } from "./queries";
 import { acceptInviteSchema, type AcceptInviteInput } from "./schema";
@@ -28,6 +29,14 @@ export async function registerInvitee(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  // Bound repeated attempts against a single invitation link. The lookup below
+  // runs before any Better Auth endpoint is hit (an invalid id never reaches the
+  // per-IP sign-up limit), so the in-house limiter guards this entry directly.
+  const limit = hitRateLimit(`invite-register:${invitationId}`, 8, 10 * 60 * 1000);
+  if (!limit.ok) {
+    return { ok: false, error: "Too many attempts. Please wait a few minutes and try again." };
+  }
+
   const invite = await getPendingInvitation(invitationId);
   if (!invite) {
     return { ok: false, error: "This invitation is invalid or has expired." };
@@ -46,6 +55,7 @@ export async function registerInvitee(
       body: { email: invite.email, password: parsed.data.password },
       headers: await headers(),
     });
+    resetRateLimit(`invite-register:${invitationId}`);
     return { ok: true };
   } catch (err) {
     return {
