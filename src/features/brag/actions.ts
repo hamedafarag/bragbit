@@ -1,11 +1,11 @@
 "use server";
 
-import { and, eq, exists } from "drizzle-orm";
+import { and, asc, eq, exists, inArray } from "drizzle-orm";
 
 import { ownedAttachmentKeysForBrag } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
-import { brag, bragLink, document } from "@/lib/db/schema";
+import { brag, bragLink, bragTag, document, tag } from "@/lib/db/schema";
 import { getStorage } from "@/lib/storage";
 
 import {
@@ -53,8 +53,44 @@ function linkValues(bragId: string, links: BragLinkInput[]) {
   }));
 }
 
-/** Verify the caller owns `documentId` in their active workspace; returns its id or null. */
-async function ownedDocumentId(documentId: string): Promise<string | null> {
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Replace a brag's tags. Tags are shared per (user, workspace): each name is
+ * create-or-found (case-normalized, deduped), then brag_tags is rewritten to the
+ * given set. Removing a tag from a brag leaves the tag itself in the user's
+ * vocabulary. Runs inside the create/update transaction.
+ */
+async function syncBragTags(
+  tx: Tx,
+  bragId: string,
+  workspaceId: string,
+  userId: string,
+  names: string[],
+): Promise<void> {
+  await tx.delete(bragTag).where(eq(bragTag.bragId, bragId));
+  const unique = [...new Set(names.map((n) => n.trim().toLowerCase()).filter(Boolean))];
+  if (unique.length === 0) return;
+
+  await tx
+    .insert(tag)
+    .values(unique.map((name) => ({ userId, workspaceId, name })))
+    .onConflictDoNothing({ target: [tag.userId, tag.workspaceId, tag.name] });
+
+  const tagRows = await tx
+    .select({ id: tag.id })
+    .from(tag)
+    .where(
+      and(eq(tag.userId, userId), eq(tag.workspaceId, workspaceId), inArray(tag.name, unique)),
+    );
+
+  await tx.insert(bragTag).values(tagRows.map((t) => ({ bragId, tagId: t.id })));
+}
+
+type OwnedDocument = { id: string; workspaceId: string; userId: string };
+
+/** Verify the caller owns `documentId`; returns its id + the owning context, or null. */
+async function ownedDocument(documentId: string): Promise<OwnedDocument | null> {
   const { workspaceId, user } = await requireWorkspace();
   const [doc] = await db
     .select({ id: document.id })
@@ -67,7 +103,7 @@ async function ownedDocumentId(documentId: string): Promise<string | null> {
       ),
     )
     .limit(1);
-  return doc?.id ?? null;
+  return doc ? { id: doc.id, workspaceId, userId: user.id } : null;
 }
 
 /**
@@ -103,12 +139,12 @@ export async function quickAddBrag(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  const docId = await ownedDocumentId(documentId);
-  if (!docId) return { ok: false, error: "Document not found." };
+  const owned = await ownedDocument(documentId);
+  if (!owned) return { ok: false, error: "Document not found." };
 
   const [row] = await db
     .insert(brag)
-    .values({ documentId: docId, title: parsed.data.title, date: parsed.data.date })
+    .values({ documentId: owned.id, title: parsed.data.title, date: parsed.data.date })
     .returning({ id: brag.id });
   return { ok: true, id: row!.id };
 }
@@ -119,26 +155,27 @@ export async function createBrag(documentId: string, input: BragInput): Promise<
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  const docId = await ownedDocumentId(documentId);
-  if (!docId) return { ok: false, error: "Document not found." };
+  const owned = await ownedDocument(documentId);
+  if (!owned) return { ok: false, error: "Document not found." };
 
   const created = await db.transaction(async (tx) => {
     const [row] = await tx
       .insert(brag)
-      .values({ documentId: docId, ...toFields(parsed.data) })
+      .values({ documentId: owned.id, ...toFields(parsed.data) })
       .returning({ id: brag.id });
     const values = linkValues(row!.id, parsed.data.links);
     if (values.length > 0) await tx.insert(bragLink).values(values);
+    await syncBragTags(tx, row!.id, owned.workspaceId, owned.userId, parsed.data.tags);
     return row!;
   });
   return { ok: true, id: created.id };
 }
 
 /**
- * Update a brag the caller owns and replace its links. Ownership is enforced in
- * the UPDATE's WHERE (the correlated EXISTS) — if it matches no row, nothing
- * downstream runs, so we never touch the links of a brag the caller doesn't own.
- * Links are replaced wholesale (delete + re-insert) so positions stay contiguous.
+ * Update a brag the caller owns and replace its links + tags. Ownership is
+ * enforced in the UPDATE's WHERE (the correlated EXISTS) — if it matches no row,
+ * nothing downstream runs, so we never touch the relations of a brag the caller
+ * doesn't own. Links and tags are replaced wholesale.
  */
 export async function updateBrag(bragId: string, input: BragInput): Promise<ActionResult> {
   const { workspaceId, user } = await requireWorkspace();
@@ -158,6 +195,7 @@ export async function updateBrag(bragId: string, input: BragInput): Promise<Acti
     await tx.delete(bragLink).where(eq(bragLink.bragId, bragId));
     const values = linkValues(bragId, parsed.data.links);
     if (values.length > 0) await tx.insert(bragLink).values(values);
+    await syncBragTags(tx, bragId, workspaceId, user.id, parsed.data.tags);
     return true;
   });
   if (!ok) return { ok: false, error: "Brag not found." };
@@ -185,4 +223,15 @@ export async function deleteBrag(bragId: string): Promise<ActionResult> {
   const storage = getStorage();
   await Promise.all(storageKeys.map((key) => storage.delete(key).catch(() => {})));
   return { ok: true };
+}
+
+/** The caller's tag names in the active workspace, for editor autocomplete. */
+export async function getTagSuggestions(): Promise<string[]> {
+  const { workspaceId, user } = await requireWorkspace();
+  const rows = await db
+    .select({ name: tag.name })
+    .from(tag)
+    .where(and(eq(tag.userId, user.id), eq(tag.workspaceId, workspaceId)))
+    .orderBy(asc(tag.name));
+  return rows.map((r) => r.name);
 }

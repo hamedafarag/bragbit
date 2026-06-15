@@ -5,11 +5,15 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { AttachmentRow } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
-import { attachment, brag, bragLink, document } from "@/lib/db/schema";
+import { attachment, brag, bragLink, bragTag, document, tag } from "@/lib/db/schema";
 
 export type BragRow = typeof brag.$inferSelect;
 export type BragLinkRow = typeof bragLink.$inferSelect;
-export type BragWithRelations = BragRow & { links: BragLinkRow[]; attachments: AttachmentRow[] };
+export type BragWithRelations = BragRow & {
+  links: BragLinkRow[];
+  attachments: AttachmentRow[];
+  tags: string[];
+};
 
 function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -46,20 +50,28 @@ export async function listBrags(documentId: string): Promise<BragWithRelations[]
   if (brags.length === 0) return [];
 
   const ids = brags.map((b) => b.id);
-  const [links, attachments] = await Promise.all([
+  const [links, attachments, tagRows] = await Promise.all([
     db.select().from(bragLink).where(inArray(bragLink.bragId, ids)).orderBy(asc(bragLink.position)),
     db
       .select()
       .from(attachment)
       .where(inArray(attachment.bragId, ids))
       .orderBy(asc(attachment.createdAt)),
+    db
+      .select({ bragId: bragTag.bragId, name: tag.name })
+      .from(bragTag)
+      .innerJoin(tag, eq(tag.id, bragTag.tagId))
+      .where(inArray(bragTag.bragId, ids))
+      .orderBy(asc(tag.name)),
   ]);
 
   const linksByBrag = groupByBragId(links);
   const attachmentsByBrag = groupByBragId(attachments);
+  const tagsByBrag = groupByBragId(tagRows);
   return brags.map((b) => ({
     ...b,
     links: linksByBrag.get(b.id) ?? [],
     attachments: attachmentsByBrag.get(b.id) ?? [],
+    tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
   }));
 }

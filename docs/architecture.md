@@ -105,8 +105,10 @@ external-link chips (new tab, `rel="noopener noreferrer"`), visually distinct fr
 their brags (see [Storage & file routes](#storage--file-routes)). The document page renders the
 brags as a **month-grouped timeline** (`features/timeline`): sticky month headers with per-month
 counts, a vertical spine, and a status-only node on each entry (solid = shipped, hollow =
-in-progress); private is a card treatment, not a node ring. Tags, filters, full-text search, and
-cursor pagination are the rest of Phase 5; the per-brag visibility toggle is Phase 6.
+in-progress); private is a card treatment, not a node ring. Tags are scoped per (user, workspace),
+create-or-found on save and reused across brags, shown as monochrome `#name` chips. Filters,
+full-text search, and cursor pagination are the rest of Phase 5; the per-brag visibility toggle is
+Phase 6.
 
 ## Workspace administration & branding
 

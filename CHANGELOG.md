@@ -85,6 +85,9 @@ on `0.x` until the deployment modes and core stabilize.
   with per-month counts, a vertical spine, and a status-only node on each entry (solid = shipped,
   hollow = in-progress) — replacing the flat list. Category colors, the "In progress" pill, the
   private card treatment, and link/attachment chips sit along the spine.
+- Tags on brags: add tags while editing (type to add, with autocomplete from your existing tags) —
+  scoped per user per workspace and reused across brags (no duplicates), rendered as monochrome
+  `#name` chips on the timeline card.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

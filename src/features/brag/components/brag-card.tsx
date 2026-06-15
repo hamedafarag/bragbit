@@ -43,6 +43,7 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
     collaborators: collaborators.join(", "),
     attribution: brag.attribution ?? "",
     links: brag.links.map((l) => ({ url: l.url, label: l.label ?? "" })),
+    tags: brag.tags,
     attachments: brag.attachments.map((a) => ({
       id: a.id,
       fileName: a.fileName,
@@ -144,8 +145,17 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
           </div>
         ) : null}
 
-        {collaborators.length > 0 || brag.attribution ? (
+        {brag.tags.length > 0 || collaborators.length > 0 || brag.attribution ? (
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-dashed border-line-soft pt-2.5 font-mono text-[10px] text-ink-faint">
+            {brag.tags.length > 0 ? (
+              <span className="flex flex-wrap gap-x-2 gap-y-1">
+                {brag.tags.map((t) => (
+                  <span key={t} className="before:opacity-60 before:content-['#']">
+                    {t}
+                  </span>
+                ))}
+              </span>
+            ) : null}
             {collaborators.length > 0 ? <span>w/ {collaborators.join(", ")}</span> : null}
             {brag.attribution ? <span>— {brag.attribution}</span> : null}
           </div>

@@ -61,5 +61,8 @@ export const bragSchema = z.object({
   collaborators: optionalText(500),
   attribution: optionalText(300),
   links: z.array(bragLinkSchema).max(20).default([]),
+  // Tag names, normalized to lowercase; the action create-or-finds them per
+  // user+workspace and dedupes. Monochrome in v1 (no color).
+  tags: z.array(z.string().trim().toLowerCase().min(1).max(50)).max(30).default([]),
 });
 export type BragInput = z.infer<typeof bragSchema>;

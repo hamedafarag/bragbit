@@ -23,10 +23,11 @@ import {
   type AttachmentItem,
 } from "@/features/attachment/components/attachment-manager";
 
-import { createBrag, updateBrag } from "../actions";
+import { createBrag, getTagSuggestions, updateBrag } from "../actions";
 import { BRAG_CATEGORIES, bragSchema } from "../schema";
 import { LinksField, type LinkRow } from "./links-field";
 import { MarkdownField } from "./markdown-field";
+import { TagsField } from "./tags-field";
 
 // All-strings form values (the action maps "" → null and splits collaborators).
 export type BragFormValues = {
@@ -39,6 +40,7 @@ export type BragFormValues = {
   collaborators: string;
   attribution: string;
   links: LinkRow[];
+  tags: string[];
   attachments: AttachmentItem[];
 };
 
@@ -74,11 +76,19 @@ export function BragEditor({
   // Links live in state (not FormData) so rows can be added/removed. The state
   // sits above the dialog content, so reset it to `initial` whenever it opens.
   const [links, setLinks] = useState<LinkRow[]>(initial?.links ?? []);
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   const v = initial;
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (next) setLinks(initial?.links ?? []);
+    if (next) {
+      setLinks(initial?.links ?? []);
+      setTags(initial?.tags ?? []);
+      getTagSuggestions()
+        .then(setTagSuggestions)
+        .catch(() => {});
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -94,6 +104,7 @@ export function BragEditor({
       collaborators: String(fd.get("collaborators") ?? ""),
       attribution: String(fd.get("attribution") ?? ""),
       links: links.filter((l) => l.url.trim() !== ""),
+      tags,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
@@ -222,6 +233,11 @@ export function BragEditor({
               />
               <p className="font-mono text-[10.5px] text-ink-faint">Who recognized the work.</p>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Tags</span>
+            <TagsField value={tags} onChange={setTags} suggestions={tagSuggestions} />
           </div>
 
           <div className="flex flex-col gap-1.5">
