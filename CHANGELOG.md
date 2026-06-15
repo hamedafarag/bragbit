@@ -75,7 +75,7 @@ on `0.x` until the deployment modes and core stabilize.
 - S3-compatible storage: an `S3Storage` driver (MinIO/R2/S3, path-style by default) selected by
   `STORAGE_DRIVER=s3`, alongside the local-disk default. The storage interface gained `stat()` and
   inclusive byte-range streaming for ranged downloads. Added the `attachments` table (file metadata
-  and storage key) for the brag attachments landing next.
+  and storage key); the adapter is covered by a MinIO integration test in CI.
 - Attachments on brags: upload files (images, PDFs, office docs — multi-file, capped by
   `MAX_UPLOAD_MB`) on an existing brag from the editor; they show as paperclip chips on the card and
   a managed list (thumbnail/icon, size, delete) in the editor. Files stream through the authorizing

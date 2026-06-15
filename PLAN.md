@@ -362,16 +362,16 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 4 — Attachments & storage adapter *(v1)*
 
-> **Status: in progress.** Slices 4.1 (the `S3Storage` adapter + the `attachments`
-> schema/migration) and 4.2 (the upload route, the attachment UI — editor manager
-> + paperclip chips on the card — and the authorizing ranged stream route) are done
-> and committed. Remaining: wiring the MinIO adapter test into CI (slice 4.3).
+> **Status: complete (2026-06-15).** Slices 4.1 (the `S3Storage` adapter + the
+> `attachments` schema/migration), 4.2 (the upload route, the attachment UI — editor
+> manager + paperclip chips on the card — and the authorizing ranged stream route),
+> and 4.3 (the MinIO adapter test wired into CI) are all done and committed.
 
 - [x] Add `S3Storage` (S3-compatible endpoint, path-style for MinIO); driver via env; per-workspace key prefixes — _slice 4.1: `S3Storage` (put/get/delete + `stat` + ranged `stream`) via `@aws-sdk/client-s3`, selected by `STORAGE_DRIVER=s3`, path-style on by default for MinIO; the `Storage` interface gained `stat()` and an inclusive byte range on `stream()` (also implemented for local disk). Keys stay workspace-prefixed by callers. The `attachments` table landed in migration `0003`; an integration test exercises the adapter against MinIO (skipped unless `S3_*` is set)._
 - [x] Upload route handler: multi-file, size/MIME limits from env, image/PDF/doc types — _slice 4.2: `/api/upload/attachment` (owner-scoped to the brag) validates every file against the MIME allowlist (images, PDF, office docs, text) and `MAX_UPLOAD_MB` before storing any, so a bad file rejects the whole batch rather than leaving a partial upload._
 - [x] Attachment list on brag (server-generated `next/image` thumbnails for images, file chips otherwise); delete; download — _slice 4.2: paperclip chips on the brag card (distinct from link chips), and an attachment manager in the editor (upload + per-file thumbnail/icon, size, delete). Per the design mockup the timeline uses chips, not inline previews; the manager's image thumbnails are a plain authed `<img>` (`next/image` can't optimize the authorizing route), and `sharp`-downscaled thumbnails are deferred as a perf refinement._
 - [x] Authorizing download/stream route (owner or valid share token only — never public URLs); ranged responses for large files — _slice 4.2: `/api/files/[...key]` serves `attachments/` to the owner only (via attachment → brag → document), with the stored MIME type, an inline `Content-Disposition` (filename + `filename*`), and `Range` → `206 Partial Content`. The valid-share-token path lands in Phase 6._
-- [ ] Adapter tests against MinIO in CI
+- [x] Adapter tests against MinIO in CI — _slice 4.3: a dedicated `storage` CI job brings up the dev stack's MinIO + its one-shot bucket init and runs the integration test with `S3_*` set (which un-skips it); the default `verify` Vitest job stays service-free._
 
 ### Phase 5 — Timeline, tags & search *(v1)*
 - [ ] Document timeline view: reverse-chronological, **grouped by month** with sticky month headers; cards show title, date, category badge, tags, impact highlight, attachment/link indicators
