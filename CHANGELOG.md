@@ -118,6 +118,10 @@ on `0.x` until the deployment modes and core stabilize.
   and reveals nothing about the document until the correct password is entered; success sets an
   httpOnly per-share cookie that's invalidated automatically if the password changes. Unlock
   attempts are rate-limited per share, and password-gated attachments require the unlock too.
+- Markdown export: an “Export” dialog on the document page downloads a document as a clean,
+  portable Markdown file — metadata and goals, then wins grouped by month with links, an
+  attachment manifest, collaborators, and tags. Private brags are excluded by default, with an
+  opt-in to include them in your own copy.
 
 ### Security
 

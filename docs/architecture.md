@@ -192,3 +192,18 @@ write, so a `documentId` from another workspace or user yields nothing.
   returns the winner's link. A DB-gated suite (`features/share/security.test.ts`) asserts the
   boundaries against real Postgres: revoked/unknown tokens resolve to nothing, private brags never
   reach a share payload or its attachments, and the password gate locks/unlocks/rate-limits.
+
+## Export
+
+`features/export` turns a document into a portable file (PLAN §6/§7). `documentToMarkdown` is a
+**pure** assembler (unit-tested, no DAL): title/period/description/goals, then brags grouped by
+month newest-first — date · category · status, impact as a blockquote, the user's Markdown
+description verbatim (high-trust assembly), Markdown links, a text attachment manifest (filenames +
+sizes; the binaries aren't bundled), collaborators/attribution/tags. `getDocumentForExport` loads
+the document + its brags with relations batched (no N+1); it's scoped **explicitly** by
+`workspaceId + userId` (passed in by the route, like `getOwnedAttachmentByKey`) rather than calling
+a redirecting guard, since export is route-driven. Downloads stream from a Route Handler
+(`GET /api/export/[documentId]`): owner-only via `getWorkspaceOrNull` (→ 401), an unowned/missing id
+404s, `?format=md` (PDF/JSON are later Phase 7 slices), and `?private=1` opts private brags in
+(default off — the same `visibility='shared'` filter the public share uses). The response is an
+attachment, never cached. An Export dialog on the document page triggers it.

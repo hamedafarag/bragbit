@@ -17,6 +17,7 @@ import {
 } from "@/features/document/components/document-dialog";
 import { BragCard } from "@/features/brag/components/brag-card";
 import { getDocument } from "@/features/document/queries";
+import { ExportDialog } from "@/features/export/components/export-dialog";
 import { ShareDialog } from "@/features/share/components/share-dialog";
 import { getActiveShareLink } from "@/features/share/queries";
 import { FilterBar } from "@/features/timeline/components/filter-bar";
@@ -97,8 +98,9 @@ export default async function DocumentPage({
           <h1 className="font-serif text-[40px] leading-[1.05] font-medium tracking-[-0.015em]">
             {doc.title}
           </h1>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <ShareDialog documentId={doc.id} initial={shareLink} />
+            <ExportDialog documentId={doc.id} />
             <DocumentDialog
               documentId={doc.id}
               initial={editValues}

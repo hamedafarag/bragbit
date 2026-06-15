@@ -411,10 +411,15 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Tests: revoked token 404s, private brags absent from share payloads/exports, password flow — _slice 6.5: a DB-gated suite (`features/share/security.test.ts`, `describe.skipIf(!DATABASE_URL)` like the attachment cleanup test) drives the real share queries/actions against Postgres — auth guard mocked, `next/headers` cookies backed by an in-memory jar. Covers: open share returns only `shared` brags (private absent from both the payload and `getSharedAttachmentByKey`); revoked + unknown tokens resolve to nothing; the password gate locks content and unlock sets the cookie; wrong→`incorrect`, then rate-limited after 5 attempts; one active link per document (idempotent create + a second active insert rejected by a new partial unique index, migration `0006`); owner set/remove password is argon2-hashed. The CI `database` job now runs the whole suite so new DB-gated files are covered automatically. (Export filtering is verified when export ships — Phase 7.)_
 
 ### Phase 7 — Export *(v1)*
-- [ ] Markdown export per document: metadata + goals, then brags grouped by month (or category), markdown links, attachment manifest
+
+> **Status: in progress.** Slice 7.1 (Markdown export per document + the
+> "include private brags?" choice) is done and committed. Next: the print-optimized
+> view (7.2), PDF via optional headless Chromium (7.3), and JSON export (7.4).
+
+- [x] Markdown export per document: metadata + goals, then brags grouped by month (or category), markdown links, attachment manifest — _slice 7.1: `features/export` — a pure `documentToMarkdown` assembler (unit-tested) renders title/period/description/goals, then brags grouped by month newest-first (date · category · status, impact as a blockquote, the user's Markdown description verbatim, Markdown links, a text attachment manifest with sizes, collaborators/attribution/tags). `getDocumentForExport` (owner-scoped by workspace + user, like `getOwnedAttachmentByKey`) loads the doc + brags with relations batched (no N+1). Downloads stream from `GET /api/export/[documentId]?format=md&private=0|1` (owner-only via `getWorkspaceOrNull` → 401; unowned id 404s; `Content-Disposition: attachment`), triggered from an Export dialog on the document page._
 - [ ] Print-optimized export view (workspace logo header, clean typography, page breaks between months)
 - [ ] PDF export via optional headless-Chromium service; graceful fallback to browser print
-- [ ] "Include private brags?" choice (owner-only, default off)
+- [x] "Include private brags?" choice (owner-only, default off) — _slice 7.1: a checkbox in the Export dialog maps to `?private=1`; off by default, so an export carries only `visibility='shared'` brags (the same filter the public share uses). Verified live: the seeded private March brag is absent unless the box is checked._
 - [ ] JSON export of all the user's data (full portability)
 
 ### Phase 8 — Email reminders *(v1)*
