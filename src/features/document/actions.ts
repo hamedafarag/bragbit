@@ -2,9 +2,11 @@
 
 import { and, eq } from "drizzle-orm";
 
+import { ownedAttachmentKeysForDocument } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { document } from "@/lib/db/schema";
+import { getStorage } from "@/lib/storage";
 
 import { documentSchema, type DocumentInput } from "./schema";
 
@@ -108,12 +110,17 @@ export async function unarchiveDocument(documentId: string): Promise<ActionResul
 }
 
 /**
- * Permanently delete a document the caller owns; its brags (and their links and
- * tag associations) cascade. Scoped by workspace + user in the WHERE so it can't
- * reach across tenants or users.
+ * Permanently delete a document the caller owns; its brags (and their links, tag
+ * associations, and attachment rows) cascade. The attachments' stored objects do
+ * NOT cascade, so we collect every attachment key under the document first, delete
+ * the document, then best-effort purge each object — otherwise deleting a document
+ * would orphan its (possibly sensitive) uploads in storage. Scoped by workspace +
+ * user in the WHERE so it can't reach across tenants or users; we purge only after
+ * a successful owned delete.
  */
 export async function deleteDocument(documentId: string): Promise<ActionResult> {
   const { workspaceId, user } = await requireWorkspace();
+  const storageKeys = await ownedAttachmentKeysForDocument(documentId, workspaceId, user.id);
   const deleted = await db
     .delete(document)
     .where(
@@ -125,5 +132,8 @@ export async function deleteDocument(documentId: string): Promise<ActionResult> 
     )
     .returning({ id: document.id });
   if (deleted.length === 0) return { ok: false, error: "Document not found." };
+
+  const storage = getStorage();
+  await Promise.all(storageKeys.map((key) => storage.delete(key).catch(() => {})));
   return { ok: true };
 }

@@ -58,6 +58,41 @@ jobs:
           S3_ACCESS_KEY_ID: minioadmin
           S3_SECRET_ACCESS_KEY: minioadmin
 
+  database:
+    name: dal integration (postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: bragbit
+          POSTGRES_PASSWORD: bragbit
+          POSTGRES_DB: bragbit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
+      BETTER_AUTH_SECRET: ci-dal-placeholder-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      # Setting DATABASE_URL un-skips the DB-gated DAL tests (skipped in `verify`).
+      - name: DAL integration tests (against Postgres)
+        run: pnpm test src/features/attachment/object-cleanup.test.ts
+
   e2e:
     name: e2e (playwright)
     runs-on: ubuntu-latest

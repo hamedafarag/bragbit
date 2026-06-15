@@ -2,9 +2,11 @@
 
 import { and, eq, exists } from "drizzle-orm";
 
+import { ownedAttachmentKeysForBrag } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { brag, bragLink, document } from "@/lib/db/schema";
+import { getStorage } from "@/lib/storage";
 
 import {
   bragSchema,
@@ -162,13 +164,25 @@ export async function updateBrag(bragId: string, input: BragInput): Promise<Acti
   return { ok: true };
 }
 
-/** Permanently delete a brag the caller owns (its links and tag associations cascade). */
+/**
+ * Permanently delete a brag the caller owns. Its links, tag associations, and
+ * attachment rows cascade — but the attachments' stored objects do not, so we
+ * collect their storage keys first, delete the brag, then best-effort purge each
+ * object (mirroring deleteAttachment: a leftover file is harmless and reclaimable,
+ * but orphaning a user's sensitive upload is a delete-completeness/privacy bug).
+ * Keys are collected only for a brag the caller owns; we purge only after a
+ * successful owned delete, so we can never remove files for a brag we don't own.
+ */
 export async function deleteBrag(bragId: string): Promise<ActionResult> {
   const { workspaceId, user } = await requireWorkspace();
+  const storageKeys = await ownedAttachmentKeysForBrag(bragId, workspaceId, user.id);
   const deleted = await db
     .delete(brag)
     .where(and(eq(brag.id, bragId), ownedBrag(workspaceId, user.id)))
     .returning({ id: brag.id });
   if (deleted.length === 0) return { ok: false, error: "Brag not found." };
+
+  const storage = getStorage();
+  await Promise.all(storageKeys.map((key) => storage.delete(key).catch(() => {})));
   return { ok: true };
 }
