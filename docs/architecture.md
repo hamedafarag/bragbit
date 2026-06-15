@@ -3,14 +3,15 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 3 — layering, authentication & tenancy, the
-> DAL boundary, the data model so far, workspace administration & branding, the
-> storage adapter, documents, and brags (incl. links). The remaining domain layers
-> (attachments, sharing, export) are added here as they land.
+> **Status:** documented through Phase 5 — layering, authentication & tenancy, the
+> DAL boundary, the data model, workspace administration & branding, the storage
+> adapter, attachments, documents, and the brag domain (timeline, tags, full-text
+> search, filters, detail view). Sharing and export are added here as they land.
 
 ## Layering (a security decision)
 
-1. **`app/` is routing only** — thin files that gate access and delegate to a feature.
+1. **`app/` is routing only** — thin files that gate access and delegate to a feature (plus the
+   route state files: `loading.tsx` skeletons, an `(app)/error.tsx` boundary, and `not-found.tsx`).
 2. **Code lives in feature modules** grouped by domain. Built so far: `features/auth`,
    `features/workspace`, `features/profile`, `features/invitation`, `features/setup`,
    `features/document`, `features/brag`, `features/attachment`, and `features/timeline`.

@@ -24,7 +24,7 @@ export function AppHeader({
   canAdminister: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-6 backdrop-blur">
+    <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
       <Link href="/dashboard" className="flex items-center gap-3 no-underline">
         {logoUrl ? (
           // Authorizing same-origin route, not an optimizable static asset.
@@ -39,7 +39,7 @@ export function AppHeader({
             B
           </div>
         )}
-        <div>
+        <div className="hidden sm:block">
           <div className="font-serif text-[17.5px] leading-none font-semibold text-ink">
             {workspaceName}
           </div>

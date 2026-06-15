@@ -375,10 +375,11 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 5 — Timeline, tags & search *(v1)*
 
-> **Status: in progress.** Slices 5.1 (timeline), 5.2 (tags), 5.3 (search), 5.4
-> (filters), and 5.5 (the expand-to-detail view) are done and committed. Cursor
-> pagination is **deferred to v1.1** (rationale on its item below; tracked in
-> Phase 10). Remaining for v1: responsive/keyboard + loading/empty/error polish.
+> **Status: complete for v1 (2026-06-15).** Timeline (5.1), tags (5.2), search (5.3),
+> filters (5.4), the expand-to-detail view (5.5), and the responsive +
+> loading/error/not-found polish (5.6) are done and committed. The one open item —
+> cursor pagination — is **deferred to v1.1** (rationale on its item below; tracked
+> in Phase 10).
 
 - [x] Document timeline view: reverse-chronological, **grouped by month** with sticky month headers; cards show title, date, category badge, tags, impact highlight, attachment/link indicators — _slice 5.1: `features/timeline` groups a document's brags by month (sticky headers + per-month counts) along a vertical spine; cards show date, category badge, impact highlight, and link/attachment chips. Tag chips landed in slice 5.2._
 - [x] Card rendering details: 8 category colors (label-paired); **timeline node = status only** (solid accent = shipped · hollow = in-progress) + an "In progress" pill; **private = card treatment** (dashed border + hatch + "Private" badge), not a node ring; links (external-link icon) vs attachments (paperclip + filename) as distinct chips (size in the detail view) — _slice 5.1: the status-only node (solid/hollow) sits on the spine; the "In progress" pill, the dashed/hatched private treatment + "Private" badge, the 8 label-paired category colors, and the distinct link/attachment chips are all in (most shipped with the brag card in Phase 3). Attachment size shows in the editor manager; a read-only detail view is later._
@@ -391,7 +392,7 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Tags: inline create while editing, scoped per user per workspace, **monochrome `#text` chips** (calm logbook style) — _slice 5.2: a tag input in the editor (type + Enter/comma, removable chips, datalist autocomplete from the caller's existing tags); names normalize to lowercase and are create-or-found per (user, workspace), so the same tag is reused across brags (replace-on-save). Monochrome `#name` chips on the card; brags load their tags alongside links/attachments._
 - [x] Filter timeline by tag, category, date range; visible gap months — _slice 5.4: a URL-driven FilterBar (category, the document's tags, a date range, Clear) re-renders the server timeline; `listBrags` applies the filters (tag via a correlated `EXISTS`). The header keeps the document's total win count; quiet months between entries show a "N quiet months" marker in the unfiltered view._
 - [x] Global search across the user's documents within the workspace (Postgres FTS), deep-linking into documents — _slice 5.3: a generated `search` tsvector on brags (weighted title/impact/description) + GIN index; `searchBrags` runs `websearch_to_tsquery` ranked by `ts_rank`, scoped per workspace + user. A header search box (plain GET form) → `/search` lists results grouped by document, each deep-linking to `/documents/[id]#brag` (a `scroll-mt` clears the sticky header)._
-- [ ] Responsive + keyboard-friendly; polish loading/empty/error states
+- [x] Responsive + keyboard-friendly; polish loading/empty/error states — _slice 5.6: a Skeleton primitive + per-route `loading.tsx` (dashboard, document, search); an `(app)/error.tsx` boundary (with retry) and `(app)/not-found.tsx` rendered in-chrome for unowned/missing documents; a mobile pass — icon-only header logo + tighter padding below `sm`, and `min-w-0` on the brag card so the timeline grid never overflows (verified zero horizontal overflow at 375px). The `n` quick-add shortcut + Radix dialog focus-trapping cover the keyboard basics; the rich empty / no-result states shipped with their features (3.x–5.4)._
 
 ### Phase 6 — Sharing *(v1)*
 - [ ] `share_links` schema; create/revoke(rotate) from a share dialog; copy-link UX

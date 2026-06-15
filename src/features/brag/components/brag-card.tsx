@@ -82,7 +82,7 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
         <small className="block text-[9px] tracking-[0.14em] text-ink-faint">{dow}</small>
       </div>
       <div
-        className={`rounded-xl border bg-card px-5 pt-3.5 pb-3.5 shadow-card transition-shadow hover:shadow-card-hover ${
+        className={`min-w-0 rounded-xl border bg-card px-5 pt-3.5 pb-3.5 shadow-card transition-shadow hover:shadow-card-hover ${
           isPrivate
             ? "border-dashed border-line bg-[repeating-linear-gradient(45deg,transparent_0_9px,rgba(34,29,22,0.018)_9px_10px)]"
             : "border-line"
