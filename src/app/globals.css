@@ -127,3 +127,89 @@
       radial-gradient(700px 500px at -10% 100%, rgba(34, 29, 22, 0.05), transparent 70%);
   }
 }
+
+/* Rendered Markdown (brag descriptions/impact, document goals, share pages).
+   Plain CSS on the logbook palette — no @tailwindcss/typography dependency. */
+@layer components {
+  .markdown {
+    color: var(--color-ink-soft);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .markdown :first-child {
+    margin-top: 0;
+  }
+  .markdown :last-child {
+    margin-bottom: 0;
+  }
+  .markdown p {
+    margin: 0.5em 0;
+  }
+  .markdown a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .markdown ul {
+    margin: 0.5em 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+  .markdown ol {
+    margin: 0.5em 0;
+    padding-left: 1.25rem;
+    list-style: decimal;
+  }
+  .markdown li {
+    margin: 0.15em 0;
+  }
+  .markdown strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .markdown em {
+    font-style: italic;
+  }
+  .markdown code {
+    background: var(--color-paper-deep);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+  .markdown pre {
+    margin: 0.5em 0;
+    padding: 0.75rem;
+    overflow-x: auto;
+    background: var(--color-paper-deep);
+    border-radius: 8px;
+  }
+  .markdown pre code {
+    padding: 0;
+    background: transparent;
+  }
+  .markdown blockquote {
+    margin: 0.5em 0;
+    border-left: 2px solid var(--color-line);
+    padding-left: 0.75rem;
+    font-style: italic;
+  }
+  .markdown h1,
+  .markdown h2,
+  .markdown h3 {
+    margin: 0.6em 0 0.3em;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .markdown table {
+    margin: 0.5em 0;
+    border-collapse: collapse;
+  }
+  .markdown th,
+  .markdown td {
+    border: 1px solid var(--color-line);
+    padding: 0.3em 0.6em;
+    text-align: left;
+  }
+}

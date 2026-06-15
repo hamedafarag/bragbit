@@ -3,17 +3,17 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 3 slice 3.1 — layering, authentication &
+> **Status:** documented through Phase 3 slice 3.2 — layering, authentication &
 > tenancy, the DAL boundary, the data model so far, workspace administration &
-> branding, the storage adapter, and documents. The remaining domain layers
-> (brags, attachments, sharing, export) are added here as they land.
+> branding, the storage adapter, documents, and brags. The remaining domain layers
+> (attachments, sharing, export) are added here as they land.
 
 ## Layering (a security decision)
 
 1. **`app/` is routing only** — thin files that gate access and delegate to a feature.
 2. **Code lives in feature modules** grouped by domain. Built so far: `features/auth`,
    `features/workspace`, `features/profile`, `features/invitation`, `features/setup`,
-   `features/document` (`features/brag` lands in the next Phase 3 slice).
+   `features/document`, and `features/brag`.
 3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through
    guards that verify session **and** workspace membership. Nothing outside the DAL imports
    the Drizzle client (`import 'server-only'` on `lib/db` keeps it out of client bundles).
@@ -80,8 +80,25 @@ Documents are **private per user** — an admin role doesn't widen access — so
 workspace + user, so a mismatched id touches no row and reports not-found rather than acting across
 tenants or users. The authenticated home is `/dashboard`, which lists the caller's active documents
 (create/edit in a dialog, reversible archive, and delete — which cascades the document's brags);
-archived documents collapse into a restorable "Archived" disclosure. The brag timeline inside a
-document (`documents/[documentId]`) lands with brags in the next Phase 3 slice.
+archived documents collapse into a restorable "Archived" disclosure. Each document has its own
+page at `documents/[documentId]` (see [Brags](#brags)).
+
+## Brags
+
+A brag is one logged win inside a document. `features/brag` owns it: the category taxonomy + Zod
+schema, queries (`listBrags`, scoped through the parent document via a join), and actions
+(`quickAddBrag` / `createBrag` / `updateBrag` / `deleteBrag`). Brags carry no direct workspace
+column, so ownership runs through the parent document — creates resolve the owned document first;
+updates and deletes use a correlated `EXISTS` on it in the `WHERE`, so a brag in another workspace
+or owned by another user matches no row.
+
+Capture is the priority. The document page has a quick-add bar that logs a brag from a title alone
+(the client stamps today's date), with `n` to focus it from anywhere; "Add with details" opens the
+full editor (date, category, status, impact, collaborators, attribution, and Markdown
+description/impact). Markdown renders through a shared, safe-by-default component (react-markdown +
+remark-gfm — no raw HTML, dangerous URLs stripped): server-side in the brag cards (zero client JS)
+and lazy-loaded for the editor's live preview. The page lists brags newest-first; the month-grouped
+timeline, tags, filters, and search are Phase 5, and the per-brag visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 

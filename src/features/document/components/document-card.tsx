@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { DocumentRow } from "../queries";
 import { DocumentActions } from "./document-actions";
 import type { DocumentFormValues } from "./document-dialog";
@@ -41,7 +43,12 @@ export function DocumentCard({ doc, archived = false }: { doc: DocumentRow; arch
             </div>
           ) : null}
           <h3 className="mt-0.5 font-serif text-[19px] leading-snug font-semibold tracking-[-0.01em]">
-            {doc.title}
+            <Link
+              href={`/documents/${doc.id}`}
+              className="text-ink no-underline hover:underline hover:decoration-line hover:underline-offset-4"
+            >
+              {doc.title}
+            </Link>
           </h3>
           {doc.description ? (
             <p className="mt-1 max-w-[60ch] text-[13.5px] text-ink-soft">{doc.description}</p>
