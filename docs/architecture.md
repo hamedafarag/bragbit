@@ -150,3 +150,21 @@ served by an authorizing one (`/api/files/[...key]`):
   type, an inline `Content-Disposition`, and `Range` → `206` support for large files; uploaded
   through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`). The
   valid-share-token path lands in Phase 6.
+
+## Sharing
+
+A document is shared through a **revocable secret link** (`share_links`, FK-cascaded to the
+document): a 24-byte (`base64url`) token that is the only credential — anyone with the URL can view,
+no login. The `share` feature module mirrors the rest: DAL-guarded queries (`getActiveShareLink`)
+and `"use server"` actions, all resolving document ownership (workspace + user) before any read or
+write, so a `documentId` from another workspace or user yields nothing.
+
+- **Owner side** (the `ShareDialog` on the document page): `createShareLink` mints a link
+  (idempotent — returns the existing active one, keeping the invariant of **one active link per
+  document**), `revokeShareLink` sets `revoked_at` (which will 404 the public route), and
+  `rotateShareLink` revokes + re-creates in a transaction so the old URL dies the instant the new
+  one is shown. The dialog offers copy, rotate, stop-sharing, and surfaces `last_accessed_at`.
+- **Still to come this phase:** the public read-only `/share/[token]` view (workspace-branded,
+  month-grouped, filtering `visibility = 'shared'` at the query layer so private brags never leak,
+  plus the valid-share-token path on the file route), optional argon2 passwords, and the security
+  tests.

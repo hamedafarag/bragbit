@@ -103,6 +103,10 @@ on `0.x` until the deployment modes and core stabilize.
 - Per-brag visibility: mark a brag “Private” in the editor — it's shown to you with a dashed
   “Private” card treatment and will be hidden from shared views and exports. (The `share_links`
   schema for revocable share links also landed, ahead of the sharing UI.)
+- Share links (owner side): a “Share” dialog on the document page creates a secret read-only
+  link (a 24-byte base64url token — the only credential), with copy-to-clipboard, rotate
+  (revoke the old token and mint a fresh one), and stop-sharing. One active link per document;
+  the dialog shows when it was last opened. The public view at `/share/[token]` lands next.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

@@ -16,6 +16,8 @@ import {
   type DocumentFormValues,
 } from "@/features/document/components/document-dialog";
 import { getDocument } from "@/features/document/queries";
+import { ShareDialog } from "@/features/share/components/share-dialog";
+import { getActiveShareLink } from "@/features/share/queries";
 import { FilterBar } from "@/features/timeline/components/filter-bar";
 import { Timeline } from "@/features/timeline/components/timeline";
 
@@ -59,10 +61,11 @@ export default async function DocumentPage({
   const filters = parseFilters(await searchParams);
   const filtersActive = Boolean(filters.category || filters.tag || filters.from || filters.to);
 
-  const [total, brags, documentTags] = await Promise.all([
+  const [total, brags, documentTags, shareLink] = await Promise.all([
     countDocumentBrags(documentId),
     listBrags(documentId, filters),
     listDocumentTags(documentId),
+    getActiveShareLink(documentId),
   ]);
 
   const period = formatPeriod(doc.periodStart, doc.periodEnd);
@@ -93,15 +96,18 @@ export default async function DocumentPage({
           <h1 className="font-serif text-[40px] leading-[1.05] font-medium tracking-[-0.015em]">
             {doc.title}
           </h1>
-          <DocumentDialog
-            documentId={doc.id}
-            initial={editValues}
-            trigger={
-              <Button type="button" variant="outline" size="sm">
-                Edit document
-              </Button>
-            }
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <ShareDialog documentId={doc.id} initial={shareLink} />
+            <DocumentDialog
+              documentId={doc.id}
+              initial={editValues}
+              trigger={
+                <Button type="button" variant="outline" size="sm">
+                  Edit document
+                </Button>
+              }
+            />
+          </div>
         </div>
         {doc.description ? (
           <p className="max-w-[60ch] text-[14px] text-ink-soft">{doc.description}</p>

@@ -396,12 +396,13 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 6 — Sharing *(v1)*
 
-> **Status: in progress.** Slice 6.1 (the `share_links` schema + migration and the
-> per-brag visibility toggle) is done and committed. Next: create/revoke + the share
-> dialog (6.2), the public `/share/[token]` view with visibility filtered at the
-> query layer (6.3), optional passwords (6.4), and the security tests (6.5).
+> **Status: in progress.** Slices 6.1 (the `share_links` schema + migration and the
+> per-brag visibility toggle) and 6.2 (the owner-side create/revoke/rotate actions +
+> the share dialog + copy-link UX) are done and committed. Next: the public
+> `/share/[token]` view with visibility filtered at the query layer (6.3), optional
+> passwords (6.4), and the security tests (6.5).
 
-- [ ] `share_links` schema; create/revoke(rotate) from a share dialog; copy-link UX — _slice 6.1: the `share_links` table + migration (`0005`) — unique `token`, optional `password_hash`, `revoked_at`, `last_accessed_at`, FK-cascaded to the document. The create/revoke actions + share dialog are slice 6.2._
+- [x] `share_links` schema; create/revoke(rotate) from a share dialog; copy-link UX — _slice 6.1: the `share_links` table + migration (`0005`) — unique `token`, optional `password_hash`, `revoked_at`, `last_accessed_at`, FK-cascaded to the document. Slice 6.2: the `share` feature module (DAL-guarded `getActiveShareLink`; `"use server"` create/revoke/rotate actions, ownership resolved before any write) + a `ShareDialog` on the document page. Token = 24 random bytes base64url; one active (non-revoked) link per document (create is idempotent); revoke sets `revoked_at`; rotate = revoke + create in a transaction. Copy-to-clipboard, and `last_accessed_at` shown to the owner (bumped by the public view in 6.3). Owner-side only — no public view yet._
 - [ ] Public read-only view at `/share/[token]`: workspace-branded timeline, attachments, links — clean, manager-presentable, "Powered by BragBit" footer
 - [ ] Optional password: set/remove, argon2 hash, unlock form, httpOnly cookie per share, rate-limited attempts
 - [ ] **Per-brag visibility:** private toggle; filtered at the query layer; visible-only-to-you styling for the owner — _slice 6.1: the editor's "Private" toggle sets `brags.visibility`, and the owner-facing card treatment (dashed border + hatch + "Private" badge) renders for private brags. Query-layer filtering (private brags excluded from the public share + exports) lands with the share view (6.3)._
