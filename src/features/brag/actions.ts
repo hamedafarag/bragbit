@@ -40,6 +40,7 @@ function toFields(data: BragInput) {
     impactMd: orNull(data.impactMd),
     collaborators: splitCollaborators(data.collaborators),
     attribution: orNull(data.attribution),
+    visibility: data.visibility,
   };
 }
 

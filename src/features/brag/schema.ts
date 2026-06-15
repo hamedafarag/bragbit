@@ -64,5 +64,7 @@ export const bragSchema = z.object({
   // Tag names, normalized to lowercase; the action create-or-finds them per
   // user+workspace and dedupes. Monochrome in v1 (no color).
   tags: z.array(z.string().trim().toLowerCase().min(1).max(50)).max(30).default([]),
+  // 'private' hides the brag from shared views and exports (filtered at the query layer).
+  visibility: z.enum(["shared", "private"]).default("shared"),
 });
 export type BragInput = z.infer<typeof bragSchema>;

@@ -41,6 +41,7 @@ export type BragFormValues = {
   attribution: string;
   links: LinkRow[];
   tags: string[];
+  visibility: "shared" | "private";
   attachments: AttachmentItem[];
 };
 
@@ -105,6 +106,7 @@ export function BragEditor({
       attribution: String(fd.get("attribution") ?? ""),
       links: links.filter((l) => l.url.trim() !== ""),
       tags,
+      visibility: fd.get("private") ? "private" : "shared",
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
@@ -189,6 +191,16 @@ export function BragEditor({
               </select>
             </div>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-ink-soft">
+            <input
+              type="checkbox"
+              name="private"
+              defaultChecked={v?.visibility === "private"}
+              className="size-4 rounded border-input accent-primary"
+            />
+            Private — hidden from shared views and exports
+          </label>
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="brag-description">Description</Label>

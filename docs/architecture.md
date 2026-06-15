@@ -63,9 +63,9 @@ Better Auth owns `user` / `session` / `account` / `verification`. The organizati
 `organization` (= the workspace, plus BragBit's `type` / `accent_color` / `logo_key`), `member`,
 and `invitation`. BragBit adds `profiles` and the brag domain: `documents` (workspace + user
 scoped), `brags` (scoped through their parent document — no direct workspace column), `brag_links`,
-`tags` (unique per user per workspace), the `brag_tags` join, and `attachments` (file metadata +
-storage key, scoped through their brag). Still to come: `share_links` (Phase 6) and
-`instance_admins` (Phase 10) — see
+`tags` (unique per user per workspace), the `brag_tags` join, `attachments` (file metadata +
+storage key, scoped through their brag), and `share_links` (revocable public links to a document —
+unique token, optional password hash). Still to come: `instance_admins` (Phase 10) — see
 [PLAN.md §5](../PLAN.md) for the full target model. Every workspace-scoped query filters by the
 caller's membership through the DAL.
 

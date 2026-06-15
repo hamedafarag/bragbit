@@ -45,6 +45,7 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
     attribution: brag.attribution ?? "",
     links: brag.links.map((l) => ({ url: l.url, label: l.label ?? "" })),
     tags: brag.tags,
+    visibility: brag.visibility === "private" ? "private" : "shared",
     attachments: brag.attachments.map((a) => ({
       id: a.id,
       fileName: a.fileName,

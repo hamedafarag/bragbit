@@ -395,10 +395,16 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Responsive + keyboard-friendly; polish loading/empty/error states — _slice 5.6: a Skeleton primitive + per-route `loading.tsx` (dashboard, document, search); an `(app)/error.tsx` boundary (with retry) and `(app)/not-found.tsx` rendered in-chrome for unowned/missing documents; a mobile pass — icon-only header logo + tighter padding below `sm`, and `min-w-0` on the brag card so the timeline grid never overflows (verified zero horizontal overflow at 375px). The `n` quick-add shortcut + Radix dialog focus-trapping cover the keyboard basics; the rich empty / no-result states shipped with their features (3.x–5.4)._
 
 ### Phase 6 — Sharing *(v1)*
-- [ ] `share_links` schema; create/revoke(rotate) from a share dialog; copy-link UX
+
+> **Status: in progress.** Slice 6.1 (the `share_links` schema + migration and the
+> per-brag visibility toggle) is done and committed. Next: create/revoke + the share
+> dialog (6.2), the public `/share/[token]` view with visibility filtered at the
+> query layer (6.3), optional passwords (6.4), and the security tests (6.5).
+
+- [ ] `share_links` schema; create/revoke(rotate) from a share dialog; copy-link UX — _slice 6.1: the `share_links` table + migration (`0005`) — unique `token`, optional `password_hash`, `revoked_at`, `last_accessed_at`, FK-cascaded to the document. The create/revoke actions + share dialog are slice 6.2._
 - [ ] Public read-only view at `/share/[token]`: workspace-branded timeline, attachments, links — clean, manager-presentable, "Powered by BragBit" footer
 - [ ] Optional password: set/remove, argon2 hash, unlock form, httpOnly cookie per share, rate-limited attempts
-- [ ] **Per-brag visibility:** private toggle; filtered at the query layer; visible-only-to-you styling for the owner
+- [ ] **Per-brag visibility:** private toggle; filtered at the query layer; visible-only-to-you styling for the owner — _slice 6.1: the editor's "Private" toggle sets `brags.visibility`, and the owner-facing card treatment (dashed border + hatch + "Private" badge) renders for private brags. Query-layer filtering (private brags excluded from the public share + exports) lands with the share view (6.3)._
 - [ ] `noindex` on share pages; `last_accessed_at` shown to owner
 - [ ] Tests: revoked token 404s, private brags absent from share payloads/exports, password flow
 
