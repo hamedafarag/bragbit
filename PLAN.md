@@ -428,16 +428,15 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 8 — Email reminders *(v1)*
 
-> **Status: in progress.** Slice 8.1 (the opt-in preferences — the `features/reminder`
-> module, a settings section to enable + choose day-of-week + timezone, persisted to
-> the existing `profiles.reminder_*` columns) is done and committed. Next: the
-> reminder email + the due-send engine + the cron route (8.2), the in-process
-> `node-cron` scheduler in `instrumentation.ts` (8.3), and one-click unsubscribe. The
-> CHANGELOG / architecture entries land with 8.2, when reminders actually send.
+> **Status: in progress.** Slices 8.1 (opt-in preferences + settings UI) and 8.2 (the
+> reminder email + the due-send engine + the secured external-cron route + one-click
+> unsubscribe, plus `profiles.last_reminded_at`) are done and committed — reminders
+> send end-to-end (verified against Mailpit). Next: the in-process `node-cron`
+> scheduler in `instrumentation.ts` (8.3), so a self-host needs no external cron.
 
-- [ ] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded — _slice 8.1: the preference side is in — `features/reminder` (Zod schema validating the IANA timezone + day 0–6, an `updateReminderSettings` action upserting `profiles.reminder_enabled` / `reminder_day` / `timezone`, self-scoped via requireSession). The email content (quick-add deep link, workspace branding) + sending are slice 8.2._
-- [ ] `node-cron` scheduler in `instrumentation.ts`; secured route-handler trigger as external-cron fallback
-- [ ] Settings UI + one-click unsubscribe in the email — _slice 8.1: the Settings UI is in (a "Weekly reminders" section: enable toggle, day select, an IANA-timezone select defaulting to the visitor's browser zone). One-click unsubscribe lands with the email (8.2/8.3)._
+- [x] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded — _slice 8.1: the preferences (`features/reminder` — Zod schema validating the IANA timezone + day 0–6, `updateReminderSettings` upserting `profiles.reminder_enabled`/`reminder_day`/`timezone`, self-scoped via requireSession). Slice 8.2: the `WeeklyReminder` React Email (workspace-branded via `emailBrandFromOrg`, a "Log this week's wins" button deep-linking to `/dashboard`, and an unsubscribe link); `sendDueReminders` fires it on the user's chosen day at a target local hour (9am) in their own timezone, idempotent via `last_reminded_at`. Verified live against Mailpit._
+- [ ] `node-cron` scheduler in `instrumentation.ts`; secured route-handler trigger as external-cron fallback — _slice 8.2: the secured route is in — `POST /api/cron/reminders` (CRON_SECRET via `Authorization: Bearer`, constant-time compared; 503 when unconfigured) calls `sendDueReminders`. The pure scheduling math (`isReminderDue` / `localDayHour`) is in `features/reminder/schedule.ts`, unit-tested for timezone + dedup. The in-process `node-cron` scheduler in `instrumentation.ts` is slice 8.3._
+- [x] Settings UI + one-click unsubscribe in the email — _slice 8.1: the Settings UI (a "Weekly reminders" section: enable toggle, day select, an IANA-timezone select defaulting to the visitor's browser zone). Slice 8.2: one-click unsubscribe — every reminder carries a `/unsubscribe/[userId]/[token]` link (a stateless HMAC token over the user id); the page is a no-JS confirm (GET only renders — prefetch-safe — a POST disables) that turns reminders off without a login. Verified: valid token unsubscribes, invalid is rejected._
 
 ### Phase 9 — Open-source & self-host readiness *(v1 release)*
 - [ ] Production `Dockerfile` (multi-stage, Next standalone) + `docker-compose.yml`: app + Postgres (+ optional MinIO, chromium) — **one `docker compose up`**

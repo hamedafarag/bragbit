@@ -129,6 +129,10 @@ on `0.x` until the deployment modes and core stabilize.
 - Data export (JSON): a “Download JSON” in Settings exports your entire dataset — every document
   (archived included) and every brag (private included), with links, attachment metadata, and
   tags — in one portable, versioned JSON file. Your career data is always yours to take.
+- Weekly reminder emails (opt-in): choose a day and time zone in Settings to get a workspace-branded
+  “What did you ship this week?” nudge with a one-tap link to log a win. Sent on your chosen day in
+  your own time zone (deduplicated so you never get two), with one-click unsubscribe in every email.
+  A secured cron endpoint (`POST /api/cron/reminders`, guarded by `CRON_SECRET`) drives delivery.
 
 ### Security
 

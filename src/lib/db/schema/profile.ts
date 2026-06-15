@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth";
 import { timestamps } from "./columns";
@@ -21,9 +21,12 @@ export const profile = pgTable("profiles", {
   team: text("team"),
   bio: text("bio"),
   avatarKey: text("avatar_key"),
-  // Phase 8 (opt-in weekly reminders) — columns defined now, no UI yet.
+  // Opt-in weekly reminders (Phase 8).
   reminderEnabled: boolean("reminder_enabled").notNull().default(false),
   reminderDay: integer("reminder_day"), // 0–6 (Sun–Sat)
   timezone: text("timezone"),
+  // Last reminder sent — guards against double-sends when the scheduler ticks
+  // more than once inside the target local hour.
+  lastRemindedAt: timestamp("last_reminded_at", { withTimezone: true }),
   ...timestamps,
 });

@@ -223,3 +223,23 @@ all brags at once (no N+1, via the shared `attachRelations`); the pure `toDataEx
 to a **versioned** contract that explicitly omits internal columns (the FTS vector, the
 workspace/user FKs). A "Download JSON" link in Settings triggers it. Together the Markdown + JSON
 exporters are the building blocks for the Phase 2 member-removal bundle when that flow lands.
+
+## Reminders
+
+Opt-in weekly reminders (PLAN §6/§8) live in `features/reminder`. A Settings section persists the
+preference (enable + day-of-week + IANA timezone) to the `profiles.reminder_*` columns via
+`updateReminderSettings`. The scheduling math is a **pure** module (`schedule.ts`, unit-tested):
+`localDayHour` resolves a user's local day/hour in their zone, and `isReminderDue` decides whether
+it's their chosen day at the target hour (9am local) and they weren't reminded inside the dedup
+window. `sendDueReminders` loads opted-in users (with their workspace brand, earliest membership),
+sends the branded `WeeklyReminder` email to those due — marking `last_reminded_at` **before** the
+send so a transient SMTP failure costs a missed nudge, never a duplicate — and returns the count.
+
+Delivery is triggered by a **secured external-cron route** (`POST /api/cron/reminders`,
+`CRON_SECRET` via `Authorization: Bearer`, constant-time compared; 503 when unconfigured) that calls
+`sendDueReminders`; the in-process **`node-cron` scheduler** in `instrumentation.ts` (so a self-host
+needs no external cron) calls the same function and lands next. Every email carries a **one-click
+unsubscribe** — a
+`/unsubscribe/[userId]/[token]` link whose token is a stateless HMAC over the user id (no token
+storage); the page is a no-JS confirm (GET only renders, so a mail-client prefetch can't
+unsubscribe; a POST disables reminders) authorized by the token, no login.
