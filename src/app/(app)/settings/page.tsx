@@ -4,10 +4,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { ChangeEmailForm } from "@/features/account/components/change-email-form";
 import { ChangePasswordForm } from "@/features/account/components/change-password-form";
 import { DeleteAccountForm } from "@/features/account/components/delete-account-form";
+import { getProfile } from "@/features/profile/queries";
+import { ReminderSettingsForm } from "@/features/reminder/components/reminder-settings-form";
 import { getActiveWorkspace } from "@/features/workspace/queries";
 
 export default async function SettingsPage() {
   const { user, workspace } = await getActiveWorkspace();
+  const profile = await getProfile(user.id);
 
   return (
     <div className="flex flex-col gap-8">
@@ -35,6 +38,21 @@ export default async function SettingsPage() {
           Choose a strong password. Changing it signs out your other sessions.
         </p>
         <ChangePasswordForm />
+      </section>
+
+      <section className="rounded-xl border border-line bg-card p-6 shadow-card">
+        <h2 className="mb-1 font-serif text-lg font-semibold">Weekly reminders</h2>
+        <p className="mb-5 text-[13px] text-ink-soft">
+          A gentle nudge to log what you shipped — capture wins while they&apos;re fresh, not at
+          review time.
+        </p>
+        <ReminderSettingsForm
+          initial={{
+            enabled: profile?.reminderEnabled ?? false,
+            day: profile?.reminderDay ?? null,
+            timezone: profile?.timezone ?? null,
+          }}
+        />
       </section>
 
       <section className="rounded-xl border border-line bg-card p-6 shadow-card">

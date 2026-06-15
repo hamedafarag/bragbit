@@ -427,9 +427,17 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] JSON export of all the user's data (full portability) — _slice 7.4: `GET /api/export/data` (owner-only via `getWorkspaceOrNull`) downloads the caller's entire dataset in the active workspace as one JSON file — every document (archived included) and every brag regardless of visibility (it's the owner's own copy), with links + attachment metadata + tags. `getAllDataForExport` loads it with relations batched across all brags (no N+1; the shared `attachRelations` helper); the pure, unit-tested `toDataExport` shaper maps it to a versioned contract that explicitly omits internal columns (the FTS vector, workspace/user FKs). Reached from a "Download JSON" link in `/settings` (Export your data)._
 
 ### Phase 8 — Email reminders *(v1)*
-- [ ] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded
+
+> **Status: in progress.** Slice 8.1 (the opt-in preferences — the `features/reminder`
+> module, a settings section to enable + choose day-of-week + timezone, persisted to
+> the existing `profiles.reminder_*` columns) is done and committed. Next: the
+> reminder email + the due-send engine + the cron route (8.2), the in-process
+> `node-cron` scheduler in `instrumentation.ts` (8.3), and one-click unsubscribe. The
+> CHANGELOG / architecture entries land with 8.2, when reminders actually send.
+
+- [ ] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded — _slice 8.1: the preference side is in — `features/reminder` (Zod schema validating the IANA timezone + day 0–6, an `updateReminderSettings` action upserting `profiles.reminder_enabled` / `reminder_day` / `timezone`, self-scoped via requireSession). The email content (quick-add deep link, workspace branding) + sending are slice 8.2._
 - [ ] `node-cron` scheduler in `instrumentation.ts`; secured route-handler trigger as external-cron fallback
-- [ ] Settings UI + one-click unsubscribe in the email
+- [ ] Settings UI + one-click unsubscribe in the email — _slice 8.1: the Settings UI is in (a "Weekly reminders" section: enable toggle, day select, an IANA-timezone select defaulting to the visitor's browser zone). One-click unsubscribe lands with the email (8.2/8.3)._
 
 ### Phase 9 — Open-source & self-host readiness *(v1 release)*
 - [ ] Production `Dockerfile` (multi-stage, Next standalone) + `docker-compose.yml`: app + Postgres (+ optional MinIO, chromium) — **one `docker compose up`**
