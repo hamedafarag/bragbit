@@ -88,6 +88,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Tags on brags: add tags while editing (type to add, with autocomplete from your existing tags) —
   scoped per user per workspace and reused across brags (no duplicates), rendered as monochrome
   `#name` chips on the timeline card.
+- Full-text search: a generated `search` tsvector on brags (weighted title/impact/description) with
+  a GIN index powers global search across your documents in the workspace. A header search box opens
+  `/search` — ranked results grouped by document, each deep-linking straight to the brag.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

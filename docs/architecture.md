@@ -106,9 +106,11 @@ their brags (see [Storage & file routes](#storage--file-routes)). The document p
 brags as a **month-grouped timeline** (`features/timeline`): sticky month headers with per-month
 counts, a vertical spine, and a status-only node on each entry (solid = shipped, hollow =
 in-progress); private is a card treatment, not a node ring. Tags are scoped per (user, workspace),
-create-or-found on save and reused across brags, shown as monochrome `#name` chips. Filters,
-full-text search, and cursor pagination are the rest of Phase 5; the per-brag visibility toggle is
-Phase 6.
+create-or-found on save and reused across brags, shown as monochrome `#name` chips. Full-text
+search runs over a generated `search` tsvector on brags (weighted title/impact/description) with a
+GIN index: `searchBrags` (`websearch_to_tsquery`, ranked by `ts_rank`, scoped per workspace + user)
+backs a header search box → `/search`, whose results deep-link to `/documents/[id]#brag`. Filters
+and cursor pagination are the rest of Phase 5; the per-brag visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 

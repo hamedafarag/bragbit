@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import type { AttachmentRow } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -74,4 +74,53 @@ export async function listBrags(documentId: string): Promise<BragWithRelations[]
     attachments: attachmentsByBrag.get(b.id) ?? [],
     tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
   }));
+}
+
+export type SearchResult = {
+  id: string;
+  title: string;
+  date: string;
+  category: string | null;
+  status: string | null;
+  descriptionMd: string | null;
+  impactMd: string | null;
+  documentId: string;
+  documentTitle: string;
+};
+
+/**
+ * Full-text search across the caller's brags in the active workspace, ranked by
+ * relevance. Scoped through the parent document (workspace + owner) so it never
+ * crosses tenants or users; matches the generated `search` tsvector via the GIN
+ * index. `websearch_to_tsquery` gives forgiving query syntax (quotes, OR, -).
+ */
+export async function searchBrags(term: string): Promise<SearchResult[]> {
+  const trimmed = term.trim();
+  if (!trimmed) return [];
+  const { workspaceId, user } = await requireWorkspace();
+  const query = sql`websearch_to_tsquery('english', ${trimmed})`;
+
+  return db
+    .select({
+      id: brag.id,
+      title: brag.title,
+      date: brag.date,
+      category: brag.category,
+      status: brag.status,
+      descriptionMd: brag.descriptionMd,
+      impactMd: brag.impactMd,
+      documentId: brag.documentId,
+      documentTitle: document.title,
+    })
+    .from(brag)
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(
+      and(
+        eq(document.workspaceId, workspaceId),
+        eq(document.userId, user.id),
+        sql`${brag.search} @@ ${query}`,
+      ),
+    )
+    .orderBy(desc(sql`ts_rank(${brag.search}, ${query})`))
+    .limit(50);
 }

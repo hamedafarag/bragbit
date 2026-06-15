@@ -1,5 +1,6 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import {
+  customType,
   date,
   index,
   integer,
@@ -15,6 +16,13 @@ import { idColumn, timestamps } from "./columns";
 import { document } from "./document";
 import { organization } from "./workspace";
 
+/** Postgres `tsvector` (no built-in Drizzle type) for the generated FTS column. */
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
+
 /**
  * A brag — a single logged win inside a document (PLAN.md §5). Brags are scoped
  * through their parent document (which carries the workspace + owner); there's no
@@ -25,10 +33,9 @@ import { organization } from "./workspace";
  * (the house convention — see member.role / organization.type), not Postgres
  * enums. `date` is a calendar date (string mode), defaulting to today.
  *
- * Brags CRUD + the <30s quick-add flow land in the next Phase 3 slice; the table
- * is defined now so the whole Phase 3 schema ships in one migration. The
- * generated `search` tsvector column + its GIN index are deferred to Phase 5
- * (full-text search), where they're explicitly scoped.
+ * `search` is a generated `tsvector` over title (weight A), impact (B), and
+ * description (C); Postgres keeps it in sync on write, and a GIN index backs the
+ * workspace full-text search (features/brag `searchBrags`).
  */
 export const brag = pgTable(
   "brags",
@@ -48,11 +55,19 @@ export const brag = pgTable(
     visibility: text("visibility").notNull().default("shared"), // 'shared' | 'private'
     collaborators: text("collaborators").array(),
     attribution: text("attribution"), // who gave the recognition (recognition brags)
+    // Generated FTS vector (weighted title/impact/description); GIN-indexed below.
+    search: tsvector("search").generatedAlwaysAs(
+      (): SQL =>
+        sql`setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(impact_md, '')), 'B') || setweight(to_tsvector('english', coalesce(description_md, '')), 'C')`,
+    ),
     ...timestamps,
   },
-  // Timeline order within a document (§6 performance). FK on document_id is
-  // covered by this composite's leading column.
-  (t) => [index("brags_document_date_idx").on(t.documentId, t.date)],
+  // Timeline order within a document (§6 performance); GIN over the FTS vector.
+  // The FK on document_id is covered by the composite's leading column.
+  (t) => [
+    index("brags_document_date_idx").on(t.documentId, t.date),
+    index("brags_search_idx").using("gin", t.search),
+  ],
 );
 
 /** External links attached to a brag (a PR, doc, dashboard…), ordered by position. */

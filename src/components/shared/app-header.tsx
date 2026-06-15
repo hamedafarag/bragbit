@@ -49,6 +49,17 @@ export function AppHeader({
         </div>
       </Link>
 
+      {/* Global full-text search — a plain GET form (no JS) → /search?q=… */}
+      <form action="/search" className="ml-5 hidden items-center sm:flex" role="search">
+        <input
+          type="search"
+          name="q"
+          placeholder="Search brags…"
+          aria-label="Search brags"
+          className="h-8 w-44 rounded-md border border-line bg-paper-deep/60 px-3 text-[13px] text-ink transition-[width,border-color] placeholder:text-ink-faint focus:w-56 focus:border-primary focus:ring-2 focus:ring-ring focus:outline-none"
+        />
+      </form>
+
       <div className="flex-1" />
 
       <nav className="flex items-center gap-1">

@@ -54,7 +54,7 @@ export function BragCard({ brag }: { brag: BragWithRelations }) {
   };
 
   return (
-    <li className="relative grid grid-cols-[60px_1fr] gap-x-8 py-1">
+    <li id={brag.id} className="relative grid scroll-mt-24 grid-cols-[60px_1fr] gap-x-8 py-1">
       {/* Status-only spine node: solid = shipped (or unset), hollow = in-progress. */}
       <span
         aria-hidden
