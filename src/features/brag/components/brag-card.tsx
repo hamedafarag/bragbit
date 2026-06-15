@@ -1,7 +1,9 @@
+import { ExternalLink } from "lucide-react";
+
 import { Markdown } from "@/components/shared/markdown";
 import { Badge } from "@/components/ui/badge";
 
-import type { BragRow } from "../queries";
+import type { BragWithLinks } from "../queries";
 import { BRAG_CATEGORIES } from "../schema";
 import { BragActions } from "./brag-actions";
 import type { BragFormValues } from "./brag-editor";
@@ -10,13 +12,20 @@ function categoryMeta(value: string | null) {
   return BRAG_CATEGORIES.find((c) => c.value === value) ?? null;
 }
 
+/** Strip the scheme + trailing slash for a tidy chip when a link has no label. */
+function prettyUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+}
+
 /**
  * One brag in a document. Reverse-chron list rendering (the month-grouped
  * timeline with its spine is Phase 5). Markdown is rendered server-side here, so
- * brag descriptions add no client JS. The dashed/hatched private treatment is
- * wired on `visibility` for when the Phase 6 toggle lands; nothing sets it yet.
+ * brag descriptions add no client JS. Links are external (external-link icon,
+ * new tab, noreferrer); attachments — a distinct paperclip chip — arrive in
+ * Phase 4. The dashed/hatched private treatment is wired on `visibility` for the
+ * Phase 6 toggle; nothing sets it yet.
  */
-export function BragCard({ brag }: { brag: BragRow }) {
+export function BragCard({ brag }: { brag: BragWithLinks }) {
   const cat = categoryMeta(brag.category);
   const d = new Date(`${brag.date}T00:00:00`);
   const mon = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -33,6 +42,7 @@ export function BragCard({ brag }: { brag: BragRow }) {
     impactMd: brag.impactMd ?? "",
     collaborators: collaborators.join(", "),
     attribution: brag.attribution ?? "",
+    links: brag.links.map((l) => ({ url: l.url, label: l.label ?? "" })),
   };
 
   return (
@@ -83,6 +93,23 @@ export function BragCard({ brag }: { brag: BragRow }) {
           <div className="mt-2.5 flex w-fit items-baseline gap-2 rounded-md bg-primary/10 px-3 py-1.5 text-[12.5px] font-medium text-primary">
             <span aria-hidden>↗</span>
             <Markdown className="text-primary [&_p]:m-0">{brag.impactMd}</Markdown>
+          </div>
+        ) : null}
+
+        {brag.links.length > 0 ? (
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {brag.links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex max-w-[260px] items-center gap-1.5 truncate rounded-md border border-line-soft bg-paper px-2 py-[3px] font-mono text-[10.5px] text-ink-soft no-underline hover:border-ink-faint hover:text-ink"
+              >
+                <ExternalLink className="size-3 shrink-0" />
+                <span className="truncate">{link.label || prettyUrl(link.url)}</span>
+              </a>
+            ))}
           </div>
         ) : null}
 

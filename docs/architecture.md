@@ -3,9 +3,9 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 3 slice 3.2 — layering, authentication &
-> tenancy, the DAL boundary, the data model so far, workspace administration &
-> branding, the storage adapter, documents, and brags. The remaining domain layers
+> **Status:** documented through Phase 3 — layering, authentication & tenancy, the
+> DAL boundary, the data model so far, workspace administration & branding, the
+> storage adapter, documents, and brags (incl. links). The remaining domain layers
 > (attachments, sharing, export) are added here as they land.
 
 ## Layering (a security decision)
@@ -94,11 +94,14 @@ or owned by another user matches no row.
 
 Capture is the priority. The document page has a quick-add bar that logs a brag from a title alone
 (the client stamps today's date), with `n` to focus it from anywhere; "Add with details" opens the
-full editor (date, category, status, impact, collaborators, attribution, and Markdown
-description/impact). Markdown renders through a shared, safe-by-default component (react-markdown +
-remark-gfm — no raw HTML, dangerous URLs stripped): server-side in the brag cards (zero client JS)
-and lazy-loaded for the editor's live preview. The page lists brags newest-first; the month-grouped
-timeline, tags, filters, and search are Phase 5, and the per-brag visibility toggle is Phase 6.
+full editor (date, category, status, impact, collaborators, attribution, multiple labeled links,
+and Markdown description/impact). Markdown renders through a shared, safe-by-default component
+(react-markdown + remark-gfm — no raw HTML, dangerous URLs stripped): server-side in the brag cards
+(zero client JS) and lazy-loaded for the editor's live preview. Links live in `brag_links`, loaded
+with their brags in one batched query (no N+1) and replaced transactionally on edit; they render as
+external-link chips (new tab, `rel="noopener noreferrer"`), visually distinct from the attachment
+chips arriving in Phase 4. The page lists brags newest-first; the month-grouped timeline, tags,
+filters, and search are Phase 5, and the per-brag visibility toggle is Phase 6.
 
 ## Workspace administration & branding
 

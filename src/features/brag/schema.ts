@@ -34,6 +34,14 @@ export type BragStatus = (typeof BRAG_STATUS_VALUES)[number];
 const optionalText = (max: number) => z.string().trim().max(max).default("");
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-06-15");
 
+// A link attached to a brag (a PR, doc, dashboard…). The URL must be absolute
+// (it opens in a new tab); the label is optional. Order is the array index.
+export const bragLinkSchema = z.object({
+  url: z.url("Enter a full URL (https://…)").max(2000),
+  label: z.string().trim().max(200).default(""),
+});
+export type BragLinkInput = z.infer<typeof bragLinkSchema>;
+
 // Quick-add — the soul: only a title, plus the date the client stamps as today.
 export const quickAddSchema = z.object({
   title: z.string().trim().min(1, "A title is all you need").max(300),
@@ -52,5 +60,6 @@ export const bragSchema = z.object({
   impactMd: optionalText(1000),
   collaborators: optionalText(500),
   attribution: optionalText(300),
+  links: z.array(bragLinkSchema).max(20).default([]),
 });
 export type BragInput = z.infer<typeof bragSchema>;

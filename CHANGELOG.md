@@ -75,8 +75,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,
-  and Markdown description/impact with a Write/Preview toggle. Markdown renders safely
-  (react-markdown — no raw HTML, dangerous URLs stripped) server-side in the cards and is
-  lazy-loaded for the editor preview. Each document page lists its brags newest-first with the
-  goals rendered and a back-fill onboarding empty state; brags are owned through their parent
-  document and guarded on every read and write.
+  multiple labeled links, and Markdown description/impact with a Write/Preview toggle. Markdown
+  renders safely (react-markdown — no raw HTML, dangerous URLs stripped) server-side in the cards
+  and is lazy-loaded for the editor preview; links render as external-link chips that open in a new
+  tab. Each document page lists its brags newest-first with the goals rendered and a back-fill
+  onboarding empty state; brags are owned through their parent document and guarded on every read
+  and write.

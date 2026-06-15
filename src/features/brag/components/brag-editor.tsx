@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 
 import { createBrag, updateBrag } from "../actions";
 import { BRAG_CATEGORIES, bragSchema } from "../schema";
+import { LinksField, type LinkRow } from "./links-field";
 import { MarkdownField } from "./markdown-field";
 
 // All-strings form values (the action maps "" → null and splits collaborators).
@@ -32,6 +33,7 @@ export type BragFormValues = {
   impactMd: string;
   collaborators: string;
   attribution: string;
+  links: LinkRow[];
 };
 
 function todayLocal(): string {
@@ -63,7 +65,15 @@ export function BragEditor({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  // Links live in state (not FormData) so rows can be added/removed. The state
+  // sits above the dialog content, so reset it to `initial` whenever it opens.
+  const [links, setLinks] = useState<LinkRow[]>(initial?.links ?? []);
   const v = initial;
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next) setLinks(initial?.links ?? []);
+  }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -77,6 +87,7 @@ export function BragEditor({
       impactMd: String(fd.get("impactMd") ?? ""),
       collaborators: String(fd.get("collaborators") ?? ""),
       attribution: String(fd.get("attribution") ?? ""),
+      links: links.filter((l) => l.url.trim() !== ""),
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
@@ -98,7 +109,7 @@ export function BragEditor({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -205,6 +216,14 @@ export function BragEditor({
               />
               <p className="font-mono text-[10.5px] text-ink-faint">Who recognized the work.</p>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Links</span>
+            <LinksField value={links} onChange={setLinks} />
+            <p className="font-mono text-[10.5px] text-ink-faint">
+              A PR, doc, or dashboard — with an optional label.
+            </p>
           </div>
 
           <DialogFooter>

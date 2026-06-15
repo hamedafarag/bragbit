@@ -343,11 +343,12 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 3 — Core domain: documents & brags *(v1)*
 
-> **Status: in progress.** Slices 3.1 (schema + Documents CRUD + the `/dashboard`
-> listing) and 3.2 (brags CRUD, the <30s quick-add, the full editor with Markdown,
-> the per-document page + empty-state onboarding) are done and committed. Remaining:
-> multiple links per brag with labels (slice 3.3). The month-grouped timeline, tags,
-> filters, and search stay in Phase 5; the per-brag visibility toggle is Phase 6.
+> **Status: complete (2026-06-15).** Slices 3.1 (schema + Documents CRUD + the
+> `/dashboard` listing), 3.2 (brags CRUD, the <30s quick-add, the full editor with
+> Markdown, the per-document page + empty-state onboarding), and 3.3 (multiple
+> labeled links per brag) are all done and committed. The month-grouped timeline,
+> tags, filters, and search land in Phase 5; the per-brag visibility toggle is
+> Phase 6.
 
 - [x] Drizzle schema + migrations for `documents`, `brags`, `brag_links`, `tags`, `brag_tags` (all workspace-scoped) — _slice 3.1: the full Phase 3 schema shipped in one migration (`0002`). Documents are workspace + user scoped; brags are scoped through their parent document (no direct workspace column); tags are unique per (user, workspace, name). The generated `search` tsvector + its GIN index are deferred to Phase 5 (FTS)._
 - [x] Documents CRUD: create (title + optional period + goals), edit, archive/delete; dashboard listing the workspace's documents for the user — _slice 3.1: `features/document` (Zod schema, DAL-guarded queries, server actions that enforce ownership + workspace in the `WHERE`). `/dashboard` lists the caller's documents with create/edit in a dialog, **reversible** archive (a restorable "Archived" disclosure), and delete (cascades the document's brags). Sign-in / setup / invite-accept now land on `/dashboard`._
@@ -355,7 +356,7 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] **Quick-add flow (the product's soul):** only title required, date defaults to today; everything else optional; target < 30s; keyboard shortcut (`n`) and inline add from timeline — _slice 3.2: a quick-add bar on the document page logs a brag from a title alone (the client stamps today's date); `n` focuses it from anywhere; "Add with details" opens the full editor. (The brag list is a simple reverse-chron list for now; the month-grouped timeline is Phase 5.)_
 - [x] Form placeholders teach the formula: *"What you did + why it mattered + the measurable result"* with the 40%→28% example — _slice 3.2: the formula line under the quick-add bar and the description placeholder (the 40%→28% checkout example)._
 - [x] Impact field, category select, status, collaborators, attribution (recognition brags) — _slice 3.2: all in the editor; category is the fixed 8-color taxonomy, collaborators a comma-separated list stored as `text[]`._
-- [ ] Multiple links per brag with labels
+- [x] Multiple links per brag with labels — _slice 3.3: a repeatable links sub-form in the editor (URL + optional label, add/remove, ordered by position); links load with brags in one batched query (no N+1) and are replaced transactionally on update; rendered as external-link chips (new tab, `rel="noopener noreferrer"`). `brag_links` cascades on brag delete._
 - [x] Markdown editor for description/impact (edit/preview), sanitized rendering — _slice 3.2: a Write/Preview Markdown field (react-markdown + remark-gfm, safe by default — no raw HTML, dangerous URLs stripped); rendered server-side in cards (zero client JS) and lazy-loaded for the editor preview. The bundle budget was raised 350→400 kB to fit the renderer._
 - [x] Empty-state onboarding: *"Start by back-filling three wins from the past month"* — _slice 3.2: shown on a document with no brags yet._
 
