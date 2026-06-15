@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getOwnedAttachmentByKey, type AttachmentRow } from "@/features/attachment/queries";
+import { getSharedAttachmentByKey } from "@/features/share/queries";
 import { getSessionOrNull, isWorkspaceMember } from "@/lib/auth/guards";
 import { contentTypeForKey, getStorage, type ByteRange, type Storage } from "@/lib/storage";
 
@@ -9,8 +10,9 @@ import { contentTypeForKey, getStorage, type ByteRange, type Storage } from "@/l
  *   - `branding/` (logos) — a deliberate public exception (PLAN.md §6): rendered
  *     on the login page and share pages before any session exists.
  *   - `avatars/` — any member of the key's workspace.
- *   - `attachments/` — the owner only (private per user, like brags), resolved via
- *     attachment → brag → document. Phase 6 adds a valid-share-token path.
+ *   - `attachments/` — the owner (session, resolved via attachment → brag →
+ *     document, private per user), or a valid `?token=` share whose document holds
+ *     the brag and that brag is shared.
  *   - anything else — 404.
  * URL segments are validated so they can never traverse the storage root.
  */
@@ -39,11 +41,22 @@ export async function GET(request: Request, ctx: RouteContext<"/api/files/[...ke
   }
 
   if (kind === "attachments") {
+    // Owner (session) path: the attachment must resolve through brag → document
+    // to this user. Private-per-user, so membership alone isn't enough.
     const data = await getSessionOrNull();
-    if (!data) return new NextResponse("Unauthorized", { status: 401 });
-    const att = await getOwnedAttachmentByKey(key, data.user.id);
-    if (!att) return new NextResponse("Not found", { status: 404 });
-    return serveRanged(request, storage, key, att);
+    if (data) {
+      const att = await getOwnedAttachmentByKey(key, data.user.id);
+      if (att) return serveRanged(request, storage, key, att);
+    }
+    // Valid-share-token path (public, no session): the attachment's brag must be
+    // SHARED and belong to the token's non-revoked document.
+    const token = new URL(request.url).searchParams.get("token");
+    if (token) {
+      const att = await getSharedAttachmentByKey(key, token);
+      if (att) return serveRanged(request, storage, key, att);
+    }
+    // Don't distinguish "no auth" from "not yours" — a flat 404 leaks nothing.
+    return new NextResponse("Not found", { status: 404 });
   }
 
   return new NextResponse("Not found", { status: 404 });

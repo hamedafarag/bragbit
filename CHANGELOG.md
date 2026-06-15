@@ -107,6 +107,12 @@ on `0.x` until the deployment modes and core stabilize.
   link (a 24-byte base64url token — the only credential), with copy-to-clipboard, rotate
   (revoke the old token and mint a fresh one), and stop-sharing. One active link per document;
   the dialog shows when it was last opened. The public view at `/share/[token]` lands next.
+- Public share page (`/share/[token]`): a read-only, login-free view of a document — workspace
+  branded (logo, name, accent), a month-grouped timeline of only the **shared** brags (private
+  ones are filtered out at the query layer, so they never appear in a share or its attachments),
+  with links and attachments. Attachments stream through the file route via the share token
+  (no session). The page is `noindex`, carries a “Powered by BragBit” footer, and records when
+  it was last opened (shown to the owner); an unknown or revoked token shows a friendly 404.
 - Brags — log wins inside a document, on its own page (`/documents/[id]`). A sub-30-second
   quick-add (a title is all you need; press <kbd>N</kbd> to focus it from anywhere) plus a full
   editor with date, category (the 8-color taxonomy), status, impact, collaborators, attribution,

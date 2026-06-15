@@ -15,6 +15,7 @@ import {
   DocumentDialog,
   type DocumentFormValues,
 } from "@/features/document/components/document-dialog";
+import { BragCard } from "@/features/brag/components/brag-card";
 import { getDocument } from "@/features/document/queries";
 import { ShareDialog } from "@/features/share/components/share-dialog";
 import { getActiveShareLink } from "@/features/share/queries";
@@ -145,7 +146,11 @@ export default async function DocumentPage({
               No brags match these filters.
             </div>
           ) : (
-            <Timeline brags={brags} showGaps={!filtersActive} />
+            <Timeline
+              brags={brags}
+              showGaps={!filtersActive}
+              renderCard={(brag) => <BragCard brag={brag} />}
+            />
           )}
         </div>
       )}

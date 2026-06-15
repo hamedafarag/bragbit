@@ -127,8 +127,9 @@ visibility toggle is Phase 6.
 - **Branding is per-workspace.** A validated hex accent + a logo are applied to the app chrome and
   the sign-in page through a `--primary` / `--ring` CSS-variable override on the layout wrapper, and
   to every email template via `lib/branding` — invitations use the inviting org's brand;
-  transactional emails (verify / reset / change-email) use the instance brand. Share-page branding
-  and the "Powered by BragBit" footer land in Phase 6.
+  transactional emails (verify / reset / change-email) use the instance brand. The public share
+  page (Phase 6) applies the document's workspace brand the same way and footers "Powered by
+  BragBit".
 
 ## Storage & file routes
 
@@ -145,11 +146,11 @@ served by an authorizing one (`/api/files/[...key]`):
 - `branding/` (logos) — **public**, the deliberate exception (rendered on the pre-auth sign-in page,
   and later on share pages).
 - `avatars/` — **session-gated** to a member of the key's workspace.
-- `attachments/` — the **owner only** (resolved via attachment → brag → document; workspace
-  membership isn't enough, since attachments are private per user). Served with the stored MIME
-  type, an inline `Content-Disposition`, and `Range` → `206` support for large files; uploaded
-  through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`). The
-  valid-share-token path lands in Phase 6.
+- `attachments/` — the **owner** (resolved via attachment → brag → document; workspace
+  membership isn't enough, since attachments are private per user) **or a valid `?token=` share**
+  (the brag must be `shared` and belong to the token's non-revoked document). Served with the
+  stored MIME type, an inline `Content-Disposition`, and `Range` → `206` support for large files;
+  uploaded through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`).
 
 ## Sharing
 
@@ -161,10 +162,19 @@ write, so a `documentId` from another workspace or user yields nothing.
 
 - **Owner side** (the `ShareDialog` on the document page): `createShareLink` mints a link
   (idempotent — returns the existing active one, keeping the invariant of **one active link per
-  document**), `revokeShareLink` sets `revoked_at` (which will 404 the public route), and
+  document**), `revokeShareLink` sets `revoked_at` (which 404s the public route), and
   `rotateShareLink` revokes + re-creates in a transaction so the old URL dies the instant the new
   one is shown. The dialog offers copy, rotate, stop-sharing, and surfaces `last_accessed_at`.
-- **Still to come this phase:** the public read-only `/share/[token]` view (workspace-branded,
-  month-grouped, filtering `visibility = 'shared'` at the query layer so private brags never leak,
-  plus the valid-share-token path on the file route), optional argon2 passwords, and the security
-  tests.
+- **Public side** (`/share/[token]`, outside the `(app)`/`(auth)` groups, no session):
+  `getSharedDocument(token)` resolves the non-revoked token to its document + workspace brand and
+  the document's `visibility = 'shared'` brags only (relations batch-loaded, no N+1), then bumps
+  `last_accessed_at`. The page applies the document's workspace brand (`accentVars` + logo + name),
+  renders a read-only month-grouped timeline, is `noindex`, and footers "Powered by BragBit"; an
+  unknown/revoked token renders a friendly 404. The timeline is **card-agnostic** (a `renderCard`
+  prop): the owner injects the interactive `BragCard`, the share page injects a read-only
+  `PublicBragCard` — both reuse the server-only `BragCardShell`, so the owner editor never reaches
+  the public bundle. Attachments stream through the file route's `?token=` path
+  (`getSharedAttachmentByKey`: the brag must be `shared` and belong to the token's non-revoked
+  document).
+- **Still to come this phase:** optional argon2 passwords (set/remove, an unlock form, an httpOnly
+  per-share cookie, rate-limited attempts) and the security tests.

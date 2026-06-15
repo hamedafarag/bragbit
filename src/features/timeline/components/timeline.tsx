@@ -1,6 +1,5 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 
-import { BragCard } from "@/features/brag/components/brag-card";
 import type { BragWithRelations } from "@/features/brag/queries";
 
 type MonthGroup = { key: string; label: string; year: string; brags: BragWithRelations[] };
@@ -34,14 +33,21 @@ function monthIndex(key: string): number {
  * not a node ring (PLAN §4). Brags arrive already date-desc from listBrags. When
  * `showGaps` (the unfiltered view), quiet months between entries are marked so
  * the logging cadence is visible; the month-windowed cursor pagination for very
- * long documents is Phase 5 slice 5.5.
+ * long documents is deferred to v1.1.
+ *
+ * Card-agnostic: callers pass `renderCard` so the owner timeline injects the
+ * interactive BragCard while the public share page injects a read-only card —
+ * keeping the owner editor out of the public bundle. The grouping/spine/gaps stay
+ * shared.
  */
 export function Timeline({
   brags,
   showGaps = false,
+  renderCard,
 }: {
   brags: BragWithRelations[];
   showGaps?: boolean;
+  renderCard: (brag: BragWithRelations) => ReactNode;
 }) {
   const months = groupByMonth(brags);
 
@@ -74,7 +80,7 @@ export function Timeline({
               </header>
               <ul className="flex flex-col gap-3 pb-2">
                 {month.brags.map((brag) => (
-                  <BragCard key={brag.id} brag={brag} />
+                  <Fragment key={brag.id}>{renderCard(brag)}</Fragment>
                 ))}
               </ul>
             </section>
