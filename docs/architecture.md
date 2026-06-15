@@ -3,11 +3,11 @@
 Kept in sync with [PLAN.md](../PLAN.md) §6. This documents what's **built**; the
 full target model and file structure live in PLAN §5–§6.
 
-> **Status:** documented through Phase 7 — layering, authentication & tenancy, the
+> **Status:** documented through Phase 8 — layering, authentication & tenancy, the
 > DAL boundary, the data model, workspace administration & branding, the storage
 > adapter, attachments, documents, the brag domain (timeline, tags, full-text
 > search, filters, detail view), sharing (public links, passwords, the security
-> invariants), and export (Markdown, print/PDF, full-data JSON).
+> invariants), export (Markdown, print/PDF, full-data JSON), and reminders.
 
 ## Layering (a security decision)
 
@@ -235,11 +235,12 @@ window. `sendDueReminders` loads opted-in users (with their workspace brand, ear
 sends the branded `WeeklyReminder` email to those due — marking `last_reminded_at` **before** the
 send so a transient SMTP failure costs a missed nudge, never a duplicate — and returns the count.
 
-Delivery is triggered by a **secured external-cron route** (`POST /api/cron/reminders`,
-`CRON_SECRET` via `Authorization: Bearer`, constant-time compared; 503 when unconfigured) that calls
-`sendDueReminders`; the in-process **`node-cron` scheduler** in `instrumentation.ts` (so a self-host
-needs no external cron) calls the same function and lands next. Every email carries a **one-click
-unsubscribe** — a
+Delivery is triggered two ways, both calling `sendDueReminders`: the in-process **`node-cron`
+scheduler** in `src/instrumentation.ts` (an hourly tick, gated to the Node.js runtime in production
+— the standalone server — so a self-host needs no external cron), and a **secured external-cron
+route** (`POST /api/cron/reminders`, `CRON_SECRET` via `Authorization: Bearer`, constant-time
+compared; 503 when unconfigured) as the serverless fallback. Running both is safe — the
+`last_reminded_at` dedup prevents a double send. Every email carries a **one-click unsubscribe** — a
 `/unsubscribe/[userId]/[token]` link whose token is a stateless HMAC over the user id (no token
 storage); the page is a no-JS confirm (GET only renders, so a mail-client prefetch can't
 unsubscribe; a POST disables reminders) authorized by the token, no login.

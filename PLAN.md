@@ -428,14 +428,15 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 
 ### Phase 8 — Email reminders *(v1)*
 
-> **Status: in progress.** Slices 8.1 (opt-in preferences + settings UI) and 8.2 (the
-> reminder email + the due-send engine + the secured external-cron route + one-click
-> unsubscribe, plus `profiles.last_reminded_at`) are done and committed — reminders
-> send end-to-end (verified against Mailpit). Next: the in-process `node-cron`
-> scheduler in `instrumentation.ts` (8.3), so a self-host needs no external cron.
+> **Status: complete (2026-06-15).** Slices 8.1 (opt-in preferences + settings UI),
+> 8.2 (the reminder email + due-send engine + secured external-cron route +
+> one-click unsubscribe, plus `profiles.last_reminded_at`), and 8.3 (the in-process
+> `node-cron` scheduler in `instrumentation.ts`) are all done and committed.
+> Reminders send end-to-end, verified against Mailpit; the production server
+> self-schedules (no external cron required).
 
 - [x] Opt-in weekly reminder per user: day-of-week + timezone; *"What did you ship this week?"* with quick-add deep link; workspace-branded — _slice 8.1: the preferences (`features/reminder` — Zod schema validating the IANA timezone + day 0–6, `updateReminderSettings` upserting `profiles.reminder_enabled`/`reminder_day`/`timezone`, self-scoped via requireSession). Slice 8.2: the `WeeklyReminder` React Email (workspace-branded via `emailBrandFromOrg`, a "Log this week's wins" button deep-linking to `/dashboard`, and an unsubscribe link); `sendDueReminders` fires it on the user's chosen day at a target local hour (9am) in their own timezone, idempotent via `last_reminded_at`. Verified live against Mailpit._
-- [ ] `node-cron` scheduler in `instrumentation.ts`; secured route-handler trigger as external-cron fallback — _slice 8.2: the secured route is in — `POST /api/cron/reminders` (CRON_SECRET via `Authorization: Bearer`, constant-time compared; 503 when unconfigured) calls `sendDueReminders`. The pure scheduling math (`isReminderDue` / `localDayHour`) is in `features/reminder/schedule.ts`, unit-tested for timezone + dedup. The in-process `node-cron` scheduler in `instrumentation.ts` is slice 8.3._
+- [x] `node-cron` scheduler in `instrumentation.ts`; secured route-handler trigger as external-cron fallback — _slice 8.2: the secured route — `POST /api/cron/reminders` (CRON_SECRET via `Authorization: Bearer`, constant-time compared; 503 when unconfigured) calls `sendDueReminders`. The pure scheduling math (`isReminderDue` / `localDayHour`) is in `features/reminder/schedule.ts`, unit-tested for timezone + dedup. Slice 8.3: `src/instrumentation.ts` registers a `node-cron` hourly tick (`0 * * * *`) calling `sendDueReminders`, gated to the Node.js runtime in production (the standalone server) — verified the "scheduler registered" log on a prod start. Running both triggers is safe (the `last_reminded_at` dedup); the route is the serverless/external fallback._
 - [x] Settings UI + one-click unsubscribe in the email — _slice 8.1: the Settings UI (a "Weekly reminders" section: enable toggle, day select, an IANA-timezone select defaulting to the visitor's browser zone). Slice 8.2: one-click unsubscribe — every reminder carries a `/unsubscribe/[userId]/[token]` link (a stateless HMAC token over the user id); the page is a no-JS confirm (GET only renders — prefetch-safe — a POST disables) that turns reminders off without a login. Verified: valid token unsubscribes, invalid is rejected._
 
 ### Phase 9 — Open-source & self-host readiness *(v1 release)*

@@ -132,7 +132,8 @@ on `0.x` until the deployment modes and core stabilize.
 - Weekly reminder emails (opt-in): choose a day and time zone in Settings to get a workspace-branded
   “What did you ship this week?” nudge with a one-tap link to log a win. Sent on your chosen day in
   your own time zone (deduplicated so you never get two), with one-click unsubscribe in every email.
-  A secured cron endpoint (`POST /api/cron/reminders`, guarded by `CRON_SECRET`) drives delivery.
+  The standalone server schedules delivery itself (an in-process hourly job); a secured cron endpoint
+  (`POST /api/cron/reminders`, guarded by `CRON_SECRET`) is available for serverless hosts.
 
 ### Security
 
