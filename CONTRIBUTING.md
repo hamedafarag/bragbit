@@ -35,6 +35,9 @@ them with `pnpm dev:down`.
 Also available: `pnpm test:e2e` (Playwright), `pnpm lint:md`, `pnpm format`, `pnpm size`, and
 `pnpm dev:up` / `pnpm dev:down` for the Docker stack.
 
+For manual / QA verification, the [manual test plan](docs/testing.md) is a step-by-step catalogue of
+test cases across Phases 1–9 (organized by feature, with priorities and a per-mode smoke test).
+
 ## Branch & PR workflow
 
 1. Branch off `main` (`feat/…`, `fix/…`, `docs/…`).
