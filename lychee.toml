@@ -1,0 +1,10 @@
+# Config for the lychee link checker (CI "links" job in .github/workflows/ci.yml).
+# Skips loopback and the documentation placeholder hosts used as examples in the
+# self-hosting guides (minio service DNS, your-domain, the placeholder clone URL) —
+# they're illustrative, not real links. Real external links are still verified.
+exclude_loopback = true
+exclude = [
+  '^https?://minio',
+  '^https://your-domain',
+  '^https://github\.com/bragbit/bragbit',
+]

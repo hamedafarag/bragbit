@@ -3,7 +3,7 @@
 For workspace **owners** and **admins** (organizations), plus the hosted
 **instance superadmin**. Workspace administration — branding, members,
 invitations, roles, removal, and ownership transfer — is complete for the
-self-hosted modes; the hosted superadmin console is Phase 10.
+self-hosted modes; the hosted superadmin console ships in v1.1.
 
 ## Workspace branding
 
@@ -69,13 +69,16 @@ Owner protection is enforced everywhere: admins can never demote, remove, or be
 handed past the owner; only the owner can change the owner's role or transfer
 ownership. You can't remove yourself through these controls.
 
-> **Removal today purges the membership** (the complete workspace removal while
-> there's no brag data). The full _export-then-delete_ — a portable Markdown +
-> JSON + attachments bundle handed to the member before their data is purged —
-> attaches once export ships in **Phase 7** (brag data arrives in Phase 3).
+> **Removal purges the member's access and data from the workspace.** The
+> _export-then-delete_ handoff — automatically handing the member a portable
+> Markdown + JSON + attachments bundle before their data is purged — builds on the
+> now-shipped [export](user-guide.md#export) feature and is a tracked follow-up.
+> Until it lands, ask the member to export their own data first (Settings →
+> Download JSON, plus per-document Markdown), since admins can't read member
+> content on their behalf.
 
 ## Hosted: instance superadmin
 
 On a `hosted` instance a seeded **superadmin** manages workspaces, users, and
 storage quotas for abuse control — and, like workspace admins, never reads brag
-content. Lands in Phase 10.
+content. Ships in v1.1.

@@ -1,27 +1,110 @@
 # Configuration
 
-Every BragBit setting is an environment variable, validated at boot by `src/lib/env.ts`.
-The canonical list with defaults lives in [`.env.example`](../.env.example).
+Every BragBit setting is an environment variable, validated at boot by
+[`src/lib/env.ts`](../src/lib/env.ts) — a misconfigured instance fails fast with a clear error. The
+annotated template is [`.env.example`](../.env.example); copy it to `.env` and fill it in.
 
-> **Status:** all current variables are grouped below; the polished per-variable
-> reference (defaults, examples, validation notes) is finalized in Phase 9.
+Under Docker Compose the database connection and the local-storage path are wired to the bundled
+services for you (see [Self-hosting](self-hosting/)), so you only set the instance shape, `APP_URL`,
+the auth secret, and SMTP.
 
-## Variable groups
+## Instance shape
 
-- **Instance shape** — `INSTANCE_MODE`, `SETUP_TOKEN`
-- **Core** — `APP_URL`, `DATABASE_URL`
-- **Auth** — `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`
-- **Email (SMTP)** — `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`
-- **Storage** — `STORAGE_DRIVER` (`local` is implemented; `s3` lands in Phase 4), `STORAGE_DIR`
-  (the local volume), `S3_*`
-- **OAuth (optional)** — `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID` /
-  `GOOGLE_CLIENT_SECRET`. Set both halves to enable a provider's button. Callback URL to register
-  with the provider: `{APP_URL}/api/auth/callback/{github|google}`. In the private modes OAuth
-  only signs in already-provisioned accounts (it links to an existing email-verified account and
-  never creates a new one).
-- **Uploads** — `MAX_UPLOAD_MB` (attachments; avatars are capped at 5 MB and workspace logos at
-  2 MB, independent of this)
-- **Hosted abuse controls** — `BLOCK_DISPOSABLE_EMAIL`, `WORKSPACE_QUOTA_MB`
-- **Reminders** — `CRON_SECRET`
+| Variable        | Default        | Notes                                                                                                                   |
+| --------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `INSTANCE_MODE` | `private-solo` | `private-org` \| `private-solo` \| `hosted` — picks the deployment shape. See [Instance modes](instance-modes.md).      |
+| `SETUP_TOKEN`   | _(unset)_      | Optional secret gating the first-run `/setup` wizard (private modes). Set it if the URL is reachable before you finish. |
 
-See also [Instance modes](instance-modes.md).
+## Core
+
+| Variable       | Default                 | Notes                                                                                                       |
+| -------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`     | `development`           | Set to `production` for a real deployment (the Docker image sets this for you).                             |
+| `APP_URL`      | `http://localhost:3000` | The instance's public origin — baked into emails, share links, and auth callbacks. Set it to your real URL. |
+| `DATABASE_URL` | _(required)_            | PostgreSQL connection string. Compose sets this to the bundled `postgres` service.                          |
+
+## Auth (Better Auth)
+
+| Variable             | Default      | Notes                                                                                              |
+| -------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET` | _(required)_ | Session-signing secret. Generate with `openssl rand -base64 32`; rotating it invalidates sessions. |
+| `BETTER_AUTH_URL`    | `APP_URL`    | Override only if auth runs on a different origin than `APP_URL`.                                   |
+
+Auth endpoints are rate-limited in production (3 requests/10s on sign-in and sign-up, 3/60s on
+password reset and verification email). Behind a reverse proxy, forward the real client IP so
+per-client limiting stays accurate.
+
+## Email (SMTP)
+
+Email is required — verification, invitations, password reset, and weekly reminders all send mail.
+In local dev, point these at the dev stack's Mailpit.
+
+| Variable                      | Default                            | Notes                                  |
+| ----------------------------- | ---------------------------------- | -------------------------------------- |
+| `SMTP_HOST`                   | _(unset)_                          | SMTP relay host.                       |
+| `SMTP_PORT`                   | `587`                              | `465` with implicit TLS.               |
+| `SMTP_SECURE`                 | `false`                            | `true` for implicit TLS (port 465).    |
+| `SMTP_USER` / `SMTP_PASSWORD` | _(unset)_                          | Credentials, if your relay needs them. |
+| `SMTP_FROM`                   | `BragBit <no-reply@bragbit.local>` | The From address on all mail.          |
+
+## Storage
+
+| Variable                                    | Default           | Notes                                                |
+| ------------------------------------------- | ----------------- | ---------------------------------------------------- |
+| `STORAGE_DRIVER`                            | `local`           | `local` (disk) or `s3` (any S3-compatible endpoint). |
+| `STORAGE_DIR`                               | `./.data/uploads` | Local-disk root. Compose mounts a named volume here. |
+| `S3_ENDPOINT`                               | _(unset)_         | e.g. an AWS S3, Cloudflare R2, or MinIO endpoint.    |
+| `S3_REGION`                                 | _(unset)_         |                                                      |
+| `S3_BUCKET`                                 | _(unset)_         |                                                      |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | _(unset)_         | S3 credentials.                                      |
+| `S3_FORCE_PATH_STYLE`                       | `true`            | Required for MinIO; set `false` for AWS S3.          |
+
+Attachments are never publicly addressable — they stream through an authorizing route. Only
+workspace logos and avatars are public.
+
+## OAuth (optional)
+
+Set both halves of a provider to enable its sign-in button. Register the callback URL
+`{APP_URL}/api/auth/callback/{github|google}` with the provider. In the private modes OAuth only
+signs in an already-provisioned, email-verified account — it never creates one (preserving
+invitation-only).
+
+| Variable                                    | Notes                |
+| ------------------------------------------- | -------------------- |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app.    |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client. |
+
+## Uploads
+
+| Variable        | Default | Notes                                                                               |
+| --------------- | ------- | ----------------------------------------------------------------------------------- |
+| `MAX_UPLOAD_MB` | `25`    | Per-attachment size cap. Avatars (5 MB) and workspace logos (2 MB) have fixed caps. |
+
+## Hosted-mode abuse controls
+
+Relevant only when `INSTANCE_MODE=hosted` (ships in v1.1).
+
+| Variable                 | Default | Notes                                            |
+| ------------------------ | ------- | ------------------------------------------------ |
+| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up. |
+| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota.                     |
+
+## Reminders
+
+The standalone (Docker) server schedules weekly reminders itself, in-process — no external cron
+needed.
+
+| Variable      | Default   | Notes                                                                                                                          |
+| ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `CRON_SECRET` | _(unset)_ | Serverless hosts only: guards `POST /api/cron/reminders` so an external scheduler can trigger a send. Use a long random value. |
+
+## Docker Compose knobs
+
+Read by [`docker-compose.yml`](../docker-compose.yml) itself (not the app):
+
+| Variable            | Default   | Notes                                                         |
+| ------------------- | --------- | ------------------------------------------------------------- |
+| `POSTGRES_PASSWORD` | `bragbit` | Password for the bundled Postgres + the wired `DATABASE_URL`. |
+| `APP_PORT`          | `3000`    | Host port mapped to the app container.                        |
+
+See also [Instance modes](instance-modes.md) and [Self-hosting](self-hosting/).

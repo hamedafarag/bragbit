@@ -145,6 +145,9 @@ on `0.x` until the deployment modes and core stabilize.
   handful of varied brags — shipped and in-progress, shared and private, a recognition quote, links,
   and tags — so you can sign in and explore a populated timeline immediately. Idempotent and
   independent of the app (raw SQL + Better Auth's password hasher).
+- Documentation: finalized the self-hosting guides (Docker Compose, the Dokploy reference, and a
+  Vercel/Neon variant), the full environment-variable reference, the instance-modes explainer, and
+  backup/restore & upgrade notes; refreshed the admin and user guides to match the shipped product.
 
 ### Security
 
