@@ -3,6 +3,9 @@
 > **BragBit** — an open-source (AGPL-3.0), self-hostable, white-label brag-document tracker for developers.
 > Next.js + Postgres. *"Your promotion evidence, on your own Postgres."*
 
+> **Side plan** — cross-cutting enhancements (quality, testing, security, performance, polish) are
+> tracked in [docs/enhancements.md](docs/enhancements.md).
+
 Plan created: 2026-06-13 · Research basis: deep dive into [bragbook.io](https://bragbook.io), [what-is-a-brag-document](https://bragbook.io/what-is-a-brag-document), [Julia Evans' brag document essay](https://jvns.ca/blog/brag-documents/), GitHub OSS landscape, and HN community discussions.
 
 ---
