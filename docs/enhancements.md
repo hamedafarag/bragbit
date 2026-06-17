@@ -87,3 +87,9 @@ review (2026-06-16). Items here are independently pickable; they don't block a r
 3. **ENH-TEST-01** — e2e for the core capture → share → export flow (the biggest real safety gap). _M_
 4. **ENH-CQ-05 + ENH-CQ-02** — bundle headroom and the TS target (both cheap). _S–M_
 5. **ENH-SEC-01 / ENH-SEC-02 / ENH-SEC-05** — before any public or hosted launch. _M_
+
+## Done
+
+| ID        | Done       | Notes                                                                             |
+| --------- | ---------- | --------------------------------------------------------------------------------- |
+| ENH-CQ-01 | 2026-06-16 | Root `/` is now a mode/session-aware redirect; the demo mockup is gone (−2.5 kB). |
