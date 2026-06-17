@@ -14,8 +14,9 @@ async function signIn(page: Page, email: string) {
 test("a member is redirected away from the admin area", async ({ page }) => {
   await signIn(page, E2E.memberEmail);
   await page.goto("/admin");
-  // The /admin layout gate (canAdminister) redirects a non-admin to "/".
-  expect(new URL(page.url()).pathname).toBe("/");
+  // The /admin gate bounces a non-admin to "/", which re-dispatches a signed-in user
+  // to /dashboard (app/page.tsx).
+  await page.waitForURL((url) => new URL(url).pathname === "/dashboard", { timeout: 20_000 });
 });
 
 test("an owner can reach the admin area", async ({ page }) => {
