@@ -51,7 +51,13 @@ out of scope here.
   - Expected: wrong/empty → "Invalid setup token"; correct → succeeds.
 - **TC-SETUP-05 · Setup closes permanently** — P1 · both
   - Pre: a workspace already exists. Steps: navigate to `/setup`.
-  - Expected: redirected to `/`; there is no way to create a second workspace via setup.
+  - Expected: bounced off `/setup` (you can't reach the wizard or create a second workspace).
+- **TC-SETUP-06 · Root routes a signed-out visitor to sign-in** — P2 · both
+  - Pre: the instance is set up. Steps: open `/` while signed out.
+  - Expected: redirected to `/sign-in` (the root renders no page of its own — it's a dispatcher).
+- **TC-SETUP-07 · Root routes a signed-in visitor to the dashboard** — P2 · both
+  - Pre: the instance is set up. Steps: sign in, then open `/`.
+  - Expected: redirected to `/dashboard`.
 
 ## B. Authentication
 

@@ -4,6 +4,8 @@ TC-SETUP-02,A. First-run setup (/setup),P1,solo,Solo setup creates a personal wo
 TC-SETUP-03,A. First-run setup (/setup),P1,org,Org setup creates an organization workspace,,,,
 TC-SETUP-04,A. First-run setup (/setup),P2,both,Setup token gate,,,,
 TC-SETUP-05,A. First-run setup (/setup),P1,both,Setup closes permanently,,,,
+TC-SETUP-06,A. First-run setup (/setup),P2,both,Root routes a signed-out visitor to sign-in,,,,
+TC-SETUP-07,A. First-run setup (/setup),P2,both,Root routes a signed-in visitor to the dashboard,,,,
 TC-AUTH-01,B. Authentication,P1,both,Sign in with valid credentials,,,,
 TC-AUTH-02,B. Authentication,P1,both,Verification required before sign-in,,,,
 TC-AUTH-03,B. Authentication,P1,both,Wrong password rejected,,,,

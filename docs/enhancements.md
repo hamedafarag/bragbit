@@ -10,23 +10,23 @@ review (2026-06-16). Items here are independently pickable; they don't block a r
 
 ## A. Code quality & tech debt
 
-| ID        | Pri | Effort | Enhancement                                                                                                                        | Why                                                                                                |
-| --------- | --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| ENH-CQ-01 | P1  | S      | Replace the `app/page.tsx` demo mockup (318 lines of hardcoded fake brags) with a redirect to `/dashboard` or a real landing page. | The root `/` shows fabricated data to real users — the biggest smell in the codebase.              |
-| ENH-CQ-02 | P3  | S      | Bump `tsconfig` `target` ES2017 → ES2022.                                                                                          | Stale create-next-app default; Node 22 / modern browsers support far newer output.                 |
-| ENH-CQ-03 | P2  | M      | Decompose the largest client components (`brag-editor` 288, `share-dialog` 265) into focused sub-components.                       | Upper bound of comfortable size; smaller pieces read and test better.                              |
-| ENH-CQ-04 | P3  | S      | Move domain logic (the `beforeDelete` workspace-reaping) out of `lib/auth/index.ts` into a feature module.                         | The auth config object carries real business logic inline.                                         |
-| ENH-CQ-05 | P2  | M      | Create bundle-budget headroom (currently **398.71 / 400 kB**).                                                                     | ~1.3 kB of slack — one client dependency from breaking the gate. Audit/trim or raise deliberately. |
+| ID        | Pri | Effort | Enhancement                                                                                                                        | Why                                                                                                  |
+| --------- | --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| ENH-CQ-01 | P1  | S      | Replace the `app/page.tsx` demo mockup (318 lines of hardcoded fake brags) with a redirect to `/dashboard` or a real landing page. | The root `/` shows fabricated data to real users — the biggest smell in the codebase.                |
+| ENH-CQ-02 | P3  | S      | Bump `tsconfig` `target` ES2017 → ES2022.                                                                                          | Stale create-next-app default; Node 22 / modern browsers support far newer output.                   |
+| ENH-CQ-03 | P2  | M      | Decompose the largest client components (`brag-editor` 288, `share-dialog` 265) into focused sub-components.                       | Upper bound of comfortable size; smaller pieces read and test better.                                |
+| ENH-CQ-04 | P3  | S      | Move domain logic (the `beforeDelete` workspace-reaping) out of `lib/auth/index.ts` into a feature module.                         | The auth config object carries real business logic inline.                                           |
+| ENH-CQ-05 | P2  | M      | Create more bundle-budget headroom (now **396.21 / 400 kB** after the `/` cleanup).                                                | ~3.8 kB of slack now (was 1.3) — better, still tight; audit client JS or set the limit deliberately. |
 
 ## B. Testing
 
-| ID          | Pri | Effort | Enhancement                                                                                | Why                                                                                        |
-| ----------- | --- | ------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| ENH-TEST-01 | P1  | M      | e2e for the core flow: capture → timeline → share (+ password) → export.                   | Today only `admin-gating` + `home` exist; the main product flows have no e2e. Biggest gap. |
-| ENH-TEST-02 | P2  | M      | e2e for the setup wizard (both modes) + invitation accept.                                 | The first-run and onboarding paths are untested end to end.                                |
-| ENH-TEST-03 | P2  | S      | A documented `pnpm test:db` that runs the DB-gated suite against the dev database locally. | They skip by default; easy local coverage would catch regressions before CI.               |
-| ENH-TEST-04 | P3  | S      | Add a QA checkbox to the PR template pointing at the [manual test plan](testing.md).       | Prompts a manual pass on user-facing PRs.                                                  |
-| ENH-TEST-05 | P3  | M      | Coverage reporting + a soft threshold in CI.                                               | Visibility into what's actually exercised.                                                 |
+| ID          | Pri | Effort | Enhancement                                                                                | Why                                                                                                                                                              |
+| ----------- | --- | ------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ENH-TEST-01 | P1  | M      | e2e for the core flow: capture → timeline → share (+ password) → export.                   | Today only `admin-gating` + `home` exist; core flows have no e2e — the ENH-CQ-01 redirect broke an admin-gating assertion that only surfaced at CI. Biggest gap. |
+| ENH-TEST-02 | P2  | M      | e2e for the setup wizard (both modes) + invitation accept.                                 | The first-run and onboarding paths are untested end to end.                                                                                                      |
+| ENH-TEST-03 | P2  | S      | A documented `pnpm test:db` that runs the DB-gated suite against the dev database locally. | They skip by default; easy local coverage would catch regressions before CI.                                                                                     |
+| ENH-TEST-04 | P3  | S      | Add a QA checkbox to the PR template pointing at the [manual test plan](testing.md).       | Prompts a manual pass on user-facing PRs.                                                                                                                        |
+| ENH-TEST-05 | P3  | M      | Coverage reporting + a soft threshold in CI.                                               | Visibility into what's actually exercised.                                                                                                                       |
 
 ## C. Security
 
