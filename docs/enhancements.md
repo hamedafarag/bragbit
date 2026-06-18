@@ -77,9 +77,10 @@ review (2026-06-16). Items here are independently pickable; they don't block a r
 
 - **Phase 10 — hosted multi-tenant (v1.1):** open signup, user-created orgs, the `/super` console,
   quota/abuse controls, the data-isolation test suite. See [PLAN.md §10](../PLAN.md).
-- **Phase 11 — v2 backlog:** REST API + personal access tokens, a companion CLI (git-history brag
-  extraction), SSO (OIDC/SAML), optional BYO-key AI, curated sharing, Markdown/Notion import. See
-  [PLAN.md §11](../PLAN.md).
+- **Phase 11 — v2 backlog:** REST API + personal access tokens (and the
+  [MCP connector](specs/mcp-connector.md) for in-assistant capture from Claude Desktop), a companion
+  CLI (git-history brag extraction), SSO (OIDC/SAML), optional BYO-key AI, curated sharing,
+  Markdown/Notion import. See [PLAN.md §11](../PLAN.md).
 
 ## Recommended order (highest leverage first)
 

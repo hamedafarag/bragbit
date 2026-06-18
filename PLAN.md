@@ -473,10 +473,11 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [ ] Tag the `hosted` release
 
 ### Phase 11 — v2 backlog (explicitly later)
-- [ ] REST API + personal access tokens → CLI/shell-alias/Slack-bridge capture (the community's strongest pattern)
+- [ ] REST API + personal access tokens → CLI/shell-alias/Slack-bridge/**MCP-connector** capture (the community's strongest pattern)
+- [ ] **MCP connector** (Claude Desktop / any MCP client): a remote MCP server mounted at `/api/mcp`, PAT-authed, exposing `add_brag` (+ `list_documents`) so a developer logs a win without leaving their AI assistant — the AI co-authors it via the formula. Builds on the REST API + PATs above; since the user's own AI does the "enhance", it may supersede the in-app BYO-key AI item. Spec: [docs/specs/mcp-connector.md](docs/specs/mcp-connector.md)
 - [ ] Companion CLI: extract candidate brags from local git history (optionally via Ollama, privacy-preserving), POST drafts for per-entry approve/edit/skip
 - [ ] SSO (OIDC/SAML) for organization workspaces
-- [ ] Optional BYO-API-key AI (Anthropic/OpenAI/Ollama): "enhance this note", "draft self-review from a date range" — strictly optional
+- [ ] Optional BYO-API-key AI (Anthropic/OpenAI/Ollama): "enhance this note", "draft self-review from a date range" — strictly optional (the MCP connector may cover "enhance" client-side, via the user's own assistant)
 - [ ] Curated sharing (hand-picked subset — the "strongest 3–5 accomplishments" pattern); org-internal shares (logged-in members only)
 - [ ] Move/copy a document between workspaces (e.g., a freelancer's personal document into an org they later join) — the deferred personal↔org linking
 - [ ] Entry content templates — action-verb scaffolds (Led Initiative, Fixed Critical Issue, Built System…) that pre-fill the brag form to beat the blank page (cheap; can be pulled into the Phase 3 editor)
