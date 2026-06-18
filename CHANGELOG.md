@@ -8,6 +8,11 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+### Changed
+
+- The root path `/` is now a thin mode- and session-aware redirect (to `/setup`, `/dashboard`, or
+  `/sign-in`) instead of a placeholder timeline — the leftover Phase-0 demo content is gone.
+
 ## [0.1.0] - 2026-06-15
 
 The first release: a self-hostable, white-label brag-document tracker for the two private
