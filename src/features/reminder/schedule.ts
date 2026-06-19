@@ -37,16 +37,26 @@ export type ReminderState = {
   lastRemindedAt: Date | null;
 };
 
+/** Overridable timing (defaults to the module constants); `send.ts` feeds it from env. */
+export type ReminderTiming = { targetHour?: number; dedupWindowMs?: number };
+
 /**
  * Whether a reminder is due for `state` at `now`: it's the user's chosen day at
  * the target local hour (in their zone) and they weren't reminded within the dedup
- * window. Missing day/timezone is never due.
+ * window. Missing day/timezone is never due. `timing` overrides the hour/window
+ * (env-tunable) while keeping this function pure and the defaults intact.
  */
-export function isReminderDue(now: Date, state: ReminderState): boolean {
+export function isReminderDue(
+  now: Date,
+  state: ReminderState,
+  timing: ReminderTiming = {},
+): boolean {
   if (state.reminderDay == null || !state.timezone) return false;
+  const targetHour = timing.targetHour ?? TARGET_HOUR;
+  const dedupWindowMs = timing.dedupWindowMs ?? DEDUP_WINDOW_MS;
   const { day, hour } = localDayHour(now, state.timezone);
-  if (day !== state.reminderDay || hour !== TARGET_HOUR) return false;
-  if (state.lastRemindedAt && now.getTime() - state.lastRemindedAt.getTime() < DEDUP_WINDOW_MS) {
+  if (day !== state.reminderDay || hour !== targetHour) return false;
+  if (state.lastRemindedAt && now.getTime() - state.lastRemindedAt.getTime() < dedupWindowMs) {
     return false;
   }
   return true;

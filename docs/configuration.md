@@ -98,6 +98,20 @@ needed.
 | ------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `CRON_SECRET` | _(unset)_ | Serverless hosts only: guards `POST /api/cron/reminders` so an external scheduler can trigger a send. Use a long random value. |
 
+## Timing & limits
+
+Optional knobs; the defaults match the shipped behaviour. Lower them to exercise the time-bound
+flows without waiting (e.g. a short `INVITATION_TTL_DAYS` to test invite expiry, or
+`RATE_LIMIT_ENABLED=true` to hit the brute-force limiter in dev).
+
+| Variable                 | Default                 | Notes                                                                                                         |
+| ------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `INVITATION_TTL_DAYS`    | `7`                     | Lifetime of a workspace invite link.                                                                          |
+| `AUTH_TOKEN_TTL_MINUTES` | `60`                    | Lifetime of email-verification and password-reset links.                                                      |
+| `REMINDER_HOUR`          | `9`                     | Local hour (0–23) the weekly reminder fires on the chosen day.                                                |
+| `REMINDER_DEDUP_HOURS`   | `20`                    | Window that suppresses a duplicate reminder send.                                                             |
+| `RATE_LIMIT_ENABLED`     | _(on in prod, off dev)_ | Brute-force limiter on the auth endpoints. Unset follows `NODE_ENV`; `true`/`false` forces it on either side. |
+
 ## Docker Compose knobs
 
 Read by [`docker-compose.yml`](../docker-compose.yml) itself (not the app):

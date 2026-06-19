@@ -36,7 +36,7 @@ export const auth = betterAuth({
   // flows and the e2e suite aren't throttled). A shared store (secondaryStorage)
   // is the multi-instance upgrade for the hosted mode (Phase 10).
   rateLimit: {
-    enabled: env.NODE_ENV === "production",
+    enabled: env.RATE_LIMIT_ENABLED ?? env.NODE_ENV === "production",
   },
 
   databaseHooks: {
@@ -67,6 +67,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    resetPasswordTokenExpiresIn: env.AUTH_TOKEN_TTL_MINUTES * 60,
     sendResetPassword: async ({ user, url }) => {
       await sendEmail({
         to: user.email,
@@ -79,6 +80,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
+    expiresIn: env.AUTH_TOKEN_TTL_MINUTES * 60,
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail({
         to: user.email,
@@ -177,7 +179,7 @@ export const auth = betterAuth({
   plugins: [
     organization({
       // workspace = Better Auth organization, with a `type` discriminator.
-      invitationExpiresIn: 60 * 60 * 24 * 7, // 7 days (PLAN)
+      invitationExpiresIn: env.INVITATION_TTL_DAYS * 60 * 60 * 24, // default 7 days (PLAN)
       // Re-inviting an address revokes its prior pending invite (PLAN §6).
       cancelPendingInvitationsOnReInvite: true,
       schema: {

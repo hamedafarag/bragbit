@@ -50,7 +50,13 @@ export async function sendDueReminders(now: Date = new Date()): Promise<{ sent: 
     if (seen.has(r.userId)) continue;
     seen.add(r.userId);
 
-    if (!isReminderDue(now, r)) continue;
+    if (
+      !isReminderDue(now, r, {
+        targetHour: env.REMINDER_HOUR,
+        dedupWindowMs: env.REMINDER_DEDUP_HOURS * 60 * 60 * 1000,
+      })
+    )
+      continue;
 
     await db.update(profile).set({ lastRemindedAt: now }).where(eq(profile.userId, r.userId));
 

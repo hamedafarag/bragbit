@@ -64,6 +64,20 @@ const schema = z.object({
 
   // Reminder cron (external-cron fallback)
   CRON_SECRET: z.string().optional(),
+
+  // Timing & limits — tunable so the time-bound flows can be exercised without
+  // waiting out the production defaults (e.g. a short INVITATION_TTL_DAYS to test
+  // expiry). All optional; the defaults match the shipped behaviour.
+  INVITATION_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  AUTH_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(60), // verify + reset links
+  REMINDER_HOUR: z.coerce.number().int().min(0).max(23).default(9), // local hour reminders fire
+  REMINDER_DEDUP_HOURS: z.coerce.number().positive().default(20), // re-send suppression window
+  // Brute-force limiter. Unset → on in production, off in dev/test (so local flows
+  // and e2e aren't throttled); set true/false to force it on either side.
+  RATE_LIMIT_ENABLED: z
+    .string()
+    .optional()
+    .transform((v) => (v == null || v === "" ? undefined : /^(1|true|yes|on)$/i.test(v))),
 });
 
 const parsed = schema.safeParse(process.env);
