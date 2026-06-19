@@ -97,9 +97,13 @@ out of scope here.
 - **TC-ACCT-03 · Avatar is session-gated** — P2 · both — security
   - Steps: copy an avatar's `/api/files/…` URL; open it logged out / as a non-member.
   - Expected: not served (only members of the key's workspace).
-- **TC-ACCT-04 · Change email confirms from current inbox** — P1 · both
-  - Steps: request a new email → confirm from the link sent to the **current** address.
-  - Expected: change applies only after clicking the link.
+- **TC-ACCT-04 · Change email — two-step confirm (current inbox + new address)** — P1 · both
+  - Steps: request a new email → click the **confirmation** link sent to the **current** address →
+    then click the **verification** link sent to the **new** address.
+  - Expected: a confirmation goes to the current inbox; clicking it does **not** yet change the email
+    but triggers a verification mail to the new address; the change applies **only after** the new
+    address is also verified. (Better Auth confirms both endpoints — the current owner approves and
+    the new address is proven reachable.)
 - **TC-ACCT-05 · Change password revokes other sessions** — P1 · both
   - Steps: sign in on two browsers; change the password on one. Expected: the other session is
     signed out.
