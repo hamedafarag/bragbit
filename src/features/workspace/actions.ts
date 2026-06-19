@@ -6,8 +6,9 @@ import { headers } from "next/headers";
 import { requireRole } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { invitation, member, organization } from "@/lib/db/schema";
+import { invitation, member, organization, user as userTable } from "@/lib/db/schema";
 
+import { emailRemovedMemberBundle } from "./offboard";
 import {
   brandingSchema,
   inviteSchema,
@@ -146,9 +147,9 @@ export async function changeMemberRole(memberId: string, role: string): Promise<
 /**
  * Remove a member from the active workspace. The owner can't be removed and you
  * can't remove yourself; Better Auth re-checks permissions. This purges the
- * membership — the complete workspace removal for now. The export-then-delete
- * bundle and full account offboard join when export ships (Phase 7); there's no
- * brag data to export until Phase 3.
+ * membership, then emails the member a copy of all their data (ENH-CO-01) so it
+ * stays theirs. The member's documents/brags are left in place for now — a full
+ * account offboard (purging the orphaned data) is still future work.
  */
 export async function removeMember(memberId: string): Promise<ActionResult> {
   const { workspaceId, user } = await requireRole("owner", "admin");
@@ -156,10 +157,12 @@ export async function removeMember(memberId: string): Promise<ActionResult> {
   const [target] = await db
     .select({
       userId: member.userId,
+      email: userTable.email,
       role: member.role,
       organizationId: member.organizationId,
     })
     .from(member)
+    .innerJoin(userTable, eq(userTable.id, member.userId))
     .where(eq(member.id, memberId))
     .limit(1);
   if (!target || target.organizationId !== workspaceId) {
@@ -170,10 +173,20 @@ export async function removeMember(memberId: string): Promise<ActionResult> {
 
   try {
     await auth.api.removeMember({ body: { memberIdOrEmail: memberId }, headers: await headers() });
-    return { ok: true };
   } catch (err) {
     return { ok: false, error: errorMessage(err, "Could not remove the member.") };
   }
+
+  // Removal succeeded — hand the member a copy of their data so it stays theirs
+  // (ENH-CO-01). Best-effort: a mail failure must never undo the removal, and the
+  // data still persists for a manual export. Runs after the purge; the member's
+  // documents/brags remain until a separate offboard, so the bundle is complete.
+  try {
+    await emailRemovedMemberBundle({ workspaceId, userId: target.userId, email: target.email });
+  } catch {
+    // Swallowed on purpose — see above.
+  }
+  return { ok: true };
 }
 
 /**
