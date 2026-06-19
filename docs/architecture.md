@@ -48,10 +48,17 @@ capability mapping is a pure function in `lib/instance-modes.ts`, bound to the r
 - **Sessions & the active workspace.** A session row carries an `activeOrganizationId`. A Better
   Auth `session.create` hook resolves it on every sign-in (the caller's earliest membership), so
   `requireWorkspace()` works after a plain email/password sign-in — not only after the setup wizard
-  or invitation acceptance, which set it explicitly.
-- **Invitations** are tokenized, 7-day, single-use, and bind registration to the invited email
-  (acceptability is the pure, unit-tested `isAcceptableInvitation`); see the
-  [Admin guide](admin-guide.md).
+  or invitation acceptance, which set it explicitly. A signed-in session with **no accessible
+  workspace** (e.g. a removed member who still has an account) is sent to a terminal `/no-workspace`
+  page rather than looping through the root dispatcher.
+- **Invitations** are tokenized, single-use, expire after `INVITATION_TTL_DAYS` (default 7), and bind
+  registration to the invited email (acceptability is the pure, unit-tested `isAcceptableInvitation`);
+  see the [Admin guide](admin-guide.md).
+- **Invitation-only sign-up.** In the private modes accounts are created only by the setup wizard and
+  invitation-accept, which call `auth.api.signUpEmail` server-side. The public `POST
+/api/auth/sign-up/email` route is blocked in the catch-all auth handler (and OAuth uses
+  `disableSignUp`), so a stranger can neither create an account nor make the instance relay a
+  verification email; hosted mode keeps open sign-up.
 - **OAuth (optional).** GitHub/Google are enabled per provider via env. Account linking lets a
   verified user attach an identity; in the private modes `disableSignUp` means OAuth only signs in
   already-provisioned accounts — it never creates one, preserving invitation-only.
@@ -126,7 +133,9 @@ visibility toggle is Phase 6.
   logo. For organizations it also has **members management** (`/admin/members`): invite one or more
   people, resend/revoke pending invitations, change roles, remove members, and **transfer
   ownership** (owner-only, an atomic role swap that keeps exactly one owner). Personal workspaces
-  have no member surface.
+  have no member surface. Removing a member emails them a portability bundle of all their data
+  (`features/workspace/offboard` — JSON + Markdown + attachments up to a cap), best-effort so a mail
+  failure never blocks the removal.
 - **Branding is per-workspace.** A validated hex accent + a logo are applied to the app chrome and
   the sign-in page through a `--primary` / `--ring` CSS-variable override on the layout wrapper, and
   to every email template via `lib/branding` — invitations use the inviting org's brand;
@@ -223,8 +232,9 @@ active workspace — every document (archived included) and brag (private includ
 own copy) with links, attachment metadata, and tags. `getAllDataForExport` batches relations across
 all brags at once (no N+1, via the shared `attachRelations`); the pure `toDataExport` shaper maps it
 to a **versioned** contract that explicitly omits internal columns (the FTS vector, the
-workspace/user FKs). A "Download JSON" link in Settings triggers it. Together the Markdown + JSON
-exporters are the building blocks for the Phase 2 member-removal bundle when that flow lands.
+workspace/user FKs). A "Download JSON" link in Settings triggers it. These same exporters power the
+member-removal bundle (`features/workspace/offboard`), which emails a removed member their full JSON
+and Markdown exports plus the attachment files (read from storage, up to a size cap).
 
 ## Reminders
 
@@ -232,8 +242,8 @@ Opt-in weekly reminders (PLAN §6/§8) live in `features/reminder`. A Settings s
 preference (enable + day-of-week + IANA timezone) to the `profiles.reminder_*` columns via
 `updateReminderSettings`. The scheduling math is a **pure** module (`schedule.ts`, unit-tested):
 `localDayHour` resolves a user's local day/hour in their zone, and `isReminderDue` decides whether
-it's their chosen day at the target hour (9am local) and they weren't reminded inside the dedup
-window. `sendDueReminders` loads opted-in users (with their workspace brand, earliest membership),
+it's their chosen day at the target hour (`REMINDER_HOUR`, default 9am local) and they weren't
+reminded inside the dedup window (`REMINDER_DEDUP_HOURS`, default 20). `sendDueReminders` loads opted-in users (with their workspace brand, earliest membership),
 sends the branded `WeeklyReminder` email to those due — marking `last_reminded_at` **before** the
 send so a transient SMTP failure costs a missed nudge, never a duplicate — and returns the count.
 
@@ -293,10 +303,10 @@ a `Permissions-Policy` dropping unused device APIs, and HSTS (honored once seen 
 
 Rate limiting guards the credential surfaces:
 
-- **Auth** — Better Auth's built-in limiter, explicitly enabled in production (`lib/auth`), keeps its
-  strict default rules for the sensitive paths (3 requests / 10s on `/sign-in`, `/sign-up`,
-  `/change-password`, `/change-email`; 3 / 60s on password-reset + verification email), backed by an
-  in-memory store.
+- **Auth** — Better Auth's built-in limiter (`lib/auth`), on in production and off in dev by default
+  but overridable either way via `RATE_LIMIT_ENABLED`, keeps its strict default rules for the
+  sensitive paths (3 requests / 10s on `/sign-in`, `/sign-up`, `/change-password`, `/change-email`;
+  3 / 60s on password-reset + verification email), backed by an in-memory store.
 - **Invitation** — `registerInvitee` adds the in-house sliding-window limiter (`lib/rate-limit`, 8
   attempts / 10 min per invitation), since an invalid invitation id is rejected before any Better
   Auth endpoint is reached.

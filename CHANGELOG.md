@@ -8,10 +8,33 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+### Added
+
+- Removed-member data bundle: removing a member now emails them a copy of everything they logged —
+  a full JSON export (every document and brag, private included), a combined Markdown, and their
+  uploaded attachments up to a size cap — so a deactivated member keeps their record. Best-effort
+  (a mail failure never blocks the removal).
+- Tunable timing & limits via environment variables (defaults match the previous behaviour):
+  `INVITATION_TTL_DAYS`, `AUTH_TOKEN_TTL_MINUTES` (verification + reset link lifetime),
+  `REMINDER_HOUR`, `REMINDER_DEDUP_HOURS`, and `RATE_LIMIT_ENABLED`.
+
 ### Changed
 
 - The root path `/` is now a thin mode- and session-aware redirect (to `/setup`, `/dashboard`, or
   `/sign-in`) instead of a placeholder timeline — the leftover Phase-0 demo content is gone.
+
+### Fixed
+
+- A signed-in session with no accessible workspace (e.g. a removed member who still has an account)
+  no longer ping-pongs `/dashboard → / → /dashboard` into a redirect loop — it lands on a terminal
+  `/no-workspace` page with a sign-out, while valid users are routed on as before.
+
+### Security
+
+- Closed the public email/password sign-up endpoint in the private (invitation-only) modes: a direct
+  `POST /api/auth/sign-up/email` no longer creates accounts or relays a verification email to an
+  arbitrary address. Account creation there stays limited to the setup wizard and invitation-accept;
+  hosted mode keeps open sign-up.
 
 ## [0.1.0] - 2026-06-15
 
