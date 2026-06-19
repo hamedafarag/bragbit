@@ -32,6 +32,10 @@ out of scope here.
    **fresh** DB for the setup/auth flows.
 5. **Two accounts** — for org-mode and isolation tests you need a second account (invite one, or seed
    one). Keep an "owner", an "admin", and a "member" handy in org mode.
+6. **Time-bound flows** — the timing/limit knobs are env-tunable (defaults match production). Set a
+   short `INVITATION_TTL_DAYS` or `AUTH_TOKEN_TTL_MINUTES`, or `RATE_LIMIT_ENABLED=true`, to exercise
+   the expiry/rate-limit cases (TC-INV-04, TC-INV-09, TC-SEC-02, reminders) without waiting out the
+   defaults; revert afterwards. See [Configuration](configuration.md).
 
 ---
 
@@ -85,6 +89,12 @@ out of scope here.
   - Expected: it does **not** create an account; it only links/sign-ins an existing verified email.
 - **TC-AUTH-10 · Sign out** — P1 · both — Expected: session cleared; protected routes bounce to
   `/sign-in`.
+- **TC-AUTH-11 · Public sign-up disabled (private modes)** — P1 · both — security
+  - Steps: in a private mode, `POST /api/auth/sign-up/email` with a fresh email/password.
+  - Expected: rejected (403 `EMAIL_PASSWORD_SIGN_UP_DISABLED`), **no** account created and **no**
+    verification email sent. The setup wizard and invitation-accept still create accounts (they call
+    `auth.api.signUpEmail` server-side, which bypasses the route guard). Hosted mode keeps open
+    sign-up.
 
 ## C. Profile & account settings
 
@@ -167,6 +177,17 @@ out of scope here.
   `/admin/members`.
 - **TC-MEM-09 · Admins cannot read member brag content** — P1 · org — security
   - Expected: there is **no** UI path for an admin/owner to view another member's documents or brags.
+- **TC-MEM-10 · Removed member lands on a terminal page (no redirect loop)** — P1 · org
+  - Steps: remove a member, then sign in as them (the account still exists, but it has no workspace).
+  - Expected: they land on `/no-workspace` (a "No workspace access" page with a sign-out), **not** a
+    `/dashboard → / → /dashboard` redirect loop; sign-out recovers. A user who _does_ have a
+    workspace is never stranded there.
+- **TC-MEM-11 · Member removal hands over a data bundle** — P2 · org
+  - Steps: remove a member who has logged data; check their inbox (Mailpit).
+  - Expected: a branded email arrives with their full export attached — `bragbit-data.json` (every
+    document + brag, private included), a combined `bragbit-wins.md`, and their uploaded attachment
+    files (up to a size cap; oversized ones listed in the JSON). Best-effort: a mail failure never
+    blocks the removal.
 
 ## G. Documents
 
