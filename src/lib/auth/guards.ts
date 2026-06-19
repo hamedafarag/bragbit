@@ -41,11 +41,15 @@ export async function requireSession() {
 export async function requireWorkspace() {
   const { user, session } = await requireSession();
   const workspaceId = session.activeOrganizationId;
-  if (!workspaceId) redirect("/");
+  // Authenticated but no accessible workspace (e.g. a removed member with a live
+  // session) → a terminal page, NOT `/`. Bouncing to `/` would loop, because the
+  // root dispatcher sends a signed-in caller straight back to `/dashboard`
+  // (ENH-CQ-07). `/no-workspace` is the exit and never redirects such a caller on.
+  if (!workspaceId) redirect("/no-workspace");
 
   const membership = await lookupMembership(user.id, workspaceId);
   // Not a member of the active workspace → no access (cross-workspace = 404-equivalent).
-  if (!membership) redirect("/");
+  if (!membership) redirect("/no-workspace");
 
   return { user, session, workspaceId, member: membership };
 }
