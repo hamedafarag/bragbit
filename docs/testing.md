@@ -350,8 +350,9 @@ out of scope here.
 ## O. Security (cross-cutting)
 
 - **TC-SEC-01 · Security headers** — P1 — Steps: `curl -I https://<host>/sign-in`. Expected:
-  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a `Content-Security-Policy`
-  (`base-uri`/`frame-ancestors`/`object-src`), `Referrer-Policy`, `Permissions-Policy`, and HSTS.
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a `Content-Security-Policy` with
+  `script-src 'self' 'nonce-…' 'strict-dynamic'` plus `base-uri`/`frame-ancestors`/`object-src`
+  (emitted per-request by `src/proxy.ts`), `Referrer-Policy`, `Permissions-Policy`, and HSTS.
 - **TC-SEC-02 · Auth rate limiting (production)** — P2 — Steps: in a production build, submit many
   rapid sign-in attempts. Expected: throttled (≈3 / 10s on sign-in).
 - **TC-SEC-03 · Tenant isolation** — P1 — Expected: no user/workspace can read another's documents,
@@ -362,6 +363,11 @@ out of scope here.
   or a valid (and, if set, unlocked) share token.
 - **TC-SEC-06 · Dead tokens** — P1 — Expected: revoked/expired/unknown share & unsubscribe tokens
   resolve to nothing / a friendly 404.
+- **TC-SEC-07 · CSP script-src nonce** — P2 — security — Steps: load any page twice and compare the
+  `Content-Security-Policy` response header; view source and check the `<script>` tags; watch the
+  browser console. Expected: a **fresh** `script-src 'nonce-…'` each load, matching the `nonce` on
+  every Next script; **no CSP violations** and the app stays interactive. A production build carries
+  **no** `'unsafe-eval'`.
 
 ## P. UX & responsiveness
 

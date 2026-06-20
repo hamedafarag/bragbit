@@ -296,11 +296,14 @@ it carries no instance data. See [Self-hosting](self-hosting/) and [Configuratio
 
 Every response carries an app-wide hardening baseline set in `next.config.ts` `headers()`:
 `X-Content-Type-Options: nosniff` (matters for the user files streamed through `/api/files`),
-`X-Frame-Options: DENY` plus a `Content-Security-Policy` of `base-uri 'self'; frame-ancestors 'none';
-object-src 'none'` (clickjacking / base-tag / plugin vectors), `Referrer-Policy:
-strict-origin-when-cross-origin` (so a share token in the path never leaks cross-origin via Referer),
-a `Permissions-Policy` dropping unused device APIs, and HSTS (honored once seen over TLS). A full
-`script-src` CSP is deferred — Next's inline hydration needs per-request nonces.
+`X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin` (so a share token in the
+path never leaks cross-origin via Referer), a `Permissions-Policy` dropping unused device APIs, and
+HSTS (honored once seen over TLS). The `Content-Security-Policy` is emitted per-request by
+`src/proxy.ts` (Next 16's renamed Middleware) so it can carry a fresh `script-src` nonce each render:
+`script-src 'self' 'nonce-…' 'strict-dynamic'` (plus `'unsafe-eval'` only in dev) blocks inline and
+injected scripts, alongside the `base-uri 'self'; frame-ancestors 'none'; object-src 'none'` baseline
+(clickjacking / base-tag / plugin vectors). The root layout opts the tree into dynamic rendering so
+the nonce applies app-wide; Next attaches it to its own scripts automatically.
 
 Rate limiting guards the credential surfaces:
 
