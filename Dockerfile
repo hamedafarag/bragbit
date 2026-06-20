@@ -12,7 +12,7 @@
 # Run:    see docker-compose.yml (app + Postgres in one `docker compose up`)
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 # libc6-compat smooths over glibc-vs-musl edges for Next.js on Alpine.
 RUN apk add --no-cache libc6-compat
 # pnpm comes from corepack, pinned by package.json's `packageManager` field.
