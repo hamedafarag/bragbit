@@ -31,6 +31,8 @@ on `0.x` until the deployment modes and core stabilize.
 - A non-admin landing on `/admin` — and any insufficient-role guard failure — is now redirected
   straight to the dashboard instead of bouncing through `/` first (one redirect instead of two).
   (ENH-CQ-06)
+- The production Docker image now builds on `node:26-alpine` (was `node:22-alpine`). Since current
+  Node images no longer bundle corepack, the image installs it explicitly to keep the pinned pnpm.
 
 ## [0.1.1] - 2026-06-20
 

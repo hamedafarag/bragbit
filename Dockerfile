@@ -15,8 +15,11 @@
 FROM node:26-alpine AS base
 # libc6-compat smooths over glibc-vs-musl edges for Next.js on Alpine.
 RUN apk add --no-cache libc6-compat
-# pnpm comes from corepack, pinned by package.json's `packageManager` field.
-RUN corepack enable
+# pnpm comes from corepack, pinned by package.json's `packageManager` field. Node 26
+# images no longer bundle corepack, so install it before enabling; the prompt env keeps
+# its first-use pnpm download non-interactive during the build.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN npm install -g corepack@latest && corepack enable
 WORKDIR /app
 
 # ── deps ─────────────────────────────────────────────────────────────────────
