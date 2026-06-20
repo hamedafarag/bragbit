@@ -8,6 +8,8 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-20
+
 ### Added
 
 - Removed-member data bundle: removing a member now emails them a copy of everything they logged —
@@ -22,12 +24,18 @@ on `0.x` until the deployment modes and core stabilize.
 
 - The root path `/` is now a thin mode- and session-aware redirect (to `/setup`, `/dashboard`, or
   `/sign-in`) instead of a placeholder timeline — the leftover Phase-0 demo content is gone.
+- Development & CI: GitHub Actions moved to the Node 24 action runtime (`checkout@v5`,
+  `setup-node@v5`, `pnpm/action-setup@v6`), and the core capture → timeline → share (with password) →
+  export flow gained end-to-end (Playwright) coverage.
 
 ### Fixed
 
 - A signed-in session with no accessible workspace (e.g. a removed member who still has an account)
   no longer ping-pongs `/dashboard → / → /dashboard` into a redirect loop — it lands on a terminal
   `/no-workspace` page with a sign-out, while valid users are routed on as before.
+- Deleting an account now also purges the user's uploaded attachment files from storage. Previously
+  the database rows were removed but the stored objects were orphaned (unreachable, but left on
+  disk / in S3).
 
 ### Security
 
@@ -35,6 +43,10 @@ on `0.x` until the deployment modes and core stabilize.
   `POST /api/auth/sign-up/email` no longer creates accounts or relays a verification email to an
   arbitrary address. Account creation there stays limited to the setup wizard and invitation-accept;
   hosted mode keeps open sign-up.
+- Share passwords are now hashed with the OWASP-recommended Argon2id work factor instead of the
+  library default; existing share passwords keep working.
+- Operator-config hardening: `BETTER_AUTH_SECRET` must be at least 32 characters, and the instance's
+  public origin (`APP_URL`) is registered as a trusted origin for the auth CSRF check.
 
 ## [0.1.0] - 2026-06-15
 
