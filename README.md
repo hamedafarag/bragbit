@@ -3,10 +3,8 @@
 > **Your promotion evidence, on your own Postgres.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-
-<!-- Add CI + release badges once the repository is public:
 [![CI](https://github.com/hamedafarag/bragbit/actions/workflows/ci.yml/badge.svg)](https://github.com/hamedafarag/bragbit/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/hamedafarag/bragbit)](https://github.com/hamedafarag/bragbit/releases) -->
+[![Release](https://img.shields.io/github/v/release/hamedafarag/bragbit)](https://github.com/hamedafarag/bragbit/releases)
 
 BragBit is an open-source (AGPL-3.0), self-hostable, white-label **brag-document tracker** for
 developers. Log your wins all year (a "brag" takes under 30 seconds), organize them into documents
