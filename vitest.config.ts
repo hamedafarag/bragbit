@@ -44,9 +44,9 @@ export default defineConfig({
       thresholds: {
         statements: 25,
         branches: 17,
-        functions: 22,
+        functions: 23,
         lines: 25,
-        "src/lib/**/*.ts": { statements: 32, branches: 21, functions: 30, lines: 37 },
+        "src/lib/**/*.ts": { statements: 38, branches: 27, functions: 36, lines: 42 },
         "src/features/**/*.ts": { statements: 65, branches: 60, functions: 63, lines: 67 },
       },
     },

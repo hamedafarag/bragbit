@@ -46,6 +46,9 @@ on `0.x` until the deployment modes and core stabilize.
   warnings, over a median of 3 runs. (ENH-PERF-03)
 - The client-bundle size budget (`pnpm size`) is now a deliberate 420 kB (was 400) — headroom over
   the ~398 kB footprint of necessary deps, after an audit found no accidental bloat. (ENH-CQ-05)
+- Accessibility: added a skip-to-content link, raised the faint-text color to meet WCAG AA contrast,
+  and the primary-button text now auto-selects white or ink to stay readable on any workspace accent.
+  (ENH-UX-02)
 
 ### Security
 

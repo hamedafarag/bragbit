@@ -14,7 +14,7 @@
   --color-paper-deep: #efe9da;
   --color-ink: #221d16;
   --color-ink-soft: #5d5547;
-  --color-ink-faint: #948a78;
+  --color-ink-faint: #726a58; /* darkened for WCAG AA on small text (~4.8:1 on paper) */
   --color-line: #ddd5c4;
   --color-line-soft: #e8e1d1;
 
@@ -45,7 +45,7 @@
   --popover-foreground: #221d16;
 
   --primary: #e8590c; /* brand accent — themeable per workspace */
-  --primary-foreground: #ffffff;
+  --primary-foreground: #221d16; /* ink: best contrast on the default accent; accentVars() picks per workspace */
   --secondary: #efe9da; /* paper-deep */
   --secondary-foreground: #221d16;
   --muted: #efe9da;

@@ -19,6 +19,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="relative z-10 min-h-screen" style={accentVars(workspace.accentColor)}>
+      {/* Keyboard users can jump past the header/nav straight to the page content. */}
+      <a
+        href="#main-content"
+        className="sr-only rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100]"
+      >
+        Skip to content
+      </a>
       <AppHeader
         workspaceName={workspace.name}
         logoUrl={logoUrl}
@@ -27,7 +34,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         initials={initials(displayName)}
         canAdminister={canAdminister}
       />
-      <main className="mx-auto max-w-[760px] px-6 py-10">{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto max-w-[760px] px-6 py-10 focus:outline-none"
+      >
+        {children}
+      </main>
     </div>
   );
 }
