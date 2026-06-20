@@ -24,7 +24,9 @@ import {
 } from "@/features/attachment/components/attachment-manager";
 
 import { createBrag, getTagSuggestions, updateBrag } from "../actions";
-import { BRAG_CATEGORIES, bragSchema } from "../schema";
+import { parseBragForm } from "../form";
+import { BragAttributionFields } from "./brag-attribution-fields";
+import { BragMetaFields } from "./brag-meta-fields";
 import { LinksField, type LinkRow } from "./links-field";
 import { MarkdownField } from "./markdown-field";
 import { TagsField } from "./tags-field";
@@ -44,14 +46,6 @@ export type BragFormValues = {
   visibility: "shared" | "private";
   attachments: AttachmentItem[];
 };
-
-function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-const selectClass =
-  "h-9 rounded-md border border-input bg-card px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 /**
  * The full brag editor in a dialog. With `bragId` it edits (prefilled from
@@ -95,19 +89,7 @@ export function BragEditor({
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const parsed = bragSchema.safeParse({
-      title: String(fd.get("title") ?? ""),
-      date: String(fd.get("date") ?? ""),
-      category: String(fd.get("category") ?? ""),
-      status: String(fd.get("status") ?? ""),
-      descriptionMd: String(fd.get("descriptionMd") ?? ""),
-      impactMd: String(fd.get("impactMd") ?? ""),
-      collaborators: String(fd.get("collaborators") ?? ""),
-      attribution: String(fd.get("attribution") ?? ""),
-      links: links.filter((l) => l.url.trim() !== ""),
-      tags,
-      visibility: fd.get("private") ? "private" : "shared",
-    });
+    const parsed = parseBragForm(fd, links, tags);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check the form.");
       return;
@@ -151,46 +133,7 @@ export function BragEditor({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="brag-date">Date</Label>
-              <Input
-                id="brag-date"
-                name="date"
-                type="date"
-                defaultValue={v?.date ?? todayLocal()}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="brag-category">Category</Label>
-              <select
-                id="brag-category"
-                name="category"
-                defaultValue={v?.category ?? ""}
-                className={selectClass}
-              >
-                <option value="">— None —</option>
-                {BRAG_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="brag-status">Status</Label>
-              <select
-                id="brag-status"
-                name="status"
-                defaultValue={v?.status ?? ""}
-                className={selectClass}
-              >
-                <option value="">— None —</option>
-                <option value="shipped">Shipped</option>
-                <option value="in_progress">In progress</option>
-              </select>
-            </div>
-          </div>
+          <BragMetaFields date={v?.date} category={v?.category} status={v?.status} />
 
           <label className="flex items-center gap-2 text-sm text-ink-soft">
             <input
@@ -224,28 +167,7 @@ export function BragEditor({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="brag-collaborators">Collaborators</Label>
-              <Input
-                id="brag-collaborators"
-                name="collaborators"
-                defaultValue={v?.collaborators ?? ""}
-                placeholder="Data team, N. Osei"
-              />
-              <p className="font-mono text-[10.5px] text-ink-faint">Comma-separated.</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="brag-attribution">Attribution</Label>
-              <Input
-                id="brag-attribution"
-                name="attribution"
-                defaultValue={v?.attribution ?? ""}
-                placeholder="Sara M., Director of Engineering"
-              />
-              <p className="font-mono text-[10.5px] text-ink-faint">Who recognized the work.</p>
-            </div>
-          </div>
+          <BragAttributionFields collaborators={v?.collaborators} attribution={v?.attribution} />
 
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">Tags</span>

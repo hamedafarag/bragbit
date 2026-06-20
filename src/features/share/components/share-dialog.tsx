@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Link2, Lock, RefreshCw } from "lucide-react";
+import { Link2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 
 import {
   createShareLink,
@@ -24,15 +23,8 @@ import {
   setSharePassword,
 } from "../actions";
 import type { ShareLinkView } from "../queries";
-
-function formatAccessed(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { ShareLinkRow } from "./share-link-row";
+import { SharePasswordPanel } from "./share-password-panel";
 
 /**
  * Owner-side share controls for a document: create the link, copy it, rotate it
@@ -161,75 +153,21 @@ export function ShareDialog({
 
         {link ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={link.url}
-                  onFocus={(e) => e.currentTarget.select()}
-                  className="font-mono text-[12px]"
-                  aria-label="Share link"
-                />
-                <Button type="button" variant="outline" size="sm" onClick={onCopy}>
-                  {copied ? (
-                    <Check className="size-3.5" aria-hidden />
-                  ) : (
-                    <Copy className="size-3.5" aria-hidden />
-                  )}
-                  {copied ? "Copied" : "Copy"}
-                </Button>
-              </div>
-              <p className="font-mono text-[10.5px] text-ink-faint">
-                {link.lastAccessedAt
-                  ? `Last opened ${formatAccessed(link.lastAccessedAt)}`
-                  : "Not opened yet."}
-              </p>
-            </div>
+            <ShareLinkRow
+              url={link.url}
+              lastAccessedAt={link.lastAccessedAt}
+              copied={copied}
+              onCopy={onCopy}
+            />
 
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-[13px] font-medium">
-                  <Lock className="size-3.5 text-ink-faint" aria-hidden />
-                  Password
-                </span>
-                <span className="font-mono text-[10.5px] text-ink-faint">
-                  {link.hasPassword ? "Protected" : "Anyone with the link can view"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="password"
-                  value={pw}
-                  onChange={(e) => setPw(e.target.value)}
-                  placeholder={link.hasPassword ? "New password" : "Set a password"}
-                  aria-label="Share password"
-                  autoComplete="new-password"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={pending || pw.length < 6}
-                  onClick={onSetPassword}
-                >
-                  {link.hasPassword ? "Update" : "Set"}
-                </Button>
-              </div>
-              {link.hasPassword ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="self-start text-destructive"
-                  disabled={pending}
-                  onClick={onRemovePassword}
-                >
-                  Remove password
-                </Button>
-              ) : (
-                <p className="font-mono text-[10.5px] text-ink-faint">At least 6 characters.</p>
-              )}
-            </div>
+            <SharePasswordPanel
+              hasPassword={link.hasPassword}
+              pw={pw}
+              onPwChange={setPw}
+              pending={pending}
+              onSet={onSetPassword}
+              onRemove={onRemovePassword}
+            />
 
             <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
               <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={onRotate}>

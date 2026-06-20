@@ -39,6 +39,9 @@ on `0.x` until the deployment modes and core stabilize.
   (`actions/checkout` v5 → v7, `actions/setup-node` v5 → v6, `actions/upload-artifact` v4 → v7).
 - CI now smoke-builds the production Docker image, so a broken `Dockerfile` fails CI rather than
   only surfacing at deploy time.
+- Internal: split the two largest client components (the brag editor and the share dialog) into
+  focused sub-components, and lifted their pure helpers — brag form parsing and the share timestamp
+  formatter — into unit-tested modules. No behavior change. (ENH-CQ-03)
 
 ## [0.1.1] - 2026-06-20
 

@@ -43,11 +43,11 @@ export default defineConfig({
       // — it climbs as Layer 2/3 add tests. The logic dirs hold a higher floor.
       thresholds: {
         statements: 24,
-        branches: 16,
+        branches: 17,
         functions: 22,
         lines: 24,
         "src/lib/**/*.ts": { statements: 32, branches: 21, functions: 30, lines: 37 },
-        "src/features/**/*.ts": { statements: 65, branches: 58, functions: 62, lines: 66 },
+        "src/features/**/*.ts": { statements: 65, branches: 60, functions: 63, lines: 67 },
       },
     },
   },
