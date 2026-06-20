@@ -118,9 +118,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      # The invitation accept e2e drives the real Better Auth sign-up, which sends
+      # a verification email — Mailpit is a throwaway SMTP sink so that succeeds.
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
     env:
       DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
       BETTER_AUTH_SECRET: ci-e2e-placeholder-secret-0123456789abcdef
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
+      SMTP_FROM: BragBit <no-reply@bragbit.local>
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
