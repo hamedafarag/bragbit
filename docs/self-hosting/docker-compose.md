@@ -65,6 +65,8 @@ BragBit already sends HSTS and the other security headers (see
 
 To explore a populated instance before committing real data, the repo ships a demo seed
 (`pnpm seed:demo`) that creates a sample workspace, an owner, and a "2026" document. It's a local
-development convenience — run it from a checkout against a reachable database — see the
+development convenience — the slim production image deliberately omits its dev dependencies
+(`dotenv`, `better-auth/crypto`), so it can't run via `docker compose exec`; run it from a local
+checkout with `DATABASE_URL` pointed at the instance's database — see the
 [User guide](../user-guide.md#trying-the-demo). On a self-hosted instance you'll normally start
 empty and create your own workspace through the setup wizard.

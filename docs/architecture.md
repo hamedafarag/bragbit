@@ -318,5 +318,6 @@ Rate limiting guards the credential surfaces:
 
 All three share the single-process in-memory limiter, consistent with the single-container v1
 deployment; a shared store (Better Auth's `secondaryStorage` / a Redis-backed `lib/rate-limit`) is
-the multi-instance upgrade for hosted mode. Behind the reference reverse proxy, forward the real
-client IP so per-client auth limiting stays accurate.
+the multi-instance upgrade for hosted mode. Per-client limiting keys on the client IP, which Better
+Auth reads from `X-Forwarded-For` by default — accurate behind the reference reverse proxy;
+`TRUSTED_PROXY_IP_HEADER` overrides the header for a proxy that uses a different one.

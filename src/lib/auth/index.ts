@@ -19,6 +19,8 @@ import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
 import { isHosted } from "@/lib/instance";
 
+import { trustedProxyIpConfig } from "./ip-config";
+
 // Social providers, configured only when both an id and secret are present.
 const githubConfigured = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
 const googleConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -41,6 +43,12 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: env.RATE_LIMIT_ENABLED ?? env.NODE_ENV === "production",
   },
+
+  // Per-client IP for the rate-limiter. Better Auth reads `x-forwarded-for` by
+  // default (correct behind the reference reverse proxy); TRUSTED_PROXY_IP_HEADER
+  // points it at a different header if your proxy uses one (e.g. cf-connecting-ip).
+  // Only trust it when a proxy sets the header — see docs/configuration.md.
+  ...trustedProxyIpConfig(env.TRUSTED_PROXY_IP_HEADER),
 
   databaseHooks: {
     session: {

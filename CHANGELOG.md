@@ -42,6 +42,8 @@ on `0.x` until the deployment modes and core stabilize.
 - Internal: split the two largest client components (the brag editor and the share dialog) into
   focused sub-components, and lifted their pure helpers — brag form parsing and the share timestamp
   formatter — into unit-tested modules. No behavior change. (ENH-CQ-03)
+- CI now enforces the Lighthouse budgets (performance, CLS, LCP, TBT) as failures rather than
+  warnings, over a median of 3 runs. (ENH-PERF-03)
 
 ### Security
 
@@ -49,6 +51,9 @@ on `0.x` until the deployment modes and core stabilize.
   inline or injected scripts no longer execute unless they carry the request's nonce, closing the
   XSS gap the previous policy left open. The framing/base-tag/plugin baseline moved into the same
   single CSP. (ENH-SEC-01)
+- The header Better Auth reads for the per-IP auth rate-limit is now configurable via
+  `TRUSTED_PROXY_IP_HEADER` (default `X-Forwarded-For`), for instances behind a proxy that uses a
+  different client-IP header (e.g. Cloudflare's `cf-connecting-ip`). (ENH-SEC-03)
 
 ## [0.1.1] - 2026-06-20
 

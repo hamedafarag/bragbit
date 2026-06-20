@@ -25,14 +25,17 @@ the auth secret, and SMTP.
 
 ## Auth (Better Auth)
 
-| Variable             | Default      | Notes                                                                                              |
-| -------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET` | _(required)_ | Session-signing secret. Generate with `openssl rand -base64 32`; rotating it invalidates sessions. |
-| `BETTER_AUTH_URL`    | `APP_URL`    | Override only if auth runs on a different origin than `APP_URL`.                                   |
+| Variable                  | Default             | Notes                                                                                                                                        |
+| ------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`      | _(required)_        | Session-signing secret. Generate with `openssl rand -base64 32`; rotating it invalidates sessions.                                           |
+| `BETTER_AUTH_URL`         | `APP_URL`           | Override only if auth runs on a different origin than `APP_URL`.                                                                             |
+| `TRUSTED_PROXY_IP_HEADER` | _(x-forwarded-for)_ | Header carrying the real client IP for per-IP rate-limiting. Set only for a proxy that uses a non-standard header (e.g. `cf-connecting-ip`). |
 
 Auth endpoints are rate-limited in production (3 requests/10s on sign-in and sign-up, 3/60s on
-password reset and verification email). Behind a reverse proxy, forward the real client IP so
-per-client limiting stays accurate.
+password reset and verification email). Better Auth reads the client IP from `X-Forwarded-For` by
+default, so per-client limiting works behind the reference reverse proxy; set
+`TRUSTED_PROXY_IP_HEADER` if your proxy uses a different header (e.g. `cf-connecting-ip`). Only trust
+that header when a proxy sets it — a directly-exposed app could let a client spoof it.
 
 ## Email (SMTP)
 

@@ -83,6 +83,12 @@ const schema = z.object({
     .string()
     .optional()
     .transform((v) => (v == null || v === "" ? undefined : /^(1|true|yes|on)$/i.test(v))),
+
+  // Header carrying the real client IP for per-IP auth rate-limiting. Better Auth
+  // reads `x-forwarded-for` by default (correct behind the reference reverse proxy);
+  // set this only if your proxy uses a different header (e.g. Cloudflare's
+  // `cf-connecting-ip`, or `x-real-ip`). Trustworthy only when a proxy sets it.
+  TRUSTED_PROXY_IP_HEADER: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
