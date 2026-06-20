@@ -43,6 +43,13 @@ on `0.x` until the deployment modes and core stabilize.
   focused sub-components, and lifted their pure helpers — brag form parsing and the share timestamp
   formatter — into unit-tested modules. No behavior change. (ENH-CQ-03)
 
+### Security
+
+- Added a `script-src` Content-Security-Policy with per-request nonces (emitted by `src/proxy.ts`):
+  inline or injected scripts no longer execute unless they carry the request's nonce, closing the
+  XSS gap the previous policy left open. The framing/base-tag/plugin baseline moved into the same
+  single CSP. (ENH-SEC-01)
+
 ## [0.1.1] - 2026-06-20
 
 ### Added

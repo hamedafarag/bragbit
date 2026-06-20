@@ -19,12 +19,8 @@ const securityHeaders = [
   },
   // HTTPS-only once seen over TLS; ignored on plain HTTP, so safe to always send.
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-  // Lock down the framing / base-tag / plugin vectors. No script-src policy yet —
-  // Next's inline hydration would need per-request nonces (a later hardening step).
-  {
-    key: "Content-Security-Policy",
-    value: "base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
-  },
+  // The Content-Security-Policy is emitted per-request by `src/proxy.ts` (ENH-SEC-01) —
+  // it carries a fresh `script-src` nonce each render, so it can't be a static header.
 ];
 
 const nextConfig: NextConfig = {

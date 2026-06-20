@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -31,7 +32,12 @@ export const metadata: Metadata = {
   description: "Your promotion evidence, on your own Postgres.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // The CSP nonce (src/proxy.ts) requires dynamic rendering so each render gets a fresh
+  // one; opt the whole tree in here. Next then applies the per-request nonce to its own
+  // scripts automatically (ENH-SEC-01). The app is already request-dynamic — this also
+  // covers the otherwise-static not-found page so its scripts aren't CSP-blocked.
+  await connection();
   return (
     <html
       lang="en"

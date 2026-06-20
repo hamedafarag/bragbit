@@ -42,10 +42,10 @@ export default defineConfig({
       // in the same PR. The global floor is low because components are still 0%
       // — it climbs as Layer 2/3 add tests. The logic dirs hold a higher floor.
       thresholds: {
-        statements: 24,
+        statements: 25,
         branches: 17,
         functions: 22,
-        lines: 24,
+        lines: 25,
         "src/lib/**/*.ts": { statements: 32, branches: 21, functions: 30, lines: 37 },
         "src/features/**/*.ts": { statements: 65, branches: 60, functions: 63, lines: 67 },
       },
