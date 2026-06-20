@@ -4,20 +4,20 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { organization } from "better-auth/plugins/organization";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { ChangeEmailConfirmation } from "@/emails/change-email";
 import { InvitationEmail } from "@/emails/invitation";
 import { ResetPasswordEmail } from "@/emails/reset-password";
 import { VerifyEmail } from "@/emails/verify-email";
+import { cleanupUserStorage } from "@/features/account/deletion";
 import { emailBrandFromOrg, instanceEmailBrand } from "@/lib/branding";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
-import { member, organization as organizationTable, profile } from "@/lib/db/schema";
+import { member } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
 import { isHosted } from "@/lib/instance";
-import { getStorage } from "@/lib/storage";
 
 // Social providers, configured only when both an id and secret are present.
 const githubConfigured = Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
@@ -106,37 +106,11 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
       // The user table cascades to its sessions, accounts, members and profile.
-      // What it does NOT cascade is the workspace itself or the avatar file, so
-      // clean those up first: drop any workspace the user is the sole member of
-      // (always true for a personal workspace; also reaps an org they were the
-      // last member of), and delete their avatar object from storage.
+      // What it does NOT cascade is the workspace, the avatar file, or the
+      // attachments' stored objects — so clean those up first (drop sole-member
+      // workspaces and purge orphaned storage objects). See cleanupUserStorage.
       beforeDelete: async (deletingUser) => {
-        const [p] = await db
-          .select({ avatarKey: profile.avatarKey })
-          .from(profile)
-          .where(eq(profile.userId, deletingUser.id))
-          .limit(1);
-        if (p?.avatarKey)
-          await getStorage()
-            .delete(p.avatarKey)
-            .catch(() => {});
-
-        const memberships = await db
-          .select({ organizationId: member.organizationId })
-          .from(member)
-          .where(eq(member.userId, deletingUser.id));
-        for (const { organizationId } of memberships) {
-          const [other] = await db
-            .select({ id: member.id })
-            .from(member)
-            .where(
-              and(eq(member.organizationId, organizationId), ne(member.userId, deletingUser.id)),
-            )
-            .limit(1);
-          if (!other) {
-            await db.delete(organizationTable).where(eq(organizationTable.id, organizationId));
-          }
-        }
+        await cleanupUserStorage(deletingUser.id);
       },
     },
   },

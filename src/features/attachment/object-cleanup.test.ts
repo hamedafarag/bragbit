@@ -30,12 +30,13 @@ vi.mock("@/lib/auth/guards", () => ({
 // App modules are imported lazily (inside the gated suite's hooks) so the DB-free
 // `verify` job — where the suite is skipped — never evaluates @/lib/env.
 async function load() {
-  const [dbMod, schema, storageMod, bragMod, docMod, drizzle] = await Promise.all([
+  const [dbMod, schema, storageMod, bragMod, docMod, acctMod, drizzle] = await Promise.all([
     import("@/lib/db"),
     import("@/lib/db/schema"),
     import("@/lib/storage"),
     import("@/features/brag/actions"),
     import("@/features/document/actions"),
+    import("@/features/account/deletion"),
     import("drizzle-orm"),
   ]);
   return {
@@ -44,6 +45,7 @@ async function load() {
     getStorage: storageMod.getStorage,
     deleteBrag: bragMod.deleteBrag,
     deleteDocument: docMod.deleteDocument,
+    cleanupUserStorage: acctMod.cleanupUserStorage,
     inArray: drizzle.inArray,
   };
 }
@@ -195,5 +197,43 @@ describe.skipIf(!hasDb)("attachment objects are purged when a brag/document is d
     // ownership-scoped: nothing removed from storage
     expect(await exists(s.keyA)).toBe(true);
     expect(await exists(s.keyB)).toBe(true);
+  });
+
+  it("account deletion purges the user's attachments + avatar and drops the sole-member workspace", async () => {
+    const { db, schema, getStorage, cleanupUserStorage, inArray } = mod;
+    const s = await seed("acct");
+    // Make the user the sole member of the workspace + give them an avatar object,
+    // so cleanupUserStorage exercises the org-drop and avatar paths too.
+    await db
+      .insert(schema.member)
+      .values({ id: `test-mem-acct`, organizationId: s.ws, userId: s.uid, role: "owner" });
+    const avatarKey = `${s.ws}/avatars/av-acct.png`;
+    await db.insert(schema.profile).values({ userId: s.uid, displayName: "Test User", avatarKey });
+    await getStorage().put(avatarKey, Buffer.from("AV"));
+    expect(await exists(avatarKey)).toBe(true);
+    expect(await exists(s.keyA)).toBe(true);
+
+    // Runs the same cleanup the deleteUser beforeDelete hook does, BEFORE the row
+    // cascade. It drops the org (cascading documents → brags → attachment rows).
+    await cleanupUserStorage(s.uid);
+
+    // workspace row dropped, attachment rows cascaded away
+    expect(
+      await db
+        .select({ id: schema.organization.id })
+        .from(schema.organization)
+        .where(inArray(schema.organization.id, [s.ws])),
+    ).toEqual([]);
+    expect(
+      await db
+        .select({ id: schema.attachment.id })
+        .from(schema.attachment)
+        .where(inArray(schema.attachment.storageKey, [s.keyA, s.keyB, s.keyC])),
+    ).toEqual([]);
+    // every stored object purged — the orphan-file bug this fix closes
+    expect(await exists(s.keyA)).toBe(false);
+    expect(await exists(s.keyB)).toBe(false);
+    expect(await exists(s.keyC)).toBe(false);
+    expect(await exists(avatarKey)).toBe(false);
   });
 });
