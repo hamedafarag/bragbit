@@ -38,13 +38,14 @@ services:
     volumes:
       - bragbit_uploads:/app/.data/uploads
     healthcheck:
-      # Node 22 has global fetch; any non-5xx (incl. the setup redirect) is healthy.
+      # Hit the dedicated /api/health endpoint (ENH-INFRA-03): r.ok (200) = app up
+      # AND Postgres reachable; 503 = DB unreachable. Node 22 has global fetch.
       test:
         [
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 5s

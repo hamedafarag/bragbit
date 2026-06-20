@@ -8,6 +8,12 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+### Added
+
+- A dedicated `/api/health` endpoint — `GET` returns 200 `{ "status": "ok" }` when the app and
+  database are reachable, 503 otherwise. The Docker Compose healthcheck now targets it instead of
+  `/` (which renders the full app). (ENH-INFRA-03)
+
 ### Changed
 
 - Test coverage is now measured (V8) and enforced in CI as a ratchet — the build fails if coverage
