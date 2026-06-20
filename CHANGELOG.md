@@ -19,6 +19,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Added end-to-end coverage for onboarding (ENH-TEST-02): the invitation accept flow and the
   first-run setup wizard in both private modes (the latter via a dedicated `playwright.setup.config.ts`
   against an isolated empty database).
+- Bumped the TypeScript compile `target` from ES2017 to ES2022 (the stale create-next-app default).
+  Type-checking and editor-tooling change only — the shipped bundle is unchanged, since Next.js
+  transpiles with SWC targeting the Browserslist browsers, not the tsconfig `target`. (ENH-CQ-02)
 
 ## [0.1.1] - 2026-06-20
 
