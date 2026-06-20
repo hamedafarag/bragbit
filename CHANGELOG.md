@@ -16,6 +16,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Added DB-gated integration tests across the server-action layer (workspace, invitation, setup,
   document, brag, profile, reminder), raising `src/features` line coverage from ~33% to ~67% and
   global from ~13% to ~24% (the ratchet floors were bumped accordingly).
+- Added end-to-end coverage for onboarding (ENH-TEST-02): the invitation accept flow and the
+  first-run setup wizard in both private modes (the latter via a dedicated `playwright.setup.config.ts`
+  against an isolated empty database).
 
 ## [0.1.1] - 2026-06-20
 

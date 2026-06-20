@@ -141,6 +141,12 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm db:migrate
       - run: pnpm test:e2e
+      # First-run setup wizard, both private modes, against an isolated empty DB
+      # (its own `next dev` per mode, run sequentially after the main e2e above).
+      - name: Setup-wizard e2e (both private modes)
+        run: pnpm test:e2e:setup
+        env:
+          SETUP_DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit_e2e_setup
 
   lighthouse:
     name: lighthouse (web vitals)
