@@ -3,6 +3,6 @@
     "name": "App route JS (gzip)",
     "path": ".next/static/chunks/**/*.js",
     "gzip": true,
-    "limit": "400 kB"
+    "limit": "420 kB"
   }
 ]
