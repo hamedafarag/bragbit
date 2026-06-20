@@ -13,8 +13,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Test coverage is now measured (V8) and enforced in CI as a ratchet — the build fails if coverage
   regresses. Added `pnpm test:db` (run the DB-gated suite locally) and `pnpm test:coverage` /
   `pnpm test:db:coverage`. (ENH-TEST-03/05)
-- Added DB-gated integration tests for the workspace, invitation, and setup server actions, raising
-  coverage of `src/features` from ~33% to ~50% (the ratchet floor was bumped accordingly).
+- Added DB-gated integration tests across the server-action layer (workspace, invitation, setup,
+  document, brag, profile, reminder), raising `src/features` line coverage from ~33% to ~67% and
+  global from ~13% to ~24% (the ratchet floors were bumped accordingly).
 
 ## [0.1.1] - 2026-06-20
 
