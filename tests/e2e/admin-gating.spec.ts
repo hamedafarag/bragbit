@@ -11,11 +11,15 @@ async function signIn(page: Page, email: string) {
   await page.waitForURL((url) => new URL(url).pathname === "/dashboard", { timeout: 20_000 });
 }
 
-test("a member is redirected away from the admin area", async ({ page }) => {
+test("a member is sent straight to the dashboard from /admin", async ({ page }) => {
   await signIn(page, E2E.memberEmail);
+  // The /admin gate now redirects a non-admin directly to /dashboard — a single
+  // 307 — instead of bouncing through "/" (which re-dispatches). ENH-CQ-06.
+  const res = await page.request.get("/admin", { maxRedirects: 0 });
+  expect(res.status()).toBe(307);
+  expect(new URL(res.headers()["location"] ?? "", "http://e2e").pathname).toBe("/dashboard");
+  // And a real navigation lands there (no redirect loop).
   await page.goto("/admin");
-  // The /admin gate bounces a non-admin to "/", which re-dispatches a signed-in user
-  // to /dashboard (app/page.tsx).
   await page.waitForURL((url) => new URL(url).pathname === "/dashboard", { timeout: 20_000 });
 });
 

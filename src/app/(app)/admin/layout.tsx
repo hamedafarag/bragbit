@@ -10,7 +10,9 @@ import { canAdminister } from "@/features/workspace/roles";
 // own workspace settings; the Members tab is hidden for personal workspaces.)
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { workspace, role } = await getActiveWorkspace();
-  if (!canAdminister(role)) redirect("/");
+  // Non-admins go straight to the dashboard, not "/" — the root dispatcher would
+  // only bounce a signed-in caller back to /dashboard anyway (one extra 307). ENH-CQ-06.
+  if (!canAdminister(role)) redirect("/dashboard");
 
   return (
     <div className="flex flex-col gap-6">

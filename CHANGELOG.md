@@ -22,6 +22,9 @@ on `0.x` until the deployment modes and core stabilize.
 - Bumped the TypeScript compile `target` from ES2017 to ES2022 (the stale create-next-app default).
   Type-checking and editor-tooling change only — the shipped bundle is unchanged, since Next.js
   transpiles with SWC targeting the Browserslist browsers, not the tsconfig `target`. (ENH-CQ-02)
+- A non-admin landing on `/admin` — and any insufficient-role guard failure — is now redirected
+  straight to the dashboard instead of bouncing through `/` first (one redirect instead of two).
+  (ENH-CQ-06)
 
 ## [0.1.1] - 2026-06-20
 

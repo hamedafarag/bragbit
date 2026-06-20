@@ -57,7 +57,10 @@ export async function requireWorkspace() {
 /** Require the caller's active-workspace membership to hold one of `roles`. */
 export async function requireRole(...roles: WorkspaceRole[]) {
   const ctx = await requireWorkspace();
-  if (!roles.includes(ctx.member.role as WorkspaceRole)) redirect("/");
+  // Insufficient role → the dashboard directly. The caller is signed in with a
+  // workspace, so "/" would just re-dispatch them here (ENH-CQ-06; cf. the
+  // /no-workspace note in requireWorkspace).
+  if (!roles.includes(ctx.member.role as WorkspaceRole)) redirect("/dashboard");
   return ctx;
 }
 
