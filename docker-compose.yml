@@ -39,7 +39,7 @@ services:
       - bragbit_uploads:/app/.data/uploads
     healthcheck:
       # Hit the dedicated /api/health endpoint (ENH-INFRA-03): r.ok (200) = app up
-      # AND Postgres reachable; 503 = DB unreachable. Node 22 has global fetch.
+      # AND Postgres reachable; 503 = DB unreachable. Node has global fetch built in.
       test:
         [
           "CMD",

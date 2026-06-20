@@ -288,8 +288,9 @@ check gates the app on a ready database), with `minio` + `minio-init` behind a `
 S3-compatible storage. Compose injects `DATABASE_URL` (→ the `postgres` service) and `STORAGE_DIR`
 (→ the `bragbit_uploads` volume) over `.env`, so the operator only fills in the secrets and SMTP.
 The in-process reminder scheduler (`src/instrumentation.ts`) runs in this standalone server, so a
-self-host needs no external cron. See [Self-hosting](self-hosting/) and
-[Configuration](configuration.md).
+self-host needs no external cron. An unauthenticated `GET /api/health` runs `select 1` and returns
+200 `{status:"ok"}` (app + Postgres reachable) or 503 — the Compose `app` healthcheck probes it, and
+it carries no instance data. See [Self-hosting](self-hosting/) and [Configuration](configuration.md).
 
 ## Security headers & rate limiting
 

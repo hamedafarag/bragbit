@@ -4,8 +4,9 @@ Thanks for your interest! BragBit is AGPL-3.0 and welcomes issues and pull reque
 
 ## Local development
 
-Requirements: **Node 20+**, **pnpm 10+** (via Corepack), and a local **Docker** daemon for the dev
-stack.
+Requirements: **Node 22+** (the production image runs Node 26), **pnpm 10+**, and a local **Docker**
+daemon for the dev stack. pnpm is managed by Corepack (`corepack enable`); newer Node releases no
+longer bundle Corepack, so install it first (`npm install -g corepack`) if it isn't on your PATH.
 
 ```bash
 pnpm install
@@ -34,7 +35,8 @@ them with `pnpm dev:down`.
 | `pnpm seed:demo`  | Seed a demo workspace + document                |
 
 Also available: `pnpm test:coverage` / `pnpm test:db:coverage` (V8 coverage), `pnpm test:e2e`
-(Playwright), `pnpm lint:md`, `pnpm format`, `pnpm size`, and `pnpm dev:up` / `pnpm dev:down` for
+(Playwright) and `pnpm test:e2e:setup` (the first-run setup wizard, both private modes, against an
+isolated DB), `pnpm lint:md`, `pnpm format`, `pnpm size`, and `pnpm dev:up` / `pnpm dev:down` for
 the Docker stack.
 
 **Coverage gate.** CI measures coverage in the `database` job (where the DB-gated tests run, so

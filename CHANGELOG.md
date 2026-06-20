@@ -33,6 +33,10 @@ on `0.x` until the deployment modes and core stabilize.
   (ENH-CQ-06)
 - The production Docker image now builds on `node:26-alpine` (was `node:22-alpine`). Since current
   Node images no longer bundle corepack, the image installs it explicitly to keep the pinned pnpm.
+- Dependency maintenance (via Dependabot): TypeScript 5.9 → 6.0, `@types/node` 20 → 26, a grouped
+  minor/patch bump of 13 runtime/dev dependencies (better-auth, react/react-dom, node-cron,
+  `@playwright/test`, lucide-react, radix-ui, `@react-email/render`, …), and CI Actions
+  (`actions/checkout` v5 → v7, `actions/setup-node` v5 → v6, `actions/upload-artifact` v4 → v7).
 
 ## [0.1.1] - 2026-06-20
 

@@ -1,4 +1,4 @@
-# BragBit — Manual Test Plan (v0.1.0, Phases 1–9)
+# BragBit — Manual Test Plan (v0.1.1, Phases 1–9)
 
 A step-by-step manual test catalogue for the v1 (self-host) scope: the two private deployment modes,
 `private-solo` and `private-org`. Hosted multi-tenant mode (`INSTANCE_MODE=hosted`) is v1.1 and is
@@ -172,7 +172,8 @@ out of scope here.
   - Steps: owner hands ownership to another member. Expected: atomic swap — the new owner is owner,
     the old owner becomes admin, exactly one owner remains.
 - **TC-MEM-07 · Members can't reach admin** — P1 · org — security
-  - Steps: as a Member, open `/admin` and `/admin/members`. Expected: redirected away (to `/`).
+  - Steps: as a Member, open `/admin` and `/admin/members`. Expected: redirected away — straight to
+    `/dashboard` in a single redirect (not bounced via `/`; ENH-CQ-06).
 - **TC-MEM-08 · No member surface in solo mode** — P1 · solo — Expected: no Members tab, no
   `/admin/members`.
 - **TC-MEM-09 · Admins cannot read member brag content** — P1 · org — security
@@ -341,6 +342,10 @@ out of scope here.
   Expected: migrations apply on start; the app comes back healthy.
 - **TC-DEPLOY-09 · Demo seed** — P3 — Steps: `pnpm seed:demo`. Expected: sign in as
   `demo@bragbit.local` / `demobragbit` and see a populated "2026" document.
+- **TC-DEPLOY-10 · Health endpoint** — P2 — Steps: `curl -i http://<host>/api/health`, then again
+  with Postgres stopped. Expected: 200 `{"status":"ok"}` when the app and database are reachable;
+  503 `{"status":"error"}` when the DB is unreachable. Unauthenticated and returns no instance data;
+  the Compose `app` healthcheck (and any external uptime monitor) targets it.
 
 ## O. Security (cross-cutting)
 

@@ -52,6 +52,9 @@ BragBit already sends HSTS and the other security headers (see
 
 ## Operations
 
+- **Health:** `curl http://localhost:${APP_PORT:-3000}/api/health` → `{"status":"ok"}` (HTTP 200)
+  when the app and Postgres are reachable, `503` if the database is down. The Compose `app`
+  healthcheck uses this; point any external uptime monitor or reverse-proxy health probe at it too.
 - **Logs:** `docker compose logs -f app`
 - **Restart:** `docker compose restart app`
 - **Stop / start:** `docker compose down` / `docker compose up -d`. Your data lives in the
