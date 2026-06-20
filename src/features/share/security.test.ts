@@ -10,7 +10,7 @@
 // DB-free (importing @/lib/env throws without it — hence the lazy imports). The CI
 // `database` job sets DATABASE_URL to un-skip it. Locally:
 //   pnpm dev:up && DATABASE_URL=postgres://bragbit:bragbit@localhost:5433/bragbit \
-//     BETTER_AUTH_SECRET=x pnpm test src/features/share/security.test.ts
+//     BETTER_AUTH_SECRET=0123456789abcdef0123456789abcdef pnpm test src/features/share/security.test.ts
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

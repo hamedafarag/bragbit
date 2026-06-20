@@ -8,7 +8,7 @@
 // DB-free (importing @/lib/env throws without it — hence the lazy imports below).
 // The CI `database` job sets DATABASE_URL to un-skip it. Locally:
 //   pnpm dev:up && DATABASE_URL=postgres://bragbit:bragbit@localhost:5433/bragbit \
-//     BETTER_AUTH_SECRET=x pnpm test src/features/attachment/object-cleanup.test.ts
+//     BETTER_AUTH_SECRET=0123456789abcdef0123456789abcdef pnpm test src/features/attachment/object-cleanup.test.ts
 import { rm } from "node:fs/promises";
 import path from "node:path";
 

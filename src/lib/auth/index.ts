@@ -26,6 +26,9 @@ const googleConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRE
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL ?? env.APP_URL,
   secret: env.BETTER_AUTH_SECRET,
+  // Trust the instance's own public origin for the CSRF Origin check, so
+  // legitimate requests behind a reverse proxy aren't rejected.
+  trustedOrigins: [env.BETTER_AUTH_URL ?? env.APP_URL],
   database: drizzleAdapter(db, { provider: "pg", schema }),
 
   // Brute-force protection for the auth endpoints. Better Auth's limiter ships

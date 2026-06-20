@@ -28,7 +28,12 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
   // Auth (Better Auth)
-  BETTER_AUTH_SECRET: z.string().min(1, "BETTER_AUTH_SECRET is required"),
+  BETTER_AUTH_SECRET: z
+    .string()
+    .min(
+      32,
+      "BETTER_AUTH_SECRET must be at least 32 characters (generate with `openssl rand -base64 32`)",
+    ),
   BETTER_AUTH_URL: z.string().optional(),
 
   // Email (SMTP)

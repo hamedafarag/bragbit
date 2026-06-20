@@ -140,7 +140,13 @@ export async function setSharePassword(
   const active = await activeLinkFor(ownedId);
   if (!active) return { ok: false, error: "Create a share link first." };
 
-  const passwordHash = await hash(parsed.data.password);
+  // OWASP Argon2id minimum (the @node-rs default is only 4 MiB). verify() reads
+  // these params back from the encoded hash, so existing hashes still validate.
+  const passwordHash = await hash(parsed.data.password, {
+    memoryCost: 19456,
+    timeCost: 2,
+    parallelism: 1,
+  });
   await db.update(shareLink).set({ passwordHash }).where(eq(shareLink.id, active.id));
   return { ok: true };
 }
