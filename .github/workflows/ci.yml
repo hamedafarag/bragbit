@@ -17,6 +17,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Production-dependency advisories only; accepted dev-tool advisories are
+      # allowlisted in package.json (pnpm.auditConfig.ignoreGhsas).
+      - run: pnpm audit --prod
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check

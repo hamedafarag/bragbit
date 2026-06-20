@@ -1,0 +1,39 @@
+# Automated dependency updates (ENH-INFRA-02). Weekly, grouped to keep PR noise
+# down; commit prefixes match the Conventional Commits the repo enforces.
+version: 2
+updates:
+  # App dependencies (pnpm workspace at the root).
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+    groups:
+      # Routine minor/patch bumps land as one PR; majors stay separate to review.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions pinned in the workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # The Dockerfile base image.
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore

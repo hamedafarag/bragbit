@@ -25,8 +25,10 @@ on `0.x` until the deployment modes and core stabilize.
 - The root path `/` is now a thin mode- and session-aware redirect (to `/setup`, `/dashboard`, or
   `/sign-in`) instead of a placeholder timeline — the leftover Phase-0 demo content is gone.
 - Development & CI: GitHub Actions moved to the Node 24 action runtime (`checkout@v5`,
-  `setup-node@v5`, `pnpm/action-setup@v6`), and the core capture → timeline → share (with password) →
-  export flow gained end-to-end (Playwright) coverage.
+  `setup-node@v5`, `pnpm/action-setup@v6`); the core capture → timeline → share (with password) →
+  export flow gained end-to-end (Playwright) coverage; CI now runs `pnpm audit --prod` (accepted
+  dev-tool advisories allowlisted); and Dependabot keeps dependencies, Actions, and the Docker base
+  image current.
 
 ### Fixed
 
@@ -47,6 +49,8 @@ on `0.x` until the deployment modes and core stabilize.
   library default; existing share passwords keep working.
 - Operator-config hardening: `BETTER_AUTH_SECRET` must be at least 32 characters, and the instance's
   public origin (`APP_URL`) is registered as a trusted origin for the auth CSRF check.
+- Updated `nodemailer` to 9.0.1, clearing a high-severity advisory (file read + SSRF via a crafted
+  message) in the email transport.
 
 ## [0.1.0] - 2026-06-15
 
