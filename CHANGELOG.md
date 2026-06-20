@@ -8,6 +8,12 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+### Changed
+
+- Test coverage is now measured (V8) and enforced in CI as a ratchet — the build fails if coverage
+  regresses. Added `pnpm test:db` (run the DB-gated suite locally) and `pnpm test:coverage` /
+  `pnpm test:db:coverage`. (ENH-TEST-03/05)
+
 ## [0.1.1] - 2026-06-20
 
 ### Added

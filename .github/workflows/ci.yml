@@ -86,11 +86,20 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate
-      # DATABASE_URL un-skips the DB-gated tests (skipped in `verify`). Running the
-      # whole suite covers every DB-gated file automatically (the pure tests just
-      # re-run harmlessly), so a new integration test needs no CI change.
-      - name: DB-gated integration tests (against Postgres)
-        run: pnpm test
+      # DATABASE_URL un-skips the DB-gated tests (skipped in `verify`), so this is
+      # the run where the most logic executes — hence where we measure coverage.
+      # `test:coverage` enforces the ratchet thresholds in vitest.config.ts and
+      # fails the build on any regression. A new integration test needs no CI
+      # change (the whole suite runs here automatically).
+      - name: DB-gated integration tests + coverage (against Postgres)
+        run: pnpm test:coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
 
   e2e:
     name: e2e (playwright)

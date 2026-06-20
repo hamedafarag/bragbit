@@ -22,18 +22,25 @@ them with `pnpm dev:down`.
 
 ### Scripts
 
-| Command           | Purpose                                 |
-| ----------------- | --------------------------------------- |
-| `pnpm dev`        | Run the app in development              |
-| `pnpm build`      | Production build                        |
-| `pnpm lint`       | ESLint                                  |
-| `pnpm typecheck`  | TypeScript                              |
-| `pnpm test`       | Unit tests (Vitest)                     |
-| `pnpm db:migrate` | Apply database migrations (drizzle-kit) |
-| `pnpm seed:demo`  | Seed a demo workspace + document        |
+| Command           | Purpose                                         |
+| ----------------- | ----------------------------------------------- |
+| `pnpm dev`        | Run the app in development                      |
+| `pnpm build`      | Production build                                |
+| `pnpm lint`       | ESLint                                          |
+| `pnpm typecheck`  | TypeScript                                      |
+| `pnpm test`       | Unit tests (Vitest); DB-gated suites skip       |
+| `pnpm test:db`    | Full suite incl. DB-gated (needs `pnpm dev:up`) |
+| `pnpm db:migrate` | Apply database migrations (drizzle-kit)         |
+| `pnpm seed:demo`  | Seed a demo workspace + document                |
 
-Also available: `pnpm test:e2e` (Playwright), `pnpm lint:md`, `pnpm format`, `pnpm size`, and
-`pnpm dev:up` / `pnpm dev:down` for the Docker stack.
+Also available: `pnpm test:coverage` / `pnpm test:db:coverage` (V8 coverage), `pnpm test:e2e`
+(Playwright), `pnpm lint:md`, `pnpm format`, `pnpm size`, and `pnpm dev:up` / `pnpm dev:down` for
+the Docker stack.
+
+**Coverage gate.** CI measures coverage in the `database` job (where the DB-gated tests run, so
+server actions count) and enforces a ratchet in `vitest.config.ts` — it fails on any regression.
+When your change raises a coverage number, bump that threshold to the new floor in the same PR;
+never lower a floor without a reviewed reason. Run `pnpm test:db:coverage` locally to see the number.
 
 For manual / QA verification, the [manual test plan](docs/testing.md) is a step-by-step catalogue of
 test cases across Phases 1–9 (organized by feature, with priorities and a per-mode smoke test).
