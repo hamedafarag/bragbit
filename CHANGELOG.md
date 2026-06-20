@@ -37,6 +37,8 @@ on `0.x` until the deployment modes and core stabilize.
   minor/patch bump of 13 runtime/dev dependencies (better-auth, react/react-dom, node-cron,
   `@playwright/test`, lucide-react, radix-ui, `@react-email/render`, …), and CI Actions
   (`actions/checkout` v5 → v7, `actions/setup-node` v5 → v6, `actions/upload-artifact` v4 → v7).
+- CI now smoke-builds the production Docker image, so a broken `Dockerfile` fails CI rather than
+  only surfacing at deploy time.
 
 ## [0.1.1] - 2026-06-20
 

@@ -192,3 +192,17 @@ jobs:
           args: "--no-progress README.md 'docs/**/*.md'"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-image:
+    name: docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Smoke-build the production image so a Dockerfile break (e.g. a base-image
+      # bump that drops a bundled tool, as node:26-alpine did with corepack) fails
+      # CI instead of only surfacing at deploy time. The builder stage inlines
+      # placeholder secrets and opens no DB connection, so this needs no services.
+      - name: Build the production image
+        run: docker build -t bragbit:ci .
+        env:
+          DOCKER_BUILDKIT: "1"
