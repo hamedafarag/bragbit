@@ -10,9 +10,9 @@ jobs:
     name: typecheck · lint · test · build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -35,9 +35,9 @@ jobs:
     name: storage adapter (minio)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -78,9 +78,9 @@ jobs:
       DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
       BETTER_AUTH_SECRET: ci-dal-placeholder-secret-0123456789abcdef
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -113,9 +113,9 @@ jobs:
       DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
       BETTER_AUTH_SECRET: ci-e2e-placeholder-secret-0123456789abcdef
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -145,9 +145,9 @@ jobs:
       DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
       BETTER_AUTH_SECRET: ci-lh-placeholder-secret-0123456789abcdef
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
@@ -162,7 +162,7 @@ jobs:
     name: docs link check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: lycheeverse/lychee-action@v2
         with:
           args: "--no-progress README.md 'docs/**/*.md'"
