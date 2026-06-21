@@ -25,6 +25,11 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Changed
 
+- Added a cross-workspace **data-isolation test suite** (`src/test/data-isolation.test.ts`) — the
+  security foundation for hosted multi-tenant mode (Phase 10). It seeds two independent workspaces and
+  asserts every cross-tenant access fails — documents, brags, full-text search, attachments, share
+  links, export, the authorizing file route, and dashboard activity — each paired with an owner
+  positive control. Raised the `src/features` coverage floor to 82/74/81/83 (global to 41/31/42/41).
 - Image previews (avatars, attachment thumbnails, logos) are now served downscaled as webp via a
   `?w=` param on the authorizing files route (sharp) — cutting bandwidth on the dashboard, timeline,
   and share pages; full-resolution originals still serve for opens and downloads. (ENH-PERF-02)
