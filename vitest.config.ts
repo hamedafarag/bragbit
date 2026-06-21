@@ -44,10 +44,10 @@ export default defineConfig({
       // higher floor.
       thresholds: {
         statements: 34,
-        branches: 25,
-        functions: 35,
+        branches: 26,
+        functions: 36,
         lines: 34,
-        "src/lib/**/*.ts": { statements: 41, branches: 30, functions: 40, lines: 45 },
+        "src/lib/**/*.ts": { statements: 43, branches: 33, functions: 42, lines: 47 },
         "src/features/**/*.ts": { statements: 68, branches: 62, functions: 65, lines: 69 },
       },
     },

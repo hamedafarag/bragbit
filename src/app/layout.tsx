@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import "./globals.css";
 
+import { ThemeInit } from "@/components/shared/theme-init";
 import { Toaster } from "@/components/ui/sonner";
+import { THEME_COOKIE, themeClass } from "@/lib/theme";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -38,12 +41,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // scripts automatically (ENH-SEC-01). The app is already request-dynamic — this also
   // covers the otherwise-static not-found page so its scripts aren't CSP-blocked.
   await connection();
+  const cookieStore = await cookies();
+  // Dark mode (ENH-UX-01): the cookie drives the SSR class for no-flash on return
+  // visits; ThemeInit applies the OS preference on a first visit. suppressHydration
+  // Warning because the toggle/ThemeInit mutate the <html> class on the client.
+  const theme = themeClass(cookieStore.get(THEME_COOKIE)?.value);
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable} ${theme} h-full antialiased`}
     >
       <body className="min-h-full">
+        <ThemeInit />
         {children}
         <Toaster />
       </body>

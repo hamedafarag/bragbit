@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { thumbUrl } from "@/lib/utils";
 
+import { ThemeToggle } from "./theme-toggle";
+
 /**
  * App-wide top chrome for the authenticated `(app)` area. Shows the active
  * workspace identity (logo or wordmark) and a small user cluster (avatar →
@@ -65,6 +67,7 @@ export function AppHeader({
       <div className="flex-1" />
 
       <nav className="flex items-center gap-1">
+        <ThemeToggle />
         {canAdminister ? (
           <Link
             href="/admin"

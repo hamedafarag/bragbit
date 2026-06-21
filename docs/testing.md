@@ -397,6 +397,10 @@ out of scope here.
   Expected: an "Activity" panel shows a year-long heatmap (cells tinted in the workspace accent), a
   non-zero week streak, and the wins-this-year total; hovering a day shows its count; the panel is
   hidden when there are no wins.
+- **TC-UX-08 · Dark mode** — P2 — Steps: click the sun/moon toggle in the header; reload; then view a
+  share/auth page. Expected: the whole app re-themes to the warm dark palette (not a harsh invert),
+  the choice persists across reloads (cookie) and carries to share/auth pages, and a first-time
+  visitor whose OS prefers dark loads dark. No flash for a returning user; no console errors.
 
 ---
 

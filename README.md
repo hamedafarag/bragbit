@@ -33,6 +33,7 @@ can always leave.
 - **Per-workspace white-labeling** (name, logo, accent) and **weekly email reminders**.
 - **A dashboard activity heatmap** — a year of your logging cadence at a glance, with a week streak.
 - **Accessible & keyboard-navigable** — skip-to-content link, focus-visible rings, and WCAG AA contrast.
+- **Light & dark themes** — a designed warm dark mode (not a mechanical invert), following your OS by default.
 - **Self-host with one `docker compose up`** — Postgres-backed, migrations run on start.
 
 A static preview of the interface (the "engineering logbook" design language) is in

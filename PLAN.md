@@ -73,7 +73,7 @@ A single concept absorbs every scenario: a **workspace** is the tenant boundary,
 
 ### Design system (reconciled with `design-mockup.html`, 2026-06-13)
 
-- **Light-only for v1.** The warm-paper "logbook" palette ships light-only; a deliberately-designed dark variant (ink-on-dark, not a mechanical invert) is a post-v1 enhancement. (The Phase 0 "dark mode" item is removed.)
+- **Light-only for v1.** The warm-paper "logbook" palette ships light-only; a deliberately-designed dark variant (ink-on-dark, not a mechanical invert) shipped post-v1 as ENH-UX-01 (2026-06-21). (The Phase 0 "dark mode" item was deferred to there.)
 - **8 category colors** for `globals.css`: shipped `#5c8a58`, technical `#4f6d9e`, collaboration `#8b5e83`, recognition `#b08a2e`, glue `#927e63`, leadership `#9a5b3b`, skills-learning `#3f8a82`, other `#6f6757`.
 - **Monochrome tags.** Faint `#text`, no per-tag color (calmer on a dense timeline); `tags.color` dropped from the v1 schema.
 - **Timeline node encodes status only:** solid accent center = shipped, hollow (paper) center = in-progress; `in_progress` brags also carry an "In progress" pill on the card. (An earlier two-axis node that also put visibility on the ring was dropped — rendered at 8px, a dashed *accent* ring is invisible against the solid accent fill, so shipped·shared and shipped·private collided, and that's the common case since `status` defaults to the solid node.)

@@ -10,6 +10,8 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Added
 
+- Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
+  it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)
 - A dashboard **activity heatmap** + week streak — a year-long, accent-tinted view of your logging
   cadence (GitHub-style), built from a per-day win aggregation and shown once you've logged a win.
   (ENH-UX-05)
