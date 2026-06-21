@@ -29,6 +29,10 @@ on `0.x` until the deployment modes and core stabilize.
   (the instance default `WORKSPACE_QUOTA_MB`, or a per-workspace override set in `/super`; an upload
   over quota is refused), and signups from disposable / throwaway email domains are blocked
   (`BLOCK_DISPOSABLE_EMAIL`, on by default). (Phase 10)
+- **Timeline cursor pagination** (PERF-01) — a long document now loads the most recent months first
+  and reveals older months on demand with a "Load more" control, so a multi-year logbook stays fast
+  to open. The window is sized by whole months, so a month header never splits across a load and the
+  quiet-month gap markers stay correct across the page boundary; filters reset the window. (Phase 10)
 
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)

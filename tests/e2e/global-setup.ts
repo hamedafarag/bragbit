@@ -16,7 +16,25 @@ export const E2E = {
   // the real Better Auth sign-up (so the e2e env needs SMTP/Mailpit).
   inviteId: "e2e-invite",
   inviteeEmail: "invitee@e2e.test",
+  // A personal workspace whose one document carries enough brags across enough
+  // months to split the timeline into two cursor-paged pages (PERF-01).
+  paginate: {
+    email: "paginate@e2e.test",
+    userId: "e2e-paginate",
+    wsId: "e2e-paginate-ws",
+    docId: "e2e-paginate-doc",
+    docPath: "/documents/e2e-paginate-doc",
+  },
 };
+
+// Brags per month for the pagination document, newest first. 16 + 16 fills the
+// first page (target 30, whole months); the older month (with a quiet gap before
+// it) spills onto page two via "load more".
+const PAGINATE_MONTHS: [string, number, string][] = [
+  ["2026-06", 16, "June win"],
+  ["2026-05", 16, "May win"],
+  ["2026-03", 6, "March win"],
+];
 
 const SEED = [
   ["e2e-owner", "E2E Owner", E2E.ownerEmail, "owner"],
@@ -53,6 +71,34 @@ export default async function globalSetup() {
     await sql`insert into invitation (id, organization_id, email, role, status, expires_at, inviter_id)
               values (${E2E.inviteId}, 'e2e-org', ${E2E.inviteeEmail}, 'member', 'pending',
                       now() + interval '7 days', 'e2e-owner')`;
+
+    // The pagination fixture: a personal workspace, its owner, one document, and
+    // brags spread across months (explicit deletes — no reliance on cascade order).
+    const pg = E2E.paginate;
+    await sql`delete from brags where document_id = ${pg.docId}`;
+    await sql`delete from documents where id = ${pg.docId}`;
+    await sql`delete from "user" where id = ${pg.userId}`;
+    await sql`delete from organization where id = ${pg.wsId}`;
+
+    await sql`insert into organization (id, name, slug, type)
+              values (${pg.wsId}, 'Pagination WS', ${pg.wsId}, 'personal')`;
+    await sql`insert into "user" (id, name, email, email_verified)
+              values (${pg.userId}, 'Paginate User', ${pg.email}, true)`;
+    await sql`insert into account (id, account_id, provider_id, user_id, password)
+              values (${`${pg.userId}-acc`}, ${pg.userId}, 'credential', ${pg.userId}, ${password})`;
+    await sql`insert into member (id, organization_id, user_id, role)
+              values (${`${pg.userId}-mem`}, ${pg.wsId}, ${pg.userId}, 'owner')`;
+    await sql`insert into documents (id, workspace_id, user_id, title)
+              values (${pg.docId}, ${pg.wsId}, ${pg.userId}, 'Pagination Log')`;
+
+    let n = 0;
+    for (const [month, count, label] of PAGINATE_MONTHS) {
+      for (let j = 0; j < count; j++) {
+        await sql`insert into brags (id, document_id, title, date)
+                  values (${`e2e-pg-${n}`}, ${pg.docId}, ${`${label} ${j + 1}`}, ${`${month}-15`})`;
+        n++;
+      }
+    }
   } finally {
     await sql.end();
   }

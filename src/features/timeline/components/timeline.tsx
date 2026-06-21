@@ -27,40 +27,44 @@ function monthIndex(key: string): number {
 }
 
 /**
- * The document timeline: brags reverse-chronological, grouped by month with
- * sticky month headers and a vertical spine. The per-brag status node lives on
- * BragCard (solid = shipped, hollow = in-progress); private is a card treatment,
- * not a node ring (PLAN §4). Brags arrive already date-desc from listBrags. When
- * `showGaps` (the unfiltered view), quiet months between entries are marked so
- * the logging cadence is visible; the month-windowed cursor pagination for very
- * long documents is deferred to v1.1.
+ * One contiguous slice of the timeline: date-desc brags grouped into month
+ * sections (sticky headers + per-month win counts) along the shared spine. The
+ * per-brag status node lives on the card (solid = shipped, hollow = in-progress);
+ * private is a card treatment, not a node ring (PLAN §4).
+ *
+ * When `showGaps` (the unfiltered view), quiet months between entries are marked
+ * so the logging cadence is visible — including a *leading* gap from `prevMonthKey`
+ * (the month immediately newer than this slice). That's how cursor-paged "load
+ * more" keeps the cadence correct across the page boundary: a slice's first month
+ * measures its gap against the previous page's oldest month, not nothing. On the
+ * first page `prevMonthKey` is null, so there's no leading marker.
  *
  * Card-agnostic: callers pass `renderCard` so the owner timeline injects the
  * interactive BragCard while the public share page injects a read-only card —
- * keeping the owner editor out of the public bundle. The grouping/spine/gaps stay
- * shared.
+ * keeping the owner editor out of the public bundle. A shared component (no
+ * server-only), so the "load more" island can render appended slices client-side
+ * with the very same markup as the server-rendered first page.
  */
-export function Timeline({
+export function TimelineChunk({
   brags,
   showGaps = false,
+  prevMonthKey = null,
   renderCard,
 }: {
   brags: BragWithRelations[];
   showGaps?: boolean;
+  prevMonthKey?: string | null;
   renderCard: (brag: BragWithRelations) => ReactNode;
 }) {
   const months = groupByMonth(brags);
 
   return (
-    <div className="relative">
-      {/* The spine — behind the entries; sticky month headers fade it with their gradient. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-[76px] w-px bg-line"
-      />
+    <>
       {months.map((month, i) => {
-        const gap =
-          showGaps && i > 0 ? monthIndex(months[i - 1]!.key) - monthIndex(month.key) - 1 : 0;
+        // Gap reference: the previous month in this slice, or — for the slice's
+        // first month — the previous page's oldest month (prevMonthKey).
+        const prevKey = i > 0 ? months[i - 1]!.key : prevMonthKey;
+        const gap = showGaps && prevKey ? monthIndex(prevKey) - monthIndex(month.key) - 1 : 0;
         return (
           <Fragment key={month.key}>
             {gap > 0 ? (
@@ -87,6 +91,39 @@ export function Timeline({
           </Fragment>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * The document timeline, all brags in one pass: the `.relative` wrapper + vertical
+ * spine around a single {@link TimelineChunk}. Used where the whole set renders at
+ * once (the public share page). The owner timeline paginates instead — see
+ * LoadMoreTimeline, which owns its own wrapper + spine so the spine grows as older
+ * pages append. Brags arrive already date-desc from the query layer.
+ */
+export function Timeline({
+  brags,
+  showGaps = false,
+  renderCard,
+}: {
+  brags: BragWithRelations[];
+  showGaps?: boolean;
+  renderCard: (brag: BragWithRelations) => ReactNode;
+}) {
+  return (
+    <div className="relative">
+      {/* The spine — behind the entries; sticky month headers fade it with their gradient. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-[76px] w-px bg-line"
+      />
+      <TimelineChunk
+        brags={brags}
+        showGaps={showGaps}
+        prevMonthKey={null}
+        renderCard={renderCard}
+      />
     </div>
   );
 }
