@@ -16,6 +16,7 @@ import { emailBrandFromOrg, instanceEmailBrand } from "@/lib/branding";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { member } from "@/lib/db/schema";
+import { assertSignupEmailAllowed } from "@/lib/disposable-email";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
 import { isHosted } from "@/lib/instance";
@@ -58,6 +59,9 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // HOSTED: reject disposable-email signups before the account exists (PLAN §10
+        // abuse controls); no-op in the private modes / when BLOCK_DISPOSABLE_EMAIL off.
+        before: assertSignupEmailAllowed,
         // HOSTED: every new account is given its own personal workspace (PLAN §10).
         // The gate (isHosted) + inserts live in features/workspace/provisioning so
         // the logic stays inside the unit-tested src/features coverage glob; here we

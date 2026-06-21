@@ -35,7 +35,11 @@ test("open signup creates an account and provisions a personal workspace", async
   await page.getByRole("button", { name: "Create account" }).click();
 
   // Required verification → no session yet; the form routes to the verify page.
-  await expect(page.getByRole("heading", { name: "Verify your email" })).toBeVisible();
+  // Generous timeout: signup also sends a verification email, which is slower under
+  // the parallel hosted-suite load.
+  await expect(page.getByRole("heading", { name: "Verify your email" })).toBeVisible({
+    timeout: 15_000,
+  });
 
   // The deliverable: the account now owns a `personal` workspace (provisioned by the
   // user-create hook). Poll the DB rather than the UI — the user isn't signed in yet.

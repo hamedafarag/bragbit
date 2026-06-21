@@ -25,6 +25,10 @@ on `0.x` until the deployment modes and core stabilize.
   List every workspace and account, view signups, suspend abusive workspaces or accounts (a suspended
   workspace or account is frozen out of the app), and set per-workspace storage-quota overrides. It
   shows only operational metadata — never members' documents or brags. (Phase 10)
+- **Hosted abuse controls** — per-workspace storage quotas are now enforced on attachment uploads
+  (the instance default `WORKSPACE_QUOTA_MB`, or a per-workspace override set in `/super`; an upload
+  over quota is refused), and signups from disposable / throwaway email domains are blocked
+  (`BLOCK_DISPOSABLE_EMAIL`, on by default). (Phase 10)
 
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)
