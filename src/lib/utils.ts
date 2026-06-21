@@ -34,6 +34,16 @@ export function accentVars(hex?: string | null): CSSProperties | undefined {
   return { "--primary": hex, "--ring": hex, "--primary-foreground": foreground } as CSSProperties;
 }
 
+/**
+ * Append a thumbnail-width hint to an `/api/files` URL (ENH-PERF-02). The route
+ * serves a downscaled webp for allowlisted widths and ignores anything else, so
+ * this is a safe no-op for an unknown width. Handles a pre-existing query (e.g. a
+ * share `?token=`).
+ */
+export function thumbUrl(url: string, width: number): string {
+  return `${url}${url.includes("?") ? "&" : "?"}w=${width}`;
+}
+
 /** Up to two uppercase initials from a name, for avatar fallbacks. */
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

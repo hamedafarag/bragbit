@@ -4,6 +4,7 @@ import { getOwnedAttachmentByKey, type AttachmentRow } from "@/features/attachme
 import { getShareCredentials, getSharedAttachmentByKey } from "@/features/share/queries";
 import { isShareUnlocked } from "@/features/share/unlock";
 import { getSessionOrNull, isWorkspaceMember } from "@/lib/auth/guards";
+import { isThumbnailable, parseThumbWidth, thumbnail, type ThumbWidth } from "@/lib/image";
 import { contentTypeForKey, getStorage, type ByteRange, type Storage } from "@/lib/storage";
 
 /**
@@ -31,7 +32,12 @@ export async function GET(request: Request, ctx: { params: Promise<{ key: string
   const key = segments.join("/");
   const storage = getStorage();
 
+  // A `?w=` request asks for a downscaled webp thumbnail (ENH-PERF-02); the width
+  // must be on the allowlist or it's ignored (full object served as before).
+  const width = parseThumbWidth(new URL(request.url).searchParams.get("w"));
+
   if (kind === "branding") {
+    if (width) return serveThumb(storage, key, width, "public, max-age=300");
     return serveBuffered(storage, key, "public, max-age=300");
   }
 
@@ -41,6 +47,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ key: string
     if (!(await isWorkspaceMember(data.user.id, workspaceId))) {
       return new NextResponse("Not found", { status: 404 });
     }
+    if (width) return serveThumb(storage, key, width, "private, max-age=300");
     return serveBuffered(storage, key, "private, max-age=300");
   }
 
@@ -50,7 +57,12 @@ export async function GET(request: Request, ctx: { params: Promise<{ key: string
     const data = await getSessionOrNull();
     if (data) {
       const att = await getOwnedAttachmentByKey(key, data.user.id);
-      if (att) return serveRanged(request, storage, key, att);
+      if (att) {
+        if (width && isThumbnailable(att.mimeType)) {
+          return serveThumb(storage, key, width, "private, max-age=300");
+        }
+        return serveRanged(request, storage, key, att);
+      }
     }
     // Valid-share-token path (public, no session): the attachment's brag must be
     // SHARED and belong to the token's non-revoked document — and if that share is
@@ -63,7 +75,12 @@ export async function GET(request: Request, ctx: { params: Promise<{ key: string
         cred && (!cred.passwordHash || (await isShareUnlocked(cred.id, cred.passwordHash)));
       if (unlocked) {
         const att = await getSharedAttachmentByKey(key, token);
-        if (att) return serveRanged(request, storage, key, att);
+        if (att) {
+          if (width && isThumbnailable(att.mimeType)) {
+            return serveThumb(storage, key, width, "private, max-age=300");
+          }
+          return serveRanged(request, storage, key, att);
+        }
       }
     }
     // Don't distinguish "no auth" from "not yours" — a flat 404 leaks nothing.
@@ -88,6 +105,42 @@ async function serveBuffered(storage: Storage, key: string, cacheControl: string
     });
   } catch {
     return new NextResponse("Not found", { status: 404 });
+  }
+}
+
+/**
+ * Downscaled webp thumbnail for an image object (ENH-PERF-02). Buffers the
+ * original (image objects are small), resizes through sharp, and serves webp —
+ * falling back to the original bytes if sharp can't process it, 404 if the object
+ * is gone.
+ */
+async function serveThumb(storage: Storage, key: string, width: ThumbWidth, cacheControl: string) {
+  let original: Buffer;
+  try {
+    original = await storage.get(key);
+  } catch {
+    return new NextResponse("Not found", { status: 404 });
+  }
+  try {
+    const thumb = await thumbnail(original, width);
+    return new NextResponse(new Uint8Array(thumb), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/webp",
+        "Content-Length": String(thumb.length),
+        "Cache-Control": cacheControl,
+      },
+    });
+  } catch {
+    // Unsupported or corrupt image — serve the original rather than failing.
+    return new NextResponse(new Uint8Array(original), {
+      status: 200,
+      headers: {
+        "Content-Type": contentTypeForKey(key),
+        "Content-Length": String(original.length),
+        "Cache-Control": cacheControl,
+      },
+    });
   }
 }
 

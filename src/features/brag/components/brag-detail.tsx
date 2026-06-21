@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatBytes } from "@/features/attachment/components/attachment-manager";
+import { thumbUrl } from "@/lib/utils";
 
 import { BRAG_CATEGORIES } from "../schema";
 
@@ -108,10 +109,10 @@ export function BragDetail({ data }: { data: BragDetailData }) {
                         rel="noopener noreferrer"
                         className="shrink-0"
                       >
-                        {/* Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated. */}
+                        {/* Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={a.url}
+                          src={thumbUrl(a.url, 192)}
                           alt={a.fileName}
                           className="size-14 rounded object-cover"
                         />

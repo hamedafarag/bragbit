@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { thumbUrl } from "@/lib/utils";
 
 import { deleteAttachment } from "../actions";
 
@@ -90,9 +91,13 @@ export function AttachmentManager({
               className="flex items-center gap-2 rounded-md border border-line-soft bg-paper px-2 py-1.5"
             >
               {a.mimeType.startsWith("image/") ? (
-                // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+                // Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route.
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.url} alt="" className="size-8 shrink-0 rounded object-cover" />
+                <img
+                  src={thumbUrl(a.url, 64)}
+                  alt=""
+                  className="size-8 shrink-0 rounded object-cover"
+                />
               ) : (
                 <span className="grid size-8 shrink-0 place-items-center rounded bg-paper-deep text-ink-faint">
                   <FileText className="size-4" />

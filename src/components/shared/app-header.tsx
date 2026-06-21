@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
+import { thumbUrl } from "@/lib/utils";
 
 /**
  * App-wide top chrome for the authenticated `(app)` area. Shows the active
@@ -27,10 +28,11 @@ export function AppHeader({
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
       <Link href="/dashboard" className="flex items-center gap-3 no-underline">
         {logoUrl ? (
-          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+          // Plain <img> with a `?w=` webp thumbnail from the files route (ENH-PERF-02). next/image
+          // isn't used — the route is session-gated for avatars/attachments.
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={logoUrl}
+            src={thumbUrl(logoUrl, 400)}
             alt={workspaceName}
             className="h-8 w-auto max-w-[140px] object-contain"
           />
@@ -84,9 +86,14 @@ export function AppHeader({
           className="ml-1 grid h-[30px] w-[30px] place-items-center overflow-hidden rounded-full border border-line bg-paper-deep font-mono text-[11px] font-medium text-ink-soft no-underline"
         >
           {avatarUrl ? (
-            // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+            // Plain <img> with a `?w=` webp thumbnail (ENH-PERF-02); the session-gated files route
+            // is unreachable by next/image's optimizer.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            <img
+              src={thumbUrl(avatarUrl, 192)}
+              alt={displayName}
+              className="h-full w-full object-cover"
+            />
           ) : (
             initials
           )}

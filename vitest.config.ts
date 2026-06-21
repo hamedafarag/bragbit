@@ -47,7 +47,7 @@ export default defineConfig({
         branches: 25,
         functions: 35,
         lines: 34,
-        "src/lib/**/*.ts": { statements: 38, branches: 27, functions: 36, lines: 42 },
+        "src/lib/**/*.ts": { statements: 41, branches: 30, functions: 40, lines: 45 },
         "src/features/**/*.ts": { statements: 68, branches: 62, functions: 65, lines: 69 },
       },
     },

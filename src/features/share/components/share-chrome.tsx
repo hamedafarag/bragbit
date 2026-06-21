@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { ShareBrand } from "@/features/share/queries";
-import { accentVars } from "@/lib/utils";
+import { accentVars, thumbUrl } from "@/lib/utils";
 
 /**
  * The branded outer chrome for a public share page — a per-workspace accent
@@ -17,10 +17,10 @@ export function ShareChrome({ brand, children }: { brand: ShareBrand; children: 
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[760px] items-center gap-3 px-6 py-4">
           {logoUrl ? (
-            // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+            // Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={logoUrl}
+              src={thumbUrl(logoUrl, 400)}
               alt={brand.name}
               className="h-7 w-auto max-w-[140px] object-contain"
             />

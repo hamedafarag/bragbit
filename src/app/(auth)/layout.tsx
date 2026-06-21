@@ -5,7 +5,7 @@ import { isInstanceSetup } from "@/features/setup/queries";
 import { getInstanceBranding } from "@/features/workspace/queries";
 import { auth } from "@/lib/auth";
 import { isPrivate } from "@/lib/instance";
-import { accentVars } from "@/lib/utils";
+import { accentVars, thumbUrl } from "@/lib/utils";
 
 // Shared chrome + gating for the auth pages. Before setup (private modes) there's
 // no one to sign in → /setup; already signed in → the app. Pre-auth surfaces show
@@ -27,9 +27,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     >
       <div className="mb-8 flex items-center gap-3">
         {logoUrl ? (
-          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+          // Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt={name} className="h-9 w-auto max-w-[160px] object-contain" />
+          <img
+            src={thumbUrl(logoUrl, 400)}
+            alt={name}
+            className="h-9 w-auto max-w-[160px] object-contain"
+          />
         ) : (
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-serif text-lg font-semibold text-primary-foreground shadow-[inset_0_-8px_14px_rgba(0,0,0,0.18)]">
             B

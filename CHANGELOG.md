@@ -23,6 +23,9 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Changed
 
+- Image previews (avatars, attachment thumbnails, logos) are now served downscaled as webp via a
+  `?w=` param on the authorizing files route (sharp) — cutting bandwidth on the dashboard, timeline,
+  and share pages; full-resolution originals still serve for opens and downloads. (ENH-PERF-02)
 - Test coverage is now measured (V8) and enforced in CI as a ratchet — the build fails if coverage
   regresses. Added `pnpm test:db` (run the DB-gated suite locally) and `pnpm test:coverage` /
   `pnpm test:db:coverage`. (ENH-TEST-03/05)

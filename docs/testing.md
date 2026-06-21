@@ -239,6 +239,9 @@ out of scope here.
   entire batch (no partial upload).
 - **TC-ATT-04 · Thumbnails + size** — P3 · both — Expected: image thumbnail vs file icon; size shown
   in the editor/detail.
+- **TC-ATT-08 · Downscaled webp previews** — P3 — Expected: avatar / attachment-preview / logo image
+  requests carry a `?w=` param and return `image/webp` smaller than the original (check DevTools
+  network); opening or downloading an attachment still serves the full-resolution original.
 - **TC-ATT-05 · Download** — P2 · both — Expected: owner downloads with the correct filename + type.
 - **TC-ATT-06 · Delete** — P2 · both — Expected: row + stored object removed.
 - **TC-ATT-07 · Never publicly addressable** — P1 · both — security

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { accentVars, cn } from "./utils";
+import { accentVars, cn, thumbUrl } from "./utils";
 
 describe("cn", () => {
   it("joins class names", () => {
@@ -13,6 +13,18 @@ describe("cn", () => {
 
   it("drops falsy values", () => {
     expect(cn("a", false, undefined, null, "c")).toBe("a c");
+  });
+});
+
+describe("thumbUrl", () => {
+  it("adds ?w= to a bare url", () => {
+    expect(thumbUrl("/api/files/ws/avatars/a.png", 192)).toBe("/api/files/ws/avatars/a.png?w=192");
+  });
+
+  it("adds &w= when the url already carries a query", () => {
+    expect(thumbUrl("/api/files/ws/attachments/x.png?token=abc", 64)).toBe(
+      "/api/files/ws/attachments/x.png?token=abc&w=64",
+    );
   });
 });
 

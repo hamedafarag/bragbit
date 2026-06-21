@@ -169,6 +169,11 @@ served by an authorizing one (`/api/files/[...key]`):
   stored MIME type, an inline `Content-Disposition`, and `Range` → `206` support for large files;
   uploaded through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`).
 
+A `?w=<allowlisted-width>` query on any image response returns a downscaled **webp** thumbnail
+(`sharp`, no upscaling, EXIF-rotated — `src/lib/image.ts`), used for avatar / attachment / logo
+previews; an unknown width or a non-image serves the full object, and a sharp failure falls back to
+the original. On-demand, so it needs no stored copies or backfill (ENH-PERF-02).
+
 Deletion purges the stored objects, not just the rows. Deleting a document removes its attachment
 objects; the `deleteUser` hook (`cleanupUserStorage` in `src/features/account/deletion.ts`)
 best-effort deletes the user's avatar plus every attachment the row cascade would orphan — the

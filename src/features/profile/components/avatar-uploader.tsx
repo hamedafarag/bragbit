@@ -5,6 +5,7 @@ import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { thumbUrl } from "@/lib/utils";
 
 export function AvatarUploader({
   avatarUrl,
@@ -40,9 +41,13 @@ export function AvatarUploader({
     <div className="flex items-center gap-4">
       <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-paper-deep font-mono text-lg font-medium text-ink-soft">
         {avatarUrl ? (
-          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
+          // Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="Your avatar" className="h-full w-full object-cover" />
+          <img
+            src={thumbUrl(avatarUrl, 192)}
+            alt="Your avatar"
+            className="h-full w-full object-cover"
+          />
         ) : (
           initials
         )}

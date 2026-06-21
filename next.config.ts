@@ -32,13 +32,20 @@ const nextConfig: NextConfig = {
   // only the traced files/node_modules) for the Docker-first / Dokploy deploy.
   output: "standalone",
 
-  // `scripts/migrate.mjs` runs the Drizzle migrator on container start. It's a
-  // plain Node script, not part of the app graph, so the standalone trace doesn't
-  // bundle its deps — and Next inlines `postgres` into the server chunks rather
-  // than leaving it resolvable in node_modules. Force both packages into the image
-  // so the migrate step can `import` them in the slim runner.
+  // Force a few packages into the standalone trace:
+  //   - drizzle-orm / postgres: `scripts/migrate.mjs` (the on-start migrator) is a
+  //     plain Node script outside the app graph, and Next inlines `postgres` into
+  //     the server chunks, so neither is left resolvable in node_modules otherwise.
+  //   - @img: the thumbnail route imports sharp, which loads its native libvips via
+  //     a computed `require('@img/sharp-' + platform)` the tracer can't follow.
+  //     `.npmrc` flattens node_modules so @img sits at ./node_modules/@img; this
+  //     glob force-includes it (sharp + its static deps are traced normally).
   outputFileTracingIncludes: {
-    "/*": ["./node_modules/drizzle-orm/**/*", "./node_modules/postgres/**/*"],
+    "/*": [
+      "./node_modules/drizzle-orm/**/*",
+      "./node_modules/postgres/**/*",
+      "./node_modules/@img/**/*",
+    ],
   },
 };
 

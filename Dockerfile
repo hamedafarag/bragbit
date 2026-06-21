@@ -24,7 +24,7 @@ WORKDIR /app
 
 # ── deps ─────────────────────────────────────────────────────────────────────
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # --ignore-scripts skips the dev-only `prepare` hook (lefthook needs git, absent
 # here) and dependency postinstalls; @node-rs/argon2 ships prebuilt binaries, so
 # nothing needs a build step. The cache mount persists the pnpm store across builds.
