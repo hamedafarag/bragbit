@@ -221,6 +221,14 @@ out of scope here.
 - **TC-BRAG-07 · Delete a brag** — P2 · both — Expected: its links, tags, and attachments cascade.
 - **TC-BRAG-08 · Empty-state onboarding** — P3 · both — Expected: a back-fill prompt on a document
   with no brags.
+- **TC-BRAG-09 · Entry templates (action-verb scaffolds)** — P2 · both
+  - Steps: under the quick-add bar, the "Start from" row shows six category-dotted chips (Shipped a
+    project, Fixed a critical issue, Led an initiative, Mentored a teammate, Improved a process,
+    Earned recognition); click one.
+  - Expected: the full editor opens pre-filled — matching category (+ status where the verb implies
+    it), today's date, and a Markdown description scaffold (what you did + why it mattered + the
+    measurable result); title and impact stay empty. Saving creates a brag from the seeded fields.
+    On a narrow screen the chips wrap with no horizontal overflow.
 
 ## I. Attachments & storage
 
@@ -376,6 +384,12 @@ out of scope here.
 - **TC-UX-02 · Loading states** — P3 — Expected: skeletons on dashboard/document/search while loading.
 - **TC-UX-03 · Error boundary** — P3 — Expected: an in-chrome error page with a retry.
 - **TC-UX-04 · Not-found** — P2 — Expected: an in-chrome "not found" for a missing/unowned document.
+- **TC-UX-05 · Skip-to-content link** — P2 — a11y — Steps: on any signed-in page, Tab once from the
+  top (keyboard only). Expected: a visible "Skip to content" link appears; Enter moves focus to
+  `<main>` and the page jumps past the header/nav.
+- **TC-UX-06 · WCAG AA contrast** — P2 — a11y — Expected: the faint metadata text and the primary
+  (accent) button text both meet AA (≈4.5:1); verify with a contrast checker across a warm accent
+  (orange/gold) and the default.
 
 ---
 

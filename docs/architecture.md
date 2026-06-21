@@ -164,6 +164,12 @@ served by an authorizing one (`/api/files/[...key]`):
   stored MIME type, an inline `Content-Disposition`, and `Range` → `206` support for large files;
   uploaded through `/api/upload/attachment` (multi-file, MIME-allowlisted, `MAX_UPLOAD_MB`).
 
+Deletion purges the stored objects, not just the rows. Deleting a document removes its attachment
+objects; the `deleteUser` hook (`cleanupUserStorage` in `src/features/account/deletion.ts`)
+best-effort deletes the user's avatar plus every attachment the row cascade would orphan — the
+user's own documents across all workspaces, and all documents in a sole-member workspace being
+dropped — before the cascade runs.
+
 ## Sharing
 
 A document is shared through a **revocable secret link** (`share_links`, FK-cascaded to the

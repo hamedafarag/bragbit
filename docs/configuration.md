@@ -17,19 +17,19 @@ the auth secret, and SMTP.
 
 ## Core
 
-| Variable       | Default                 | Notes                                                                                                       |
-| -------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`     | `development`           | Set to `production` for a real deployment (the Docker image sets this for you).                             |
-| `APP_URL`      | `http://localhost:3000` | The instance's public origin — baked into emails, share links, and auth callbacks. Set it to your real URL. |
-| `DATABASE_URL` | _(required)_            | PostgreSQL connection string. Compose sets this to the bundled `postgres` service.                          |
+| Variable       | Default                 | Notes                                                                                                                                                                                                                                                                               |
+| -------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`     | `development`           | Set to `production` for a real deployment (the Docker image sets this for you).                                                                                                                                                                                                     |
+| `APP_URL`      | `http://localhost:3000` | The instance's public origin — baked into emails, share links, and auth callbacks. Set it to your real URL; use `https` in production — Better Auth derives the session-cookie `Secure` flag from the scheme, so an `http` value behind a TLS proxy ships cookies without `Secure`. |
+| `DATABASE_URL` | _(required)_            | PostgreSQL connection string. Compose sets this to the bundled `postgres` service.                                                                                                                                                                                                  |
 
 ## Auth (Better Auth)
 
-| Variable                  | Default             | Notes                                                                                                                                        |
-| ------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`      | _(required)_        | Session-signing secret. Generate with `openssl rand -base64 32`; rotating it invalidates sessions.                                           |
-| `BETTER_AUTH_URL`         | `APP_URL`           | Override only if auth runs on a different origin than `APP_URL`.                                                                             |
-| `TRUSTED_PROXY_IP_HEADER` | _(x-forwarded-for)_ | Header carrying the real client IP for per-IP rate-limiting. Set only for a proxy that uses a non-standard header (e.g. `cf-connecting-ip`). |
+| Variable                  | Default             | Notes                                                                                                                                                             |
+| ------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`      | _(required)_        | Session-signing secret, **minimum 32 characters** (the app refuses to boot otherwise). Generate with `openssl rand -base64 32`; rotating it invalidates sessions. |
+| `BETTER_AUTH_URL`         | `APP_URL`           | Override only if auth runs on a different origin than `APP_URL`.                                                                                                  |
+| `TRUSTED_PROXY_IP_HEADER` | _(x-forwarded-for)_ | Header carrying the real client IP for per-IP rate-limiting. Set only for a proxy that uses a non-standard header (e.g. `cf-connecting-ip`).                      |
 
 Auth endpoints are rate-limited in production (3 requests/10s on sign-in and sign-up, 3/60s on
 password reset and verification email). Better Auth reads the client IP from `X-Forwarded-For` by

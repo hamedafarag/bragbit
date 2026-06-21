@@ -23,13 +23,15 @@ can always leave.
 
 ## Highlights
 
-- **Sub-30-second capture** — a title is all you need; press <kbd>N</kbd> to log from anywhere.
+- **Sub-30-second capture** — a title is all you need; press <kbd>N</kbd> to log from anywhere, or
+  start from an action-verb template to beat the blank page.
 - **A month-grouped timeline** with categories, tags, full-text search, and filtering.
 - **Multiple documents** per user, each with its own revocable, optionally password-protected
   **share link** — private brags never leak into a share.
 - **Attachments of any type** (screenshots, PDFs, praise emails) and labeled links.
 - **Markdown / PDF / JSON export** — your data is always portable.
 - **Per-workspace white-labeling** (name, logo, accent) and **weekly email reminders**.
+- **Accessible & keyboard-navigable** — skip-to-content link, focus-visible rings, and WCAG AA contrast.
 - **Self-host with one `docker compose up`** — Postgres-backed, migrations run on start.
 
 A static preview of the interface (the "engineering logbook" design language) is in
