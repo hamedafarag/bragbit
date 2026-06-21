@@ -1,19 +1,24 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
+
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
-import { requireRole } from "@/lib/auth/guards";
+import { requireRole, requireSession } from "@/lib/auth/guards";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invitation, member, organization, user as userTable } from "@/lib/db/schema";
+import { allowsOrgCreation } from "@/lib/instance";
 
 import { emailRemovedMemberBundle } from "./offboard";
 import {
   brandingSchema,
+  createOrgSchema,
   inviteSchema,
   roleSchema,
   type BrandingInput,
+  type CreateOrgInput,
   type InviteInput,
 } from "./schema";
 
@@ -24,6 +29,74 @@ export type InviteResult =
 
 function errorMessage(err: unknown, fallback: string): string {
   return err instanceof Error && err.message ? err.message : fallback;
+}
+
+export type CreateOrgResult = { ok: true; id: string } | { ok: false; error: string };
+
+/** Slugify a workspace name into a URL-safe base. */
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * A globally-unique org slug from the name. `organization.slug` is unique; if the
+ * slugified base is already taken we append a short random suffix. The unique index
+ * is the real guard — a create/create race still surfaces as the friendly error in
+ * `createOrganizationWorkspace`.
+ */
+async function uniqueOrgSlug(name: string): Promise<string> {
+  const base = slugify(name) || "workspace";
+  const [taken] = await db
+    .select({ id: organization.id })
+    .from(organization)
+    .where(eq(organization.slug, base))
+    .limit(1);
+  return taken ? `${base}-${randomBytes(3).toString("hex")}` : base;
+}
+
+/**
+ * Create an organization workspace owned by the caller (PLAN §10). Hosted only —
+ * any signed-in user may create one, becomes its owner, and is switched into it.
+ * Reuses Better Auth's `createOrganization` (the session makes the caller the
+ * owner) and then sets it active so they land in the new workspace. The private
+ * modes have a fixed single workspace, so this is gated by `allowsOrgCreation()`.
+ */
+export async function createOrganizationWorkspace(input: CreateOrgInput): Promise<CreateOrgResult> {
+  await requireSession();
+  if (!allowsOrgCreation()) {
+    return { ok: false, error: "Creating organizations isn't available on this instance." };
+  }
+
+  const parsed = createOrgSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const reqHeaders = await headers();
+  try {
+    const org = await auth.api.createOrganization({
+      body: {
+        name: parsed.data.name,
+        slug: await uniqueOrgSlug(parsed.data.name),
+        type: "organization",
+        ...(parsed.data.accentColor ? { accentColor: parsed.data.accentColor } : {}),
+      },
+      headers: reqHeaders,
+    });
+    if (!org?.id) return { ok: false, error: "Couldn't create the organization. Try again." };
+
+    await auth.api.setActiveOrganization({
+      body: { organizationId: org.id },
+      headers: reqHeaders,
+    });
+    return { ok: true, id: org.id };
+  } catch (err) {
+    return { ok: false, error: errorMessage(err, "Couldn't create the organization. Try again.") };
+  }
 }
 
 /**

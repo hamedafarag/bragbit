@@ -18,6 +18,7 @@ export function AppHeader({
   avatarUrl,
   initials,
   canAdminister,
+  canCreateOrg,
 }: {
   workspaceName: string;
   logoUrl: string | null;
@@ -25,6 +26,7 @@ export function AppHeader({
   avatarUrl: string | null;
   initials: string;
   canAdminister: boolean;
+  canCreateOrg: boolean;
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
@@ -74,6 +76,14 @@ export function AppHeader({
             className="rounded-md px-2.5 py-1.5 font-mono text-[11.5px] text-ink-soft no-underline hover:bg-accent hover:text-ink"
           >
             Workspace
+          </Link>
+        ) : null}
+        {canCreateOrg ? (
+          <Link
+            href="/organizations/new"
+            className="rounded-md px-2.5 py-1.5 font-mono text-[11.5px] text-ink-soft no-underline hover:bg-accent hover:text-ink"
+          >
+            New org
           </Link>
         ) : null}
         <Link

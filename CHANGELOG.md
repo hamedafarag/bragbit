@@ -15,6 +15,9 @@ on `0.x` until the deployment modes and core stabilize.
   is automatically given its own personal workspace, so a freelancer signing up lands in a ready
   logbook. The private (invitation-only) self-host modes are unchanged — `/sign-up` redirects to
   sign-in there. (Phase 10)
+- **User-created organizations** on hosted instances — any signed-in user can create an organization
+  workspace from the header ("New org"), becomes its owner, and is switched into it. The existing
+  invitation, admin, and branding tools then apply to that organization. (Phase 10)
 
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)

@@ -24,14 +24,20 @@ const api = vi.hoisted(() => ({
   cancelInvitation: vi.fn(),
   updateMemberRole: vi.fn(),
   removeMember: vi.fn(),
+  createOrganization: vi.fn(),
+  setActiveOrganization: vi.fn(),
 }));
 const offboard = vi.hoisted(() => ({ emailRemovedMemberBundle: vi.fn() }));
+// Toggles the hosted org-creation capability for the createOrganizationWorkspace tests.
+const inst = vi.hoisted(() => ({ allows: true }));
 
 vi.mock("@/lib/auth/guards", () => ({
   requireRole: async () => authCtx,
   requireWorkspace: async () => authCtx,
+  requireSession: async () => authCtx,
 }));
 vi.mock("@/lib/auth", () => ({ auth: { api } }));
+vi.mock("@/lib/instance", () => ({ allowsOrgCreation: () => inst.allows }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("@/features/workspace/offboard", () => offboard);
 
@@ -92,6 +98,7 @@ describe.skipIf(!hasDb)("workspace server actions", () => {
       await db.delete(schema.organization).where(inArray(schema.organization.id, orgIds));
     userIds.length = 0;
     orgIds.length = 0;
+    inst.allows = true;
     vi.clearAllMocks();
   });
 
@@ -249,5 +256,56 @@ describe.skipIf(!hasDb)("workspace server actions", () => {
     expect(api.createInvitation).toHaveBeenCalledWith(
       expect.objectContaining({ body: { email: "y@t.local", role: "admin", resend: true } }),
     );
+  });
+
+  it("createOrganizationWorkspace creates an org owned by the caller and switches into it", async () => {
+    api.createOrganization.mockResolvedValueOnce({ id: "new-org-id" });
+    api.setActiveOrganization.mockResolvedValueOnce({});
+
+    const res = await mod.createOrganizationWorkspace({ name: "Acme Corp" });
+    expect(res).toEqual({ ok: true, id: "new-org-id" });
+    expect(api.createOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          name: "Acme Corp",
+          slug: "acme-corp",
+          type: "organization",
+        }),
+      }),
+    );
+    expect(api.setActiveOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { organizationId: "new-org-id" } }),
+    );
+  });
+
+  it("createOrganizationWorkspace suffixes the slug when the base is taken", async () => {
+    const { db, schema } = mod;
+    await db
+      .insert(schema.organization)
+      .values({ id: "dupe-org", name: "Taken", slug: "taken-name" });
+    orgIds.push("dupe-org");
+    api.createOrganization.mockResolvedValueOnce({ id: "new-org-2" });
+    api.setActiveOrganization.mockResolvedValueOnce({});
+
+    await mod.createOrganizationWorkspace({ name: "Taken Name" });
+    expect(api.createOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ slug: expect.stringMatching(/^taken-name-[0-9a-f]{6}$/) }),
+      }),
+    );
+  });
+
+  it("createOrganizationWorkspace validates input and respects the hosted gate", async () => {
+    // empty name → validation error, no API call
+    expect((await mod.createOrganizationWorkspace({ name: "  " })).ok).toBe(false);
+    expect(api.createOrganization).not.toHaveBeenCalled();
+
+    // gate off → not available, no API call
+    inst.allows = false;
+    expect(await mod.createOrganizationWorkspace({ name: "Acme" })).toEqual({
+      ok: false,
+      error: "Creating organizations isn't available on this instance.",
+    });
+    expect(api.createOrganization).not.toHaveBeenCalled();
   });
 });

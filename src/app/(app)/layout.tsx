@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/shared/app-header";
 import { getProfile } from "@/features/profile/queries";
 import { getActiveWorkspace } from "@/features/workspace/queries";
+import { allowsOrgCreation } from "@/lib/instance";
 import { accentVars, initials } from "@/lib/utils";
 
 // Authenticated, workspace-scoped shell (PLAN.md §6). getActiveWorkspace runs
@@ -33,6 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         avatarUrl={avatarUrl}
         initials={initials(displayName)}
         canAdminister={canAdminister}
+        canCreateOrg={allowsOrgCreation()}
       />
       <main
         id="main-content"
