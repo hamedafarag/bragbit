@@ -127,6 +127,11 @@ a read-only detail dialog (`BragDetail`) — full Markdown, attachments with inl
 sizes, links, collaborators, and tags. Cursor pagination is the rest of Phase 5; the per-brag
 visibility toggle is Phase 6.
 
+The dashboard surfaces a year-long **activity heatmap** and week streak derived from a per-day win
+aggregation (`features/dashboard`): a workspace-scoped `getActivityCounts` query feeds the pure,
+unit-tested `buildActivity` model (Sunday-aligned grid, streaks, month labels), painted server-side
+(no client JS) in the workspace accent.
+
 ## Workspace administration & branding
 
 - **Admin area** (`/admin`, owner/admin via the role policy): workspace settings — name, accent,

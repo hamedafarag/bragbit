@@ -1,12 +1,29 @@
 import { Button } from "@/components/ui/button";
+import { buildActivity, windowStart } from "@/features/dashboard/activity";
+import { ActivityHeatmap } from "@/features/dashboard/components/activity-heatmap";
+import { getActivityCounts } from "@/features/dashboard/queries";
 import { DocumentCard } from "@/features/document/components/document-card";
 import { DocumentDialog } from "@/features/document/components/document-dialog";
 import { listArchivedDocuments, listDocuments } from "@/features/document/queries";
 
-// The authenticated home: the caller's documents in their active workspace.
-// Both queries run the DAL guard (session + membership) and scope to the user.
+const ACTIVITY_WEEKS = 52;
+
+function todayYmd(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// The authenticated home: the caller's documents in their active workspace, plus
+// a win-activity heatmap. All queries run the DAL guard (session + membership)
+// and scope to the user.
 export default async function DashboardPage() {
-  const [documents, archived] = await Promise.all([listDocuments(), listArchivedDocuments()]);
+  const today = todayYmd();
+  const [documents, archived, activityCounts] = await Promise.all([
+    listDocuments(),
+    listArchivedDocuments(),
+    getActivityCounts(windowStart(today, ACTIVITY_WEEKS)),
+  ]);
+  const activity = buildActivity(activityCounts, today, ACTIVITY_WEEKS);
 
   return (
     <div className="flex flex-col gap-8">
@@ -22,6 +39,8 @@ export default async function DashboardPage() {
         </div>
         {documents.length > 0 ? <DocumentDialog trigger={<Button>New document</Button>} /> : null}
       </header>
+
+      {activity.totalWins > 0 ? <ActivityHeatmap data={activity} /> : null}
 
       {documents.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line bg-card/60 px-6 py-14 text-center shadow-card">

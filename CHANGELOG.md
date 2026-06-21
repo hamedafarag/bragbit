@@ -10,6 +10,9 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Added
 
+- A dashboard **activity heatmap** + week streak — a year-long, accent-tinted view of your logging
+  cadence (GitHub-style), built from a per-day win aggregation and shown once you've logged a win.
+  (ENH-UX-05)
 - Entry templates — a row of action-verb chips (Shipped a project, Fixed a critical issue, Led an
   initiative, Mentored a teammate, Improved a process, Earned recognition) beneath the quick-add box.
   Each opens the editor pre-filled with the matching category and a Markdown description scaffold

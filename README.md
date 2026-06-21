@@ -31,6 +31,7 @@ can always leave.
 - **Attachments of any type** (screenshots, PDFs, praise emails) and labeled links.
 - **Markdown / PDF / JSON export** — your data is always portable.
 - **Per-workspace white-labeling** (name, logo, accent) and **weekly email reminders**.
+- **A dashboard activity heatmap** — a year of your logging cadence at a glance, with a week streak.
 - **Accessible & keyboard-navigable** — skip-to-content link, focus-visible rings, and WCAG AA contrast.
 - **Self-host with one `docker compose up`** — Postgres-backed, migrations run on start.
 

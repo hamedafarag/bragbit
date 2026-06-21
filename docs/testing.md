@@ -390,6 +390,10 @@ out of scope here.
 - **TC-UX-06 · WCAG AA contrast** — P2 — a11y — Expected: the faint metadata text and the primary
   (accent) button text both meet AA (≈4.5:1); verify with a contrast checker across a warm accent
   (orange/gold) and the default.
+- **TC-UX-07 · Dashboard activity heatmap** — P3 — Steps: log a win today, then open the dashboard.
+  Expected: an "Activity" panel shows a year-long heatmap (cells tinted in the workspace accent), a
+  non-zero week streak, and the wins-this-year total; hovering a day shows its count; the panel is
+  hidden when there are no wins.
 
 ---
 
