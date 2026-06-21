@@ -100,6 +100,29 @@ export async function createOrganizationWorkspace(input: CreateOrgInput): Promis
 }
 
 /**
+ * Switch the caller's active workspace (PLAN §10 — the header switcher). Verifies
+ * membership first (you can only switch into a workspace you belong to), then sets
+ * it active via Better Auth; the client refreshes, re-scoping/re-theming the app.
+ */
+export async function switchWorkspace(organizationId: string): Promise<ActionResult> {
+  const { user } = await requireSession();
+
+  const [m] = await db
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.organizationId, organizationId), eq(member.userId, user.id)))
+    .limit(1);
+  if (!m) return { ok: false, error: "Workspace not found." };
+
+  try {
+    await auth.api.setActiveOrganization({ body: { organizationId }, headers: await headers() });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorMessage(err, "Couldn't switch workspace.") };
+  }
+}
+
+/**
  * Update the active workspace's branding (name + accent). Owner/admin only — the
  * role gate runs in the DAL. The logo is set by its own upload route. The client
  * refreshes after this returns so the chrome re-renders with the new brand.

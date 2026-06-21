@@ -1,6 +1,6 @@
 import { AppHeader } from "@/components/shared/app-header";
 import { getProfile } from "@/features/profile/queries";
-import { getActiveWorkspace } from "@/features/workspace/queries";
+import { getActiveWorkspace, listUserWorkspaces } from "@/features/workspace/queries";
 import { allowsOrgCreation } from "@/lib/instance";
 import { accentVars, initials } from "@/lib/utils";
 
@@ -12,6 +12,8 @@ import { accentVars, initials } from "@/lib/utils";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace, role } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
+  // The switcher is a hosted-only affordance (the private modes have one workspace).
+  const workspaces = allowsOrgCreation() ? await listUserWorkspaces() : [];
 
   const displayName = profile?.displayName ?? user.name;
   const avatarUrl = profile?.avatarKey ? `/api/files/${profile.avatarKey}` : null;
@@ -34,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         avatarUrl={avatarUrl}
         initials={initials(displayName)}
         canAdminister={canAdminister}
-        canCreateOrg={allowsOrgCreation()}
+        workspaces={workspaces}
       />
       <main
         id="main-content"

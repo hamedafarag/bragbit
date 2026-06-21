@@ -53,8 +53,9 @@ test("a signed-in user creates an organization and becomes its owner", async ({ 
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL((url) => new URL(url).pathname === "/dashboard", { timeout: 20_000 });
 
-  // The hosted header offers "New org"; create one.
-  await page.getByRole("link", { name: "New org" }).click();
+  // The hosted header's workspace switcher offers "Create organization".
+  await page.getByRole("button", { name: "Switch workspace" }).click();
+  await page.getByRole("link", { name: "Create organization" }).click();
   await expect(page.getByRole("heading", { name: "Create an organization" })).toBeVisible();
   await page.fill("#name", ORG_NAME);
   await page.getByRole("button", { name: "Create organization" }).click();

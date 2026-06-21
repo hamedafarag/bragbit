@@ -10,6 +10,8 @@ import { db } from "@/lib/db";
 import { invitation, member, organization, session, user } from "@/lib/db/schema";
 import { isHosted } from "@/lib/instance";
 
+import type { UserWorkspace } from "./components/workspace-switcher";
+
 export type Workspace = typeof organization.$inferSelect;
 
 export type WorkspaceBrand = {
@@ -46,6 +48,27 @@ export async function getActiveWorkspace() {
   // requireWorkspace proved membership (FK-backed), so the row exists; guard anyway.
   if (!workspace) redirect("/");
   return { user: caller, workspace, role: membership.role };
+}
+
+/**
+ * Every workspace the caller belongs to (their personal one + any orgs), each with
+ * their role and whether it's the active one — the data behind the header workspace
+ * switcher (PLAN §10). Ordered personal-first, then by name.
+ */
+export async function listUserWorkspaces(): Promise<UserWorkspace[]> {
+  const { user: caller, workspaceId } = await requireWorkspace();
+  const rows = await db
+    .select({
+      id: organization.id,
+      name: organization.name,
+      type: organization.type,
+      role: member.role,
+    })
+    .from(member)
+    .innerJoin(organization, eq(organization.id, member.organizationId))
+    .where(eq(member.userId, caller.id))
+    .orderBy(sql`${organization.type} <> 'personal'`, organization.name);
+  return rows.map((r) => ({ ...r, isActive: r.id === workspaceId }));
 }
 
 /**

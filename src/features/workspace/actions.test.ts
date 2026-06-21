@@ -308,4 +308,23 @@ describe.skipIf(!hasDb)("workspace server actions", () => {
     });
     expect(api.createOrganization).not.toHaveBeenCalled();
   });
+
+  it("switchWorkspace sets the active org for a workspace the caller belongs to", async () => {
+    const s = await seed("switch");
+    api.setActiveOrganization.mockResolvedValueOnce({});
+
+    expect(await mod.switchWorkspace(s.org)).toEqual({ ok: true });
+    expect(api.setActiveOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { organizationId: s.org } }),
+    );
+  });
+
+  it("switchWorkspace refuses a workspace the caller is not a member of", async () => {
+    await seed("switch-deny");
+    expect(await mod.switchWorkspace("some-other-org")).toEqual({
+      ok: false,
+      error: "Workspace not found.",
+    });
+    expect(api.setActiveOrganization).not.toHaveBeenCalled();
+  });
 });
