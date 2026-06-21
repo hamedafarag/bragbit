@@ -10,6 +10,10 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Added
 
+- Entry templates — a row of action-verb chips (Shipped a project, Fixed a critical issue, Led an
+  initiative, Mentored a teammate, Improved a process, Earned recognition) beneath the quick-add box.
+  Each opens the editor pre-filled with the matching category and a Markdown description scaffold
+  (what you did + why it mattered + the measurable result), to beat the blank page. (ENH-UX-04)
 - A dedicated `/api/health` endpoint — `GET` returns 200 `{ "status": "ok" }` when the app and
   database are reachable, 503 otherwise. The Docker Compose healthcheck now targets it instead of
   `/` (which renders the full app). (ENH-INFRA-03)

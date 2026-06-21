@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Markdown } from "@/components/shared/markdown";
 import { Button } from "@/components/ui/button";
 import { QuickAdd } from "@/features/brag/components/quick-add";
+import { TemplateBar } from "@/features/brag/components/template-bar";
 import {
   countDocumentBrags,
   listBrags,
@@ -128,7 +129,10 @@ export default async function DocumentPage({
         </div>
       </header>
 
-      <QuickAdd documentId={doc.id} />
+      <div className="flex flex-col gap-3">
+        <QuickAdd documentId={doc.id} />
+        <TemplateBar documentId={doc.id} />
+      </div>
 
       {total === 0 ? (
         <div className="rounded-xl border border-dashed border-line bg-card/60 px-6 py-12 text-center shadow-card">
