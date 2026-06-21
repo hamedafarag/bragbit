@@ -27,7 +27,7 @@ export function AppHeader({
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
       <Link href="/dashboard" className="flex items-center gap-3 no-underline">
         {logoUrl ? (
-          // Authorizing same-origin route, not an optimizable static asset.
+          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={logoUrl}
@@ -84,7 +84,7 @@ export function AppHeader({
           className="ml-1 grid h-[30px] w-[30px] place-items-center overflow-hidden rounded-full border border-line bg-paper-deep font-mono text-[11px] font-medium text-ink-soft no-underline"
         >
           {avatarUrl ? (
-            // Authorizing same-origin route, not an optimizable static asset.
+            // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
           ) : (

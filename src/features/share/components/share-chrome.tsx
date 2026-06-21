@@ -17,7 +17,7 @@ export function ShareChrome({ brand, children }: { brand: ShareBrand; children: 
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[760px] items-center gap-3 px-6 py-4">
           {logoUrl ? (
-            // Authorizing same-origin route, not an optimizable static asset.
+            // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}

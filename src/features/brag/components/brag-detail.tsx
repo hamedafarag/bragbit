@@ -108,7 +108,7 @@ export function BragDetail({ data }: { data: BragDetailData }) {
                         rel="noopener noreferrer"
                         className="shrink-0"
                       >
-                        {/* Authorizing same-origin route, not an optimizable static asset. */}
+                        {/* Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={a.url}

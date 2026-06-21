@@ -90,7 +90,7 @@ export function AttachmentManager({
               className="flex items-center gap-2 rounded-md border border-line-soft bg-paper px-2 py-1.5"
             >
               {a.mimeType.startsWith("image/") ? (
-                // Authorizing same-origin route, not an optimizable static asset.
+                // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.url} alt="" className="size-8 shrink-0 rounded object-cover" />
               ) : (

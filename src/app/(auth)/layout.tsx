@@ -27,7 +27,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     >
       <div className="mb-8 flex items-center gap-3">
         {logoUrl ? (
-          // Authorizing same-origin route, not an optimizable static asset.
+          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logoUrl} alt={name} className="h-9 w-auto max-w-[160px] object-contain" />
         ) : (

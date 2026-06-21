@@ -40,7 +40,7 @@ export function LogoUploader({
     <div className="flex items-center gap-4">
       <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-paper-deep">
         {logoUrl ? (
-          // Authorizing same-origin route, not an optimizable static asset.
+          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={logoUrl}

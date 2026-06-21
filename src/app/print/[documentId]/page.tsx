@@ -153,7 +153,7 @@ export default async function PrintPage({
       <div className="mb-6 flex items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (
-            // Authorizing same-origin route, not an optimizable static asset.
+            // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}

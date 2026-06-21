@@ -40,7 +40,7 @@ export function AvatarUploader({
     <div className="flex items-center gap-4">
       <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-paper-deep font-mono text-lg font-medium text-ink-soft">
         {avatarUrl ? (
-          // Authorizing same-origin route, not an optimizable static asset.
+          // Plain <img>: next/image optimization needs sharp (ENH-PERF-02); avatars/attachments are also session-gated.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={avatarUrl} alt="Your avatar" className="h-full w-full object-cover" />
         ) : (
