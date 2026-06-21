@@ -229,7 +229,7 @@ describe.skipIf(!hasDb)("share security", () => {
       token: "tok-rate",
       passwordHash: pwHash,
     });
-    mod.resetRateLimit("share-unlock:sl-rate");
+    await mod.resetRateLimit("share-unlock:sl-rate");
 
     for (let i = 0; i < 5; i++) {
       expect(await mod.unlockShare("tok-rate", "wrong")).toEqual({ ok: false, code: "incorrect" });

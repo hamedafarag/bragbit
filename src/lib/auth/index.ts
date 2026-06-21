@@ -43,6 +43,10 @@ export const auth = betterAuth({
   // is the multi-instance upgrade for the hosted mode (Phase 10).
   rateLimit: {
     enabled: env.RATE_LIMIT_ENABLED ?? env.NODE_ENV === "production",
+    // Hosted runs multiple app instances, so share the per-IP limiter state in
+    // Postgres (ENH-SEC-02 — Better Auth's "database" storage uses the `rateLimit`
+    // table); the single-container private modes keep the in-memory default.
+    storage: isHosted() ? "database" : "memory",
   },
 
   // Per-client IP for the rate-limiter. Better Auth reads `x-forwarded-for` by

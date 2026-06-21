@@ -41,6 +41,10 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Changed
 
+- Rate limiting now shares state across app instances on hosted (ENH-SEC-02): BragBit's share-unlock
+  / invite limiter and Better Auth's per-IP auth limiter both persist to Postgres when
+  `INSTANCE_MODE=hosted`, so limits hold with more than one instance running. The single-container
+  self-host is unchanged (in-process). (Phase 10)
 - Added a cross-workspace **data-isolation test suite** (`src/test/data-isolation.test.ts`) — the
   security foundation for hosted multi-tenant mode (Phase 10). It seeds two independent workspaces and
   asserts every cross-tenant access fails — documents, brags, full-text search, attachments, share

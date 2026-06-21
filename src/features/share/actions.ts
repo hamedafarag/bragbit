@@ -177,13 +177,13 @@ export async function unlockShare(token: string, password: string): Promise<Unlo
   const cred = await getShareCredentials(token);
   if (!cred || !cred.passwordHash) return { ok: false, code: "unavailable" };
 
-  const limited = hitRateLimit(`share-unlock:${cred.id}`, 5, 10 * 60 * 1000);
+  const limited = await hitRateLimit(`share-unlock:${cred.id}`, 5, 10 * 60 * 1000);
   if (!limited.ok) return { ok: false, code: "rate" };
 
   const valid = await verify(cred.passwordHash, password).catch(() => false);
   if (!valid) return { ok: false, code: "incorrect" };
 
-  resetRateLimit(`share-unlock:${cred.id}`);
+  await resetRateLimit(`share-unlock:${cred.id}`);
   await setShareUnlockCookie(cred.id, cred.passwordHash);
   return { ok: true };
 }
