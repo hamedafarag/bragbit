@@ -36,16 +36,17 @@ export default defineConfig({
         "src/app/**/layout.tsx",
         "src/app/**/loading.tsx",
       ],
-      // Ratchet locked to the 2026-06-20 baseline (measured via `pnpm
-      // test:db:coverage`, which un-skips the DB-gated suites). Coverage must
-      // never regress past these; when a change RAISES a number, bump the floor
-      // in the same PR. The global floor is low because components are still 0%
-      // — it climbs as Layer 2/3 add tests. The logic dirs hold a higher floor.
+      // Ratchet locked to the latest `pnpm test:db:coverage` run (which un-skips
+      // the DB-gated suites). Coverage must never regress past these; when a
+      // change RAISES a number, bump the floor in the same PR. The global floor
+      // climbs as more components/pages gain jsdom render tests (Layer 3 added
+      // the brag-editor sub-components, the template bar, and the share panels);
+      // the logic dirs (`*.ts`, unaffected by `.tsx` tests) hold a higher floor.
       thresholds: {
-        statements: 25,
-        branches: 17,
-        functions: 23,
-        lines: 25,
+        statements: 27,
+        branches: 19,
+        functions: 26,
+        lines: 27,
         "src/lib/**/*.ts": { statements: 38, branches: 27, functions: 36, lines: 42 },
         "src/features/**/*.ts": { statements: 65, branches: 60, functions: 63, lines: 67 },
       },
