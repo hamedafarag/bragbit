@@ -147,6 +147,13 @@ jobs:
         run: pnpm test:e2e:setup
         env:
           SETUP_DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit_e2e_setup
+      # Hosted multi-tenant mode (open signup → personal workspace): its own
+      # `next dev` in INSTANCE_MODE=hosted against an isolated DB (globalSetup
+      # creates + migrates it). Reuses the Mailpit sink for the verification email.
+      - name: Hosted-mode e2e (open signup)
+        run: pnpm test:e2e:hosted
+        env:
+          HOSTED_DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit_e2e_hosted
 
   lighthouse:
     name: lighthouse (web vitals)

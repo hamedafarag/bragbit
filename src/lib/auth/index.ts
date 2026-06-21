@@ -11,6 +11,7 @@ import { InvitationEmail } from "@/emails/invitation";
 import { ResetPasswordEmail } from "@/emails/reset-password";
 import { VerifyEmail } from "@/emails/verify-email";
 import { cleanupUserStorage } from "@/features/account/deletion";
+import { provisionPersonalWorkspaceOnSignUp } from "@/features/workspace/provisioning";
 import { emailBrandFromOrg, instanceEmailBrand } from "@/lib/branding";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
@@ -51,6 +52,15 @@ export const auth = betterAuth({
   ...trustedProxyIpConfig(env.TRUSTED_PROXY_IP_HEADER),
 
   databaseHooks: {
+    user: {
+      create: {
+        // HOSTED: every new account is given its own personal workspace (PLAN §10).
+        // The gate (isHosted) + inserts live in features/workspace/provisioning so
+        // the logic stays inside the unit-tested src/features coverage glob; here we
+        // only reference it. No-op in the private modes.
+        after: provisionPersonalWorkspaceOnSignUp,
+      },
+    },
     session: {
       create: {
         // Resolve the active workspace on every session creation: pick the

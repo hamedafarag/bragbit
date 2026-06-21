@@ -10,6 +10,12 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Added
 
+- **Open signup** on hosted instances (`INSTANCE_MODE=hosted`) — a public `/sign-up` page with
+  required email verification. Each new account (email/password, OAuth, or an accepted invitation)
+  is automatically given its own personal workspace, so a freelancer signing up lands in a ready
+  logbook. The private (invitation-only) self-host modes are unchanged — `/sign-up` redirects to
+  sign-in there. (Phase 10)
+
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)
 - A dashboard **activity heatmap** + week streak — a year-long, accent-tinted view of your logging

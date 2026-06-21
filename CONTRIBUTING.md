@@ -35,9 +35,9 @@ them with `pnpm dev:down`.
 | `pnpm seed:demo`  | Seed a demo workspace + document                |
 
 Also available: `pnpm test:coverage` / `pnpm test:db:coverage` (V8 coverage), `pnpm test:e2e`
-(Playwright) and `pnpm test:e2e:setup` (the first-run setup wizard, both private modes, against an
-isolated DB), `pnpm lint:md`, `pnpm format`, `pnpm size`, and `pnpm dev:up` / `pnpm dev:down` for
-the Docker stack.
+(Playwright), `pnpm test:e2e:setup` (the first-run setup wizard, both private modes, against an
+isolated DB), `pnpm test:e2e:hosted` (hosted-mode open signup, its own `INSTANCE_MODE=hosted` DB),
+`pnpm lint:md`, `pnpm format`, `pnpm size`, and `pnpm dev:up` / `pnpm dev:down` for the Docker stack.
 
 **Coverage gate.** CI measures coverage in the `database` job (where the DB-gated tests run, so
 server actions count) and enforces a ratchet in `vitest.config.ts` — it fails on any regression.

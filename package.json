@@ -19,6 +19,7 @@
     "test:e2e:setup:solo": "INSTANCE_MODE=private-solo SETUP_PORT=3100 playwright test -c playwright.setup.config.ts",
     "test:e2e:setup:org": "INSTANCE_MODE=private-org SETUP_PORT=3101 playwright test -c playwright.setup.config.ts",
     "test:e2e:setup": "node scripts/e2e-setup-db.mjs && pnpm test:e2e:setup:solo && pnpm test:e2e:setup:org",
+    "test:e2e:hosted": "playwright test -c playwright.hosted.config.ts",
     "size": "size-limit",
     "dev:up": "docker compose -f docker-compose.dev.yml up -d",
     "dev:down": "docker compose -f docker-compose.dev.yml down",
