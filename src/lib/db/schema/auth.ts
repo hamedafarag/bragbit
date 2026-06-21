@@ -12,6 +12,10 @@ export const user = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // BragBit addition (hosted instance superadmin) — when set, the account is
+  // suspended: it can't access any workspace. Better Auth doesn't know this column,
+  // so it never reads/writes it; the /super console + the DAL guards do.
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
 });
 
 export const session = pgTable("session", {

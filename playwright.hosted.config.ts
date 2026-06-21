@@ -30,6 +30,7 @@ export default defineConfig({
       DATABASE_URL: hostedDbUrl,
       INSTANCE_MODE: "hosted",
       APP_URL: `http://localhost:${port}`,
+      SUPERADMIN_EMAILS: "superadmin-e2e@bragbit.local",
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "0123456789abcdef0123456789abcdef",
       SMTP_HOST: process.env.SMTP_HOST ?? "localhost",
       SMTP_PORT: process.env.SMTP_PORT ?? "1025",

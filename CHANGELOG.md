@@ -21,6 +21,10 @@ on `0.x` until the deployment modes and core stabilize.
 - **Workspace switcher** in the header (hosted) — switch between your personal workspace and any
   organizations you belong to; switching re-scopes and re-themes the whole app. "Create organization"
   now lives in the switcher. (Phase 10)
+- **Instance superadmin console** (`/super`, hosted) — seeded via the `SUPERADMIN_EMAILS` allowlist.
+  List every workspace and account, view signups, suspend abusive workspaces or accounts (a suspended
+  workspace or account is frozen out of the app), and set per-workspace storage-quota overrides. It
+  shows only operational metadata — never members' documents or brags. (Phase 10)
 
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)

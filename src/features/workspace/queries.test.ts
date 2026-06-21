@@ -6,8 +6,18 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
-const authCtx = vi.hoisted(() => ({ workspaceId: "", user: { id: "" } }));
+const authCtx = vi.hoisted(() => ({
+  workspaceId: "",
+  user: { id: "" },
+  member: { role: "owner" },
+}));
 vi.mock("@/lib/auth/guards", () => ({ requireWorkspace: async () => authCtx }));
+// redirect throws a recognizable error so the suspension-bounce branch is testable.
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => {
+    throw new Error(`REDIRECT:${url}`);
+  },
+}));
 
 async function load() {
   const [dbMod, schema, drizzle, queries] = await Promise.all([
@@ -79,5 +89,56 @@ describe.skipIf(!hasDb)("listUserWorkspaces", () => {
       role: "admin",
       isActive: true,
     });
+  });
+
+  it("getActiveWorkspace returns the workspace + role when nothing is suspended", async () => {
+    const { db, schema } = mod;
+    await db.insert(schema.user).values({ id: "gaw-u", name: "U", email: "gaw-u@t.local" });
+    userIds.push("gaw-u");
+    await db
+      .insert(schema.organization)
+      .values({ id: "gaw-o", name: "Acme", slug: "gaw-o", type: "organization" });
+    orgIds.push("gaw-o");
+    authCtx.user.id = "gaw-u";
+    authCtx.workspaceId = "gaw-o";
+    authCtx.member.role = "owner";
+
+    const res = await mod.getActiveWorkspace();
+    expect(res.workspace.id).toBe("gaw-o");
+    expect(res.role).toBe("owner");
+  });
+
+  it("getActiveWorkspace bounces a suspended workspace to /suspended", async () => {
+    const { db, schema } = mod;
+    await db.insert(schema.user).values({ id: "gaw-u2", name: "U", email: "gaw-u2@t.local" });
+    userIds.push("gaw-u2");
+    await db.insert(schema.organization).values({
+      id: "gaw-o2",
+      name: "Acme",
+      slug: "gaw-o2",
+      type: "organization",
+      suspendedAt: new Date(),
+    });
+    orgIds.push("gaw-o2");
+    authCtx.user.id = "gaw-u2";
+    authCtx.workspaceId = "gaw-o2";
+
+    await expect(mod.getActiveWorkspace()).rejects.toThrow("REDIRECT:/suspended");
+  });
+
+  it("getActiveWorkspace bounces a suspended account to /suspended", async () => {
+    const { db, schema } = mod;
+    await db
+      .insert(schema.user)
+      .values({ id: "gaw-u3", name: "U", email: "gaw-u3@t.local", suspendedAt: new Date() });
+    userIds.push("gaw-u3");
+    await db
+      .insert(schema.organization)
+      .values({ id: "gaw-o3", name: "Acme", slug: "gaw-o3", type: "organization" });
+    orgIds.push("gaw-o3");
+    authCtx.user.id = "gaw-u3";
+    authCtx.workspaceId = "gaw-o3";
+
+    await expect(mod.getActiveWorkspace()).rejects.toThrow("REDIRECT:/suspended");
   });
 });

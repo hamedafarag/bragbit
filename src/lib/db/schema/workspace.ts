@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth";
 
@@ -19,6 +19,11 @@ export const organization = pgTable("organization", {
   type: text("type").notNull().default("organization"), // 'personal' | 'organization'
   accentColor: text("accent_color"),
   logoKey: text("logo_key"),
+  // Hosted instance-superadmin controls (PLAN §10): `suspendedAt` set = the
+  // workspace is frozen (members can't access it); `storageQuotaMb` overrides the
+  // instance-wide WORKSPACE_QUOTA_MB default (null = use the default).
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  storageQuotaMb: integer("storage_quota_mb"),
 });
 
 export const member = pgTable("member", {

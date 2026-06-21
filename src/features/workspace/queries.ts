@@ -47,6 +47,17 @@ export async function getActiveWorkspace() {
     .limit(1);
   // requireWorkspace proved membership (FK-backed), so the row exists; guard anyway.
   if (!workspace) redirect("/");
+
+  // Instance-superadmin suspension (PLAN §10): a suspended workspace OR a suspended
+  // account is frozen out of the whole app — bounced to a terminal page. This is the
+  // single (app) gate, so the check covers every authenticated page.
+  const [account] = await db
+    .select({ suspendedAt: user.suspendedAt })
+    .from(user)
+    .where(eq(user.id, caller.id))
+    .limit(1);
+  if (workspace.suspendedAt || account?.suspendedAt) redirect("/suspended");
+
   return { user: caller, workspace, role: membership.role };
 }
 

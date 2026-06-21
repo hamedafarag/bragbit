@@ -87,10 +87,11 @@ invitation-only).
 
 Relevant only when `INSTANCE_MODE=hosted` (ships in v1.1).
 
-| Variable                 | Default | Notes                                            |
-| ------------------------ | ------- | ------------------------------------------------ |
-| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up. |
-| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota.                     |
+| Variable                 | Default | Notes                                                                                                 |
+| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up.                                                      |
+| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota (default; the `/super` console can override it per workspace).            |
+| `SUPERADMIN_EMAILS`      | —       | Comma/space-separated allowlist of emails granted the `/super` instance-admin console (empty = none). |
 
 ## Reminders
 
