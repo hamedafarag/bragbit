@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The generated V8 coverage report (lcov-report/*.js) is not source.
+    "coverage/**",
   ]),
 ]);
 

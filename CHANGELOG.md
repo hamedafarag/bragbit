@@ -29,6 +29,10 @@ on `0.x` until the deployment modes and core stabilize.
 - Added end-to-end coverage for onboarding (ENH-TEST-02): the invitation accept flow and the
   first-run setup wizard in both private modes (the latter via a dedicated `playwright.setup.config.ts`
   against an isolated empty database).
+- Added a jsdom + React Testing Library component-test layer — 10 UI components now render-tested
+  (the brag-editor sub-fields, tag/link inputs, Markdown field, timeline filters, quick-add, and the
+  share panels) — plus Playwright e2e for entry templates and the skip-to-content link. Global
+  coverage rose to ~32% and the ratchet floors were raised accordingly.
 - Bumped the TypeScript compile `target` from ES2017 to ES2022 (the stale create-next-app default).
   Type-checking and editor-tooling change only — the shipped bundle is unchanged, since Next.js
   transpiles with SWC targeting the Browserslist browsers, not the tsconfig `target`. (ENH-CQ-02)

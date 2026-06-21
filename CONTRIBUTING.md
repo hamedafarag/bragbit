@@ -44,6 +44,13 @@ server actions count) and enforces a ratchet in `vitest.config.ts` — it fails 
 When your change raises a coverage number, bump that threshold to the new floor in the same PR;
 never lower a floor without a reviewed reason. Run `pnpm test:db:coverage` locally to see the number.
 
+**Component tests.** UI components are unit-tested with React Testing Library under jsdom. Open the
+file with `// @vitest-environment jsdom` and import `render` / `screen` / `fireEvent` from
+`@/test/dom` (it wires the jest-dom matchers and per-test cleanup) — see
+`src/features/brag/components/*.test.tsx`. The node-env logic/DB suites are unaffected. Mock heavy
+children (dialogs, server actions, `next/dynamic`) with `vi.mock` so the test renders just the unit
+under test.
+
 For manual / QA verification, the [manual test plan](docs/testing.md) is a step-by-step catalogue of
 test cases across Phases 1–9 (organized by feature, with priorities and a per-mode smoke test).
 
