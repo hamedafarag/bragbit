@@ -124,8 +124,9 @@ backs a header search box → `/search`, whose results deep-link to `/documents/
 timeline filters by category / tag / date range (a URL-driven `FilterBar`; `listBrags` applies them,
 tag via a correlated `EXISTS`) and marks quiet months between entries. Clicking a brag's title opens
 a read-only detail dialog (`BragDetail`) — full Markdown, attachments with inline image previews +
-sizes, links, collaborators, and tags. Cursor pagination is the rest of Phase 5; the per-brag
-visibility toggle is Phase 6.
+sizes, links, collaborators, and tags. The owner timeline is **cursor-paged** — month-windowed
+"load more" (PERF-01), correct across the month grouping, gap markers, and filters, while the public
+share view renders the full set; the per-brag visibility toggle landed in Phase 6 (sharing).
 
 The dashboard surfaces a year-long **activity heatmap** and week streak derived from a per-day win
 aggregation (`features/dashboard`): a workspace-scoped `getActivityCounts` query feeds the pure,
