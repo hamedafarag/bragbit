@@ -109,6 +109,12 @@ on `0.x` until the deployment modes and core stabilize.
   `TRUSTED_PROXY_IP_HEADER` (default `X-Forwarded-For`), for instances behind a proxy that uses a
   different client-IP header (e.g. Cloudflare's `cf-connecting-ip`). (ENH-SEC-03)
 
+### Documentation
+
+- A "[Hosting BragBit publicly](docs/self-hosting/public-instance.md)" guide for running a shared,
+  multi-tenant (`hosted`) instance — open signup, the `/super` superadmin console, and tuning the
+  storage-quota and disposable-email abuse controls. (Phase 10)
+
 ## [0.1.1] - 2026-06-20
 
 ### Added
