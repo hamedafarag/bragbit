@@ -25,6 +25,24 @@ export const E2E = {
     docId: "e2e-paginate-doc",
     docPath: "/documents/e2e-paginate-doc",
   },
+  // Throwaway personal-workspace accounts for the settings flows, so the shared
+  // owner/member fixture is never mutated: changePw flips its own password, delete
+  // destroys itself — both re-seeded fresh each run.
+  accounts: {
+    changePw: { email: "acct-pw@e2e.test", userId: "e2e-acct-pw", wsId: "e2e-acct-pw-ws" },
+    del: { email: "acct-del@e2e.test", userId: "e2e-acct-del", wsId: "e2e-acct-del-ws" },
+  },
+  // A dedicated org + owner + two members for the member-management flows (role
+  // change, removal, ownership transfer) — kept off the shared e2e-org.
+  memberMgmt: {
+    orgId: "e2e-mm-org",
+    ownerEmail: "mm-owner@e2e.test",
+    ownerId: "e2e-mm-owner",
+    aliceEmail: "mm-alice@e2e.test",
+    aliceId: "e2e-mm-alice",
+    bobEmail: "mm-bob@e2e.test",
+    bobId: "e2e-mm-bob",
+  },
 };
 
 // Brags per month for the pagination document, newest first. 16 + 16 fills the
@@ -98,6 +116,40 @@ export default async function globalSetup() {
                   values (${`e2e-pg-${n}`}, ${pg.docId}, ${`${label} ${j + 1}`}, ${`${month}-15`})`;
         n++;
       }
+    }
+
+    // Settings-flow accounts: each a personal workspace of one (owner).
+    for (const a of [E2E.accounts.changePw, E2E.accounts.del]) {
+      await sql`delete from "user" where id = ${a.userId}`;
+      await sql`delete from organization where id = ${a.wsId}`;
+      await sql`insert into organization (id, name, slug, type)
+                values (${a.wsId}, 'Settings WS', ${a.wsId}, 'personal')`;
+      await sql`insert into "user" (id, name, email, email_verified)
+                values (${a.userId}, 'Settings User', ${a.email}, true)`;
+      await sql`insert into account (id, account_id, provider_id, user_id, password)
+                values (${`${a.userId}-acc`}, ${a.userId}, 'credential', ${a.userId}, ${password})`;
+      await sql`insert into member (id, organization_id, user_id, role)
+                values (${`${a.userId}-mem`}, ${a.wsId}, ${a.userId}, 'owner')`;
+    }
+
+    // Member-management org: an owner plus two members to manage.
+    const mm = E2E.memberMgmt;
+    await sql`delete from "user" where id in (${mm.ownerId}, ${mm.aliceId}, ${mm.bobId})`;
+    await sql`delete from organization where id = ${mm.orgId}`;
+    await sql`insert into organization (id, name, slug, type)
+              values (${mm.orgId}, 'Member Mgmt Org', ${mm.orgId}, 'organization')`;
+    const mmSeed = [
+      [mm.ownerId, "MM Owner", mm.ownerEmail, "owner"],
+      [mm.aliceId, "MM Alice", mm.aliceEmail, "member"],
+      [mm.bobId, "MM Bob", mm.bobEmail, "member"],
+    ] as const;
+    for (const [uid, name, email, role] of mmSeed) {
+      await sql`insert into "user" (id, name, email, email_verified)
+                values (${uid}, ${name}, ${email}, true)`;
+      await sql`insert into account (id, account_id, provider_id, user_id, password)
+                values (${`${uid}-acc`}, ${uid}, 'credential', ${uid}, ${password})`;
+      await sql`insert into member (id, organization_id, user_id, role)
+                values (${`${uid}-mem`}, ${mm.orgId}, ${uid}, ${role})`;
     }
   } finally {
     await sql.end();
