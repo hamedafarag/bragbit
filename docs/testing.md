@@ -1,8 +1,8 @@
 # BragBit — Manual Test Plan (v0.1.1, Phases 1–9)
 
 A step-by-step manual test catalogue for the v1 (self-host) scope: the two private deployment modes,
-`private-solo` and `private-org`. Hosted multi-tenant mode (`INSTANCE_MODE=hosted`) is v1.1 and is
-out of scope here.
+`private-solo` and `private-org`. Hosted multi-tenant mode (`INSTANCE_MODE=hosted`) is v1.1 — its
+scenarios live in the companion [Phase 10 plan](testing-phase-10.md).
 
 ## How to use this document
 
