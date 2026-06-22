@@ -11,13 +11,19 @@ const authCtx = vi.hoisted(() => ({
   user: { id: "" },
   member: { role: "owner" },
 }));
-vi.mock("@/lib/auth/guards", () => ({ requireWorkspace: async () => authCtx }));
+vi.mock("@/lib/auth/guards", () => ({
+  requireWorkspace: async () => authCtx,
+  requireRole: async () => authCtx,
+}));
 // redirect throws a recognizable error so the suspension-bounce branch is testable.
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
   },
 }));
+const hostedFlag = vi.hoisted(() => ({ value: false }));
+vi.mock("@/lib/instance", () => ({ isHosted: () => hostedFlag.value }));
+vi.mock("next/server", () => ({ connection: async () => {} }));
 
 async function load() {
   const [dbMod, schema, drizzle, queries] = await Promise.all([
@@ -140,5 +146,83 @@ describe.skipIf(!hasDb)("listUserWorkspaces", () => {
     authCtx.workspaceId = "gaw-o3";
 
     await expect(mod.getActiveWorkspace()).rejects.toThrow("REDIRECT:/suspended");
+  });
+
+  it("listMembers returns members with role, join date, and last activity", async () => {
+    const { db, schema } = mod;
+    await db.insert(schema.user).values([
+      { id: "lm-owner", name: "Owner", email: "lm-owner@t.local" },
+      { id: "lm-member", name: "Member", email: "lm-member@t.local" },
+    ]);
+    userIds.push("lm-owner", "lm-member");
+    await db
+      .insert(schema.organization)
+      .values({ id: "lm-org", name: "Acme", slug: "lm-org", type: "organization" });
+    orgIds.push("lm-org");
+    await db.insert(schema.member).values([
+      { id: "lm-m1", organizationId: "lm-org", userId: "lm-owner", role: "owner" },
+      { id: "lm-m2", organizationId: "lm-org", userId: "lm-member", role: "member" },
+    ]);
+    // A session for the owner → a lastActiveAt; the member has none.
+    await db.insert(schema.session).values({
+      id: "lm-sess",
+      userId: "lm-owner",
+      token: "lm-tok",
+      expiresAt: new Date(Date.now() + 86_400_000),
+    });
+    authCtx.workspaceId = "lm-org";
+
+    const members = await mod.listMembers();
+    expect(members.map((m) => m.userId).sort()).toEqual(["lm-member", "lm-owner"]);
+    const owner = members.find((m) => m.userId === "lm-owner")!;
+    expect(owner.role).toBe("owner");
+    expect(owner.lastActiveAt).not.toBeNull(); // has a session → an activity timestamp
+    expect(members.find((m) => m.userId === "lm-member")!.lastActiveAt).toBeNull();
+  });
+
+  it("listPendingInvitations returns only valid (pending, unexpired) invites", async () => {
+    const { db, schema } = mod;
+    await db
+      .insert(schema.user)
+      .values({ id: "lpi-inviter", name: "I", email: "lpi-inviter@t.local" });
+    userIds.push("lpi-inviter");
+    await db
+      .insert(schema.organization)
+      .values({ id: "lpi-org", name: "Acme", slug: "lpi-org", type: "organization" });
+    orgIds.push("lpi-org");
+    const future = new Date(Date.now() + 7 * 86_400_000);
+    const past = new Date(Date.now() - 86_400_000);
+    await db.insert(schema.invitation).values([
+      // pending + unexpired → returned
+      { id: "lpi-valid", organizationId: "lpi-org", email: "valid@t.local", role: "member", status: "pending", expiresAt: future, inviterId: "lpi-inviter" }, // prettier-ignore
+      // pending but expired → filtered out by isAcceptableInvitation
+      { id: "lpi-expired", organizationId: "lpi-org", email: "expired@t.local", role: "member", status: "pending", expiresAt: past, inviterId: "lpi-inviter" }, // prettier-ignore
+      // already accepted → not even fetched (status != pending)
+      { id: "lpi-accepted", organizationId: "lpi-org", email: "accepted@t.local", role: "member", status: "accepted", expiresAt: future, inviterId: "lpi-inviter" }, // prettier-ignore
+    ]);
+    authCtx.workspaceId = "lpi-org";
+
+    const invites = await mod.listPendingInvitations();
+    expect(invites.map((i) => i.id)).toEqual(["lpi-valid"]);
+    expect(invites[0]).toMatchObject({ email: "valid@t.local", role: "member" });
+  });
+
+  it("getInstanceBranding is null on a hosted instance, a brand on a private one", async () => {
+    hostedFlag.value = true;
+    await expect(mod.getInstanceBranding()).resolves.toBeNull();
+
+    hostedFlag.value = false;
+    const { db, schema } = mod;
+    await db.insert(schema.organization).values({
+      id: "gib-org",
+      name: "Solo",
+      slug: "gib-org",
+      type: "personal",
+      accentColor: "#123456",
+    });
+    orgIds.push("gib-org");
+    const brand = await mod.getInstanceBranding();
+    expect(brand).not.toBeNull();
+    expect(typeof brand!.name).toBe("string");
   });
 });
