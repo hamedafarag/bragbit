@@ -35,7 +35,9 @@ Auth endpoints are rate-limited in production (3 requests/10s on sign-in and sig
 password reset and verification email). Better Auth reads the client IP from `X-Forwarded-For` by
 default, so per-client limiting works behind the reference reverse proxy; set
 `TRUSTED_PROXY_IP_HEADER` if your proxy uses a different header (e.g. `cf-connecting-ip`). Only trust
-that header when a proxy sets it — a directly-exposed app could let a client spoof it.
+that header when a proxy sets it — a directly-exposed app could let a client spoof it. On a `hosted`
+instance the limiter state is shared across app instances via Postgres (ENH-SEC-02), so limits hold
+even with more than one container running; the private single-container modes use an in-process limiter.
 
 ## Email (SMTP)
 
@@ -87,10 +89,11 @@ invitation-only).
 
 Relevant only when `INSTANCE_MODE=hosted` (ships in v1.1).
 
-| Variable                 | Default | Notes                                            |
-| ------------------------ | ------- | ------------------------------------------------ |
-| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up. |
-| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota.                     |
+| Variable                 | Default | Notes                                                                                                 |
+| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up.                                                      |
+| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota (default; the `/super` console can override it per workspace).            |
+| `SUPERADMIN_EMAILS`      | —       | Comma/space-separated allowlist of emails granted the `/super` instance-admin console (empty = none). |
 
 ## Reminders
 

@@ -7,7 +7,7 @@ import { QuickAdd } from "@/features/brag/components/quick-add";
 import { TemplateBar } from "@/features/brag/components/template-bar";
 import {
   countDocumentBrags,
-  listBrags,
+  listBragsPage,
   listDocumentTags,
   type BragFilters,
 } from "@/features/brag/queries";
@@ -22,7 +22,8 @@ import { ExportDialog } from "@/features/export/components/export-dialog";
 import { ShareDialog } from "@/features/share/components/share-dialog";
 import { getActiveShareLink } from "@/features/share/queries";
 import { FilterBar } from "@/features/timeline/components/filter-bar";
-import { Timeline } from "@/features/timeline/components/timeline";
+import { LoadMoreTimeline } from "@/features/timeline/components/load-more-timeline";
+import { TimelineChunk } from "@/features/timeline/components/timeline";
 
 const dateFmt: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
 const datePat = /^\d{4}-\d{2}-\d{2}$/;
@@ -63,13 +64,16 @@ export default async function DocumentPage({
 
   const filters = parseFilters(await searchParams);
   const filtersActive = Boolean(filters.category || filters.tag || filters.from || filters.to);
+  // Remount the load-more island when filters change, so appended pages reset.
+  const filterKey = JSON.stringify(filters);
 
-  const [total, brags, documentTags, shareLink] = await Promise.all([
+  const [total, page, documentTags, shareLink] = await Promise.all([
     countDocumentBrags(documentId),
-    listBrags(documentId, filters),
+    listBragsPage(documentId, filters),
     listDocumentTags(documentId),
     getActiveShareLink(documentId),
   ]);
+  const brags = page.brags;
 
   const period = formatPeriod(doc.periodStart, doc.periodEnd);
   const editValues: DocumentFormValues = {
@@ -152,11 +156,21 @@ export default async function DocumentPage({
               No brags match these filters.
             </div>
           ) : (
-            <Timeline
-              brags={brags}
+            <LoadMoreTimeline
+              key={filterKey}
+              documentId={doc.id}
+              filters={filters}
+              initialCursor={page.nextCursor}
+              initialHasMore={page.hasMore}
               showGaps={!filtersActive}
-              renderCard={(brag) => <BragCard brag={brag} />}
-            />
+            >
+              <TimelineChunk
+                brags={brags}
+                showGaps={!filtersActive}
+                prevMonthKey={null}
+                renderCard={(brag) => <BragCard brag={brag} />}
+              />
+            </LoadMoreTimeline>
           )}
         </div>
       )}

@@ -6,9 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). BragBit stays
 on `0.x` until the deployment modes and core stabilize.
 
-## [Unreleased]
+## [1.1.0] - 2026-06-22
 
 ### Added
+
+- **Open signup** on hosted instances (`INSTANCE_MODE=hosted`) — a public `/sign-up` page with
+  required email verification. Each new account (email/password, OAuth, or an accepted invitation)
+  is automatically given its own personal workspace, so a freelancer signing up lands in a ready
+  logbook. The private (invitation-only) self-host modes are unchanged — `/sign-up` redirects to
+  sign-in there. (Phase 10)
+- **User-created organizations** on hosted instances — any signed-in user can create an organization
+  workspace, becomes its owner, and is switched into it. The existing invitation, admin, and branding
+  tools then apply to that organization. (Phase 10)
+- **Workspace switcher** in the header (hosted) — switch between your personal workspace and any
+  organizations you belong to; switching re-scopes and re-themes the whole app. "Create organization"
+  now lives in the switcher. (Phase 10)
+- **Instance superadmin console** (`/super`, hosted) — seeded via the `SUPERADMIN_EMAILS` allowlist.
+  List every workspace and account, view signups, suspend abusive workspaces or accounts (a suspended
+  workspace or account is frozen out of the app), and set per-workspace storage-quota overrides. It
+  shows only operational metadata — never members' documents or brags. (Phase 10)
+- **Hosted abuse controls** — per-workspace storage quotas are now enforced on attachment uploads
+  (the instance default `WORKSPACE_QUOTA_MB`, or a per-workspace override set in `/super`; an upload
+  over quota is refused), and signups from disposable / throwaway email domains are blocked
+  (`BLOCK_DISPOSABLE_EMAIL`, on by default). (Phase 10)
+- **Timeline cursor pagination** (PERF-01) — a long document now loads the most recent months first
+  and reveals older months on demand with a "Load more" control, so a multi-year logbook stays fast
+  to open. The window is sized by whole months, so a month header never splits across a load and the
+  quiet-month gap markers stay correct across the page boundary; filters reset the window. (Phase 10)
 
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)
@@ -25,6 +49,15 @@ on `0.x` until the deployment modes and core stabilize.
 
 ### Changed
 
+- Rate limiting now shares state across app instances on hosted (ENH-SEC-02): BragBit's share-unlock
+  / invite limiter and Better Auth's per-IP auth limiter both persist to Postgres when
+  `INSTANCE_MODE=hosted`, so limits hold with more than one instance running. The single-container
+  self-host is unchanged (in-process). (Phase 10)
+- Added a cross-workspace **data-isolation test suite** (`src/test/data-isolation.test.ts`) — the
+  security foundation for hosted multi-tenant mode (Phase 10). It seeds two independent workspaces and
+  asserts every cross-tenant access fails — documents, brags, full-text search, attachments, share
+  links, export, the authorizing file route, and dashboard activity — each paired with an owner
+  positive control. Raised the `src/features` coverage floor to 82/74/81/83 (global to 41/31/42/41).
 - Image previews (avatars, attachment thumbnails, logos) are now served downscaled as webp via a
   `?w=` param on the authorizing files route (sharp) — cutting bandwidth on the dashboard, timeline,
   and share pages; full-resolution originals still serve for opens and downloads. (ENH-PERF-02)
@@ -75,6 +108,12 @@ on `0.x` until the deployment modes and core stabilize.
 - The header Better Auth reads for the per-IP auth rate-limit is now configurable via
   `TRUSTED_PROXY_IP_HEADER` (default `X-Forwarded-For`), for instances behind a proxy that uses a
   different client-IP header (e.g. Cloudflare's `cf-connecting-ip`). (ENH-SEC-03)
+
+### Documentation
+
+- A "[Hosting BragBit publicly](docs/self-hosting/public-instance.md)" guide for running a shared,
+  multi-tenant (`hosted`) instance — open signup, the `/super` superadmin console, and tuning the
+  storage-quota and disposable-email abuse controls. (Phase 10)
 
 ## [0.1.1] - 2026-06-20
 

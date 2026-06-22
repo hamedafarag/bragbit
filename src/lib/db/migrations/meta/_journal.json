@@ -57,6 +57,20 @@
       "when": 1781529804212,
       "tag": "0007_fuzzy_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782049808355,
+      "tag": "0008_stormy_lenny_balinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782059100772,
+      "tag": "0009_foamy_captain_flint",
+      "breakpoints": true
     }
   ]
 }

@@ -32,7 +32,7 @@ export async function registerInvitee(
   // Bound repeated attempts against a single invitation link. The lookup below
   // runs before any Better Auth endpoint is hit (an invalid id never reaches the
   // per-IP sign-up limit), so the in-house limiter guards this entry directly.
-  const limit = hitRateLimit(`invite-register:${invitationId}`, 8, 10 * 60 * 1000);
+  const limit = await hitRateLimit(`invite-register:${invitationId}`, 8, 10 * 60 * 1000);
   if (!limit.ok) {
     return { ok: false, error: "Too many attempts. Please wait a few minutes and try again." };
   }
@@ -55,7 +55,7 @@ export async function registerInvitee(
       body: { email: invite.email, password: parsed.data.password },
       headers: await headers(),
     });
-    resetRateLimit(`invite-register:${invitationId}`);
+    await resetRateLimit(`invite-register:${invitationId}`);
     return { ok: true };
   } catch (err) {
     return {

@@ -17,3 +17,4 @@ export * from "./profile";
 export * from "./document";
 export * from "./brag";
 export * from "./share";
+export * from "./rate-limit";

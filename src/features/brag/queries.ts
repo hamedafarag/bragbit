@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, exists, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, gte, inArray, lt, lte, sql } from "drizzle-orm";
 
 import type { AttachmentRow } from "@/features/attachment/queries";
 import { requireWorkspace } from "@/lib/auth/guards";
@@ -33,27 +33,41 @@ function groupByBragId<T extends { bragId: string }>(rows: T[]): Map<string, T[]
   return map;
 }
 
-/**
- * Brags in a document the caller owns, newest first, each with its links and
- * attachments. Scoped through the parent document (which carries the workspace +
- * owner) via the join, so a documentId from another workspace or user returns
- * nothing. Links and attachments load in batched queries keyed by the
- * already-scoped brag ids (no per-brag N+1).
- */
-export async function listBrags(
-  documentId: string,
-  filters: BragFilters = {},
-): Promise<BragWithRelations[]> {
-  const { workspaceId, user } = await requireWorkspace();
+/** A timeline page: brags plus the cursor for loading the next (older) window. */
+export type BragPage = {
+  brags: BragWithRelations[];
+  /** "YYYY-MM" of the oldest month in this page — pass back to load older. null when none remain. */
+  nextCursor: string | null;
+  hasMore: boolean;
+};
 
+/** Window size for the timeline's "load more": brags per page, rounded up to whole months. */
+export const TIMELINE_PAGE_TARGET = 30;
+
+const MONTH_CURSOR = /^\d{4}-\d{2}$/;
+
+/**
+ * Shared WHERE for the timeline queries: a document the caller owns (scoped
+ * through the join on workspace + owner, so a documentId from another workspace or
+ * user matches nothing) plus the optional filters. `before` (a "YYYY-MM" cursor)
+ * restricts to months strictly older than it, for cursor paging.
+ */
+function timelineConditions(
+  documentId: string,
+  workspaceId: string,
+  userId: string,
+  filters: BragFilters,
+  before?: string,
+) {
   const conditions = [
     eq(brag.documentId, documentId),
     eq(document.workspaceId, workspaceId),
-    eq(document.userId, user.id),
+    eq(document.userId, userId),
   ];
   if (filters.category) conditions.push(eq(brag.category, filters.category));
   if (filters.from) conditions.push(gte(brag.date, filters.from));
   if (filters.to) conditions.push(lte(brag.date, filters.to));
+  if (before && MONTH_CURSOR.test(before)) conditions.push(lt(brag.date, `${before}-01`));
   if (filters.tag) {
     // The brag carries the chosen tag (its tags are the owner's, so name alone scopes it).
     conditions.push(
@@ -66,16 +80,12 @@ export async function listBrags(
       ),
     );
   }
+  return conditions;
+}
 
-  const rows = await db
-    .select()
-    .from(brag)
-    .innerJoin(document, eq(document.id, brag.documentId))
-    .where(and(...conditions))
-    .orderBy(desc(brag.date), desc(brag.createdAt));
-  const brags = rows.map((r) => r.brags);
+/** Attach links/attachments/tags to already-scoped brag rows in batched queries (no per-brag N+1). */
+async function attachRelations(brags: BragRow[]): Promise<BragWithRelations[]> {
   if (brags.length === 0) return [];
-
   const ids = brags.map((b) => b.id);
   const [links, attachments, tagRows] = await Promise.all([
     db.select().from(bragLink).where(inArray(bragLink.bragId, ids)).orderBy(asc(bragLink.position)),
@@ -91,7 +101,6 @@ export async function listBrags(
       .where(inArray(bragTag.bragId, ids))
       .orderBy(asc(tag.name)),
   ]);
-
   const linksByBrag = groupByBragId(links);
   const attachmentsByBrag = groupByBragId(attachments);
   const tagsByBrag = groupByBragId(tagRows);
@@ -101,6 +110,81 @@ export async function listBrags(
     attachments: attachmentsByBrag.get(b.id) ?? [],
     tags: (tagsByBrag.get(b.id) ?? []).map((t) => t.name),
   }));
+}
+
+/**
+ * Every brag in a document the caller owns, newest first, with relations. The
+ * unwindowed read — used where the full set is wanted (the cross-tenant isolation
+ * suite's oracle). The owner timeline pages with `listBragsPage`.
+ */
+export async function listBrags(
+  documentId: string,
+  filters: BragFilters = {},
+): Promise<BragWithRelations[]> {
+  const { workspaceId, user } = await requireWorkspace();
+  const conditions = timelineConditions(documentId, workspaceId, user.id, filters);
+  const rows = await db
+    .select()
+    .from(brag)
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(and(...conditions))
+    .orderBy(desc(brag.date), desc(brag.createdAt));
+  return attachRelations(rows.map((r) => r.brags));
+}
+
+/**
+ * One cursor-paged window of a document's timeline (PERF-01): whole months
+ * newest-first until ~TIMELINE_PAGE_TARGET brags, always stopping on a month
+ * boundary so a "load more" never splits a month header. `cursor` ("YYYY-MM",
+ * the previous page's `nextCursor`) loads the next older window; the first page
+ * passes none. `nextCursor` is the oldest month in this page (what to load older
+ * than); it doubles as the next chunk's leading-gap reference. Same scoping +
+ * filters as `listBrags`, so a forged documentId/cursor only ever reads the
+ * caller's own brags. Concatenating the pages equals `listBrags` exactly.
+ */
+export async function listBragsPage(
+  documentId: string,
+  filters: BragFilters = {},
+  cursor?: string,
+): Promise<BragPage> {
+  const { workspaceId, user } = await requireWorkspace();
+  const conditions = timelineConditions(documentId, workspaceId, user.id, filters, cursor);
+
+  // Month buckets (newest first) with their counts, so a page stops on a month edge.
+  const monthExpr = sql<string>`to_char(${brag.date}, 'YYYY-MM')`;
+  const monthRows = await db
+    .select({ month: monthExpr, n: count() })
+    .from(brag)
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(and(...conditions))
+    .groupBy(monthExpr)
+    .orderBy(desc(monthExpr));
+  if (monthRows.length === 0) return { brags: [], nextCursor: null, hasMore: false };
+
+  // Take whole months until the target is reached (a single heavy month is never split).
+  let taken = 0;
+  let monthsTaken = 0;
+  let oldestMonth = monthRows[0]!.month;
+  for (const row of monthRows) {
+    oldestMonth = row.month;
+    taken += Number(row.n);
+    monthsTaken += 1;
+    if (taken >= TIMELINE_PAGE_TARGET) break;
+  }
+  const hasMore = monthsTaken < monthRows.length;
+
+  const rows = await db
+    .select()
+    .from(brag)
+    .innerJoin(document, eq(document.id, brag.documentId))
+    .where(and(...conditions, gte(brag.date, `${oldestMonth}-01`)))
+    .orderBy(desc(brag.date), desc(brag.createdAt));
+
+  return {
+    brags: await attachRelations(rows.map((r) => r.brags)),
+    nextCursor: hasMore ? oldestMonth : null,
+    hasMore,
+  };
 }
 
 /** Total brags in a document the caller owns (the unfiltered header stat). */

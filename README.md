@@ -11,9 +11,10 @@ developers. Log your wins all year (a "brag" takes under 30 seconds), organize t
 (one per review cycle), see them as a month-grouped timeline, and share a read-only link with your
 manager before review time.
 
-> **Early release (`0.x`).** The self-host path — a one-command Docker stack with automatic
-> migrations and complete docs — is ready. Tracking the current release, `v0.1.1`; the hosted
-> multi-tenant mode is the v1.1 fast-follow. See [PLAN.md](PLAN.md).
+> **Current release `v1.1.0`.** The self-host path (a one-command Docker stack with automatic
+> migrations and complete docs) and the **hosted multi-tenant mode** — open signup, user-created
+> organizations, an instance superadmin, and abuse controls — are both shipped. See
+> [PLAN.md](PLAN.md) and the [changelog](CHANGELOG.md).
 
 ## Why
 

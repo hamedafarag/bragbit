@@ -32,7 +32,7 @@ invitations — but never read members' brag content.
 The mode for a public instance: open sign-up with required email verification, each signup landing
 in a personal workspace, and any user able to create organizations and invite a team. It adds an
 instance superadmin and abuse controls (disposable-email blocking, per-workspace storage quotas).
-Hosted ships as the **v1.1** fast-follow; because the schema is workspace-scoped from day one, it's
+Hosted shipped in **v1.1**; because the schema is workspace-scoped from day one, it's
 purely additive — not a rewrite.
 
 ## How branding reads per mode

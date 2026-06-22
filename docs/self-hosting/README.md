@@ -11,6 +11,8 @@ up the app and Postgres, runs migrations, and serves the first-run setup wizard.
   domain and automatic TLS, managed through Dokploy's UI.
 - **[Vercel + managed Postgres](vercel.md)** — a serverless variant (Vercel + Neon), with the
   caveats serverless brings (S3 storage, external cron, manual migrations).
+- **[Hosting publicly (hosted mode)](public-instance.md)** — running a shared, multi-tenant instance
+  with open signup: the `/super` superadmin console, storage quotas, and abuse controls.
 - **[Backup, restore & upgrades](backup-and-upgrades.md)** — protecting your data and moving to a
   new version.
 

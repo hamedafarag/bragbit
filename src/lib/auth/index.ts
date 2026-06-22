@@ -11,10 +11,12 @@ import { InvitationEmail } from "@/emails/invitation";
 import { ResetPasswordEmail } from "@/emails/reset-password";
 import { VerifyEmail } from "@/emails/verify-email";
 import { cleanupUserStorage } from "@/features/account/deletion";
+import { provisionPersonalWorkspaceOnSignUp } from "@/features/workspace/provisioning";
 import { emailBrandFromOrg, instanceEmailBrand } from "@/lib/branding";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { member } from "@/lib/db/schema";
+import { assertSignupEmailAllowed } from "@/lib/disposable-email";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
 import { isHosted } from "@/lib/instance";
@@ -42,6 +44,10 @@ export const auth = betterAuth({
   // is the multi-instance upgrade for the hosted mode (Phase 10).
   rateLimit: {
     enabled: env.RATE_LIMIT_ENABLED ?? env.NODE_ENV === "production",
+    // Hosted runs multiple app instances, so share the per-IP limiter state in
+    // Postgres (ENH-SEC-02 — Better Auth's "database" storage uses the `rateLimit`
+    // table); the single-container private modes keep the in-memory default.
+    storage: isHosted() ? "database" : "memory",
   },
 
   // Per-client IP for the rate-limiter. Better Auth reads `x-forwarded-for` by
@@ -51,6 +57,18 @@ export const auth = betterAuth({
   ...trustedProxyIpConfig(env.TRUSTED_PROXY_IP_HEADER),
 
   databaseHooks: {
+    user: {
+      create: {
+        // HOSTED: reject disposable-email signups before the account exists (PLAN §10
+        // abuse controls); no-op in the private modes / when BLOCK_DISPOSABLE_EMAIL off.
+        before: assertSignupEmailAllowed,
+        // HOSTED: every new account is given its own personal workspace (PLAN §10).
+        // The gate (isHosted) + inserts live in features/workspace/provisioning so
+        // the logic stays inside the unit-tested src/features coverage glob; here we
+        // only reference it. No-op in the private modes.
+        after: provisionPersonalWorkspaceOnSignUp,
+      },
+    },
     session: {
       create: {
         // Resolve the active workspace on every session creation: pick the

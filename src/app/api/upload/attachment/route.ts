@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { isBragOwnedBy } from "@/features/attachment/queries";
+import { exceedsStorageQuota } from "@/features/workspace/quota";
 import { getWorkspaceOrNull } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { attachment } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { isHosted } from "@/lib/instance";
 import { ATTACHMENT_MIME_EXT, getStorage } from "@/lib/storage";
 
 const MAX_FILES = 20;
@@ -46,6 +48,19 @@ export async function POST(request: Request) {
     if (file.size > maxBytes) {
       return NextResponse.json(
         { error: `${file.name} exceeds the ${env.MAX_UPLOAD_MB} MB limit.` },
+        { status: 413 },
+      );
+    }
+  }
+
+  // Per-workspace storage quota (hosted abuse control, PLAN §10): the instance
+  // default (WORKSPACE_QUOTA_MB) or a /super per-workspace override caps total
+  // attachment storage. The private modes don't enforce it.
+  if (isHosted()) {
+    const incoming = files.reduce((sum, file) => sum + file.size, 0);
+    if (await exceedsStorageQuota(ctx.workspaceId, incoming)) {
+      return NextResponse.json(
+        { error: "This workspace has reached its storage quota." },
         { status: 413 },
       );
     }

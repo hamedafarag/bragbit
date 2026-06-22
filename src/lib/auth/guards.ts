@@ -2,11 +2,12 @@ import "server-only";
 
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { member } from "@/lib/db/schema";
+import { isSuperadmin } from "@/lib/super";
 
 export type WorkspaceRole = "owner" | "admin" | "member";
 
@@ -62,6 +63,18 @@ export async function requireRole(...roles: WorkspaceRole[]) {
   // /no-workspace note in requireWorkspace).
   if (!roles.includes(ctx.member.role as WorkspaceRole)) redirect("/dashboard");
   return ctx;
+}
+
+/**
+ * Require an instance superadmin (the hosted `/super` ops console, PLAN §10): any
+ * signed-in user whose email is in `SUPERADMIN_EMAILS`. Everyone else gets a 404, so
+ * `/super` never advertises its existence. No workspace is required — a superadmin
+ * manages the instance, not a workspace, so this never touches brag content.
+ */
+export async function requireSuperadmin() {
+  const data = await requireSession();
+  if (!isSuperadmin(data.user.email)) notFound();
+  return data;
 }
 
 /** Route-handler variant of `requireSession`: the session data, or null. */

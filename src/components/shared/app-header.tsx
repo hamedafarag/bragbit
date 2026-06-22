@@ -1,6 +1,10 @@
 import Link from "next/link";
 
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
+import {
+  WorkspaceSwitcher,
+  type UserWorkspace,
+} from "@/features/workspace/components/workspace-switcher";
 import { thumbUrl } from "@/lib/utils";
 
 import { ThemeToggle } from "./theme-toggle";
@@ -18,6 +22,7 @@ export function AppHeader({
   avatarUrl,
   initials,
   canAdminister,
+  workspaces,
 }: {
   workspaceName: string;
   logoUrl: string | null;
@@ -25,6 +30,7 @@ export function AppHeader({
   avatarUrl: string | null;
   initials: string;
   canAdminister: boolean;
+  workspaces: UserWorkspace[];
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
@@ -76,6 +82,7 @@ export function AppHeader({
             Workspace
           </Link>
         ) : null}
+        {workspaces.length > 0 ? <WorkspaceSwitcher workspaces={workspaces} /> : null}
         <Link
           href="/settings"
           className="rounded-md px-2.5 py-1.5 font-mono text-[11.5px] text-ink-soft no-underline hover:bg-accent hover:text-ink"
