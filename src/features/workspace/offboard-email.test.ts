@@ -1,8 +1,12 @@
-// DB-free unit test for emailRemovedMemberBundle — the portability email a removed
-// member gets (ENH-CO-01). The data loader, db (workspace brand), storage, and the
-// mailer are mocked; the pure assemblers (JSON shaper, Markdown, brand, file picker)
-// run for real, so this verifies the bundle wiring end to end without a database.
+// Unit test for emailRemovedMemberBundle — the portability email a removed member
+// gets (ENH-CO-01). The data loader, db (workspace brand), storage, and the mailer
+// are mocked; the pure assemblers (JSON shaper, Markdown, brand, file picker) run for
+// real. DB-gated + lazy-imported: importing ./offboard pulls @/lib/branding →
+// @/lib/env (needs DATABASE_URL + BETTER_AUTH_SECRET), so it runs only where env is
+// set (the coverage job), matching the other env-coupled suites.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const hasDb = Boolean(process.env.DATABASE_URL);
 
 const getAllData = vi.hoisted(() => vi.fn());
 const sendEmail = vi.hoisted(() => vi.fn());
@@ -30,7 +34,9 @@ vi.mock("@/lib/db", () => ({
   db: { select: () => makeChain([{ name: "Acme", accentColor: null, logoKey: null }]) },
 }));
 
-import { emailRemovedMemberBundle } from "./offboard";
+async function load() {
+  return (await import("./offboard")).emailRemovedMemberBundle;
+}
 
 type Att = { storageKey: string; fileName: string; mimeType: string; sizeBytes: number };
 
@@ -98,11 +104,12 @@ beforeEach(() => {
   getAllData.mockReset();
 });
 
-describe("emailRemovedMemberBundle", () => {
+describe.skipIf(!hasDb)("emailRemovedMemberBundle", () => {
   it("emails JSON + Markdown + the within-cap attachment files", async () => {
     getAllData.mockResolvedValue(loaded([FILE]));
     storageGet.mockResolvedValue(Buffer.from("filebytes"));
 
+    const emailRemovedMemberBundle = await load();
     await emailRemovedMemberBundle(scope);
 
     expect(sendEmail).toHaveBeenCalledTimes(1);
@@ -124,6 +131,7 @@ describe("emailRemovedMemberBundle", () => {
     getAllData.mockResolvedValue(loaded([FILE]));
     storageGet.mockRejectedValue(new Error("gone"));
 
+    const emailRemovedMemberBundle = await load();
     await emailRemovedMemberBundle(scope);
     const arg = sendEmail.mock.calls[0]![0] as { attachments: unknown[] };
     expect(arg.attachments).toHaveLength(2);
@@ -132,6 +140,7 @@ describe("emailRemovedMemberBundle", () => {
   it("handles a member with no attachments", async () => {
     getAllData.mockResolvedValue(loaded([]));
 
+    const emailRemovedMemberBundle = await load();
     await emailRemovedMemberBundle(scope);
     const arg = sendEmail.mock.calls[0]![0] as { attachments: unknown[] };
     expect(arg.attachments).toHaveLength(2);
