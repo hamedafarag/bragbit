@@ -31,6 +31,7 @@ export const E2E = {
   accounts: {
     changePw: { email: "acct-pw@e2e.test", userId: "e2e-acct-pw", wsId: "e2e-acct-pw-ws" },
     del: { email: "acct-del@e2e.test", userId: "e2e-acct-del", wsId: "e2e-acct-del-ws" },
+    reset: { email: "acct-reset@e2e.test", userId: "e2e-acct-reset", wsId: "e2e-acct-reset-ws" },
   },
   // A dedicated org + owner + two members for the member-management flows (role
   // change, removal, ownership transfer) — kept off the shared e2e-org.
@@ -42,6 +43,14 @@ export const E2E = {
     aliceId: "e2e-mm-alice",
     bobEmail: "mm-bob@e2e.test",
     bobId: "e2e-mm-bob",
+  },
+  // A dedicated org + owner for the settings cluster (profile, avatar, reminders,
+  // branding, logo). Branding mutates the workspace name, so it stays off e2e-org
+  // (which invitation.spec asserts by name).
+  settings: {
+    orgId: "e2e-settings-org",
+    ownerEmail: "settings-owner@e2e.test",
+    ownerId: "e2e-settings-owner",
   },
 };
 
@@ -119,7 +128,7 @@ export default async function globalSetup() {
     }
 
     // Settings-flow accounts: each a personal workspace of one (owner).
-    for (const a of [E2E.accounts.changePw, E2E.accounts.del]) {
+    for (const a of [E2E.accounts.changePw, E2E.accounts.del, E2E.accounts.reset]) {
       await sql`delete from "user" where id = ${a.userId}`;
       await sql`delete from organization where id = ${a.wsId}`;
       await sql`insert into organization (id, name, slug, type)
@@ -151,6 +160,19 @@ export default async function globalSetup() {
       await sql`insert into member (id, organization_id, user_id, role)
                 values (${`${uid}-mem`}, ${mm.orgId}, ${uid}, ${role})`;
     }
+
+    // Settings-cluster org: one owner of a dedicated organization workspace.
+    const st = E2E.settings;
+    await sql`delete from "user" where id = ${st.ownerId}`;
+    await sql`delete from organization where id = ${st.orgId}`;
+    await sql`insert into organization (id, name, slug, type)
+              values (${st.orgId}, 'Settings Org', ${st.orgId}, 'organization')`;
+    await sql`insert into "user" (id, name, email, email_verified)
+              values (${st.ownerId}, 'Settings Owner', ${st.ownerEmail}, true)`;
+    await sql`insert into account (id, account_id, provider_id, user_id, password)
+              values (${`${st.ownerId}-acc`}, ${st.ownerId}, 'credential', ${st.ownerId}, ${password})`;
+    await sql`insert into member (id, organization_id, user_id, role)
+              values (${`${st.ownerId}-mem`}, ${st.orgId}, ${st.ownerId}, 'owner')`;
   } finally {
     await sql.end();
   }
