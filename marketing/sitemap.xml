@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One page, one entry. A sitemap this small changes nothing for discovery — Google
+  will find a single linked page regardless — but it's what Search Console wants
+  submitted, and it states the canonical URL and a lastmod that crawlers can use to
+  decide whether to re-fetch. Update lastmod when the page's content actually
+  changes; a lastmod that lies about freshness is worse than none, and crawlers
+  learn to ignore it.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://hamedafarag.github.io/bragbit/</loc>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
