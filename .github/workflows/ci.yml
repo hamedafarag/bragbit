@@ -17,9 +17,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Production-dependency advisories only; accepted dev-tool advisories are
-      # allowlisted in package.json (pnpm.auditConfig.ignoreGhsas).
-      - run: pnpm audit --prod
+      # Dependency advisories (ENH-SEC-04). Was `pnpm audit --prod`, which npm
+      # broke by retiring the registry audit endpoints it calls — it now fails
+      # with a 410 on every branch, and pnpm hasn't migrated to the bulk endpoint
+      # (reproduced on 10.30.3 and 11.13.1). `npm audit` can't stand in: it needs
+      # a package-lock.json, which a pnpm repo doesn't have. osv-scanner reads
+      # pnpm-lock.yaml, i.e. the actually-resolved tree. Accepted advisories are
+      # listed with their reasons in osv-scanner.toml; it exits non-zero on
+      # anything else. Pinned so a new advisory, not a new scanner, is what
+      # changes the result.
+      - name: Dependency advisories (osv-scanner)
+        run: |
+          docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.4.0 \
+            scan source --lockfile=/src/pnpm-lock.yaml --config=/src/osv-scanner.toml
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
