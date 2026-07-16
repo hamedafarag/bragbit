@@ -12,6 +12,12 @@ export const E2E = {
   password: "E2eTest1234!",
   ownerEmail: "owner@e2e.test",
   memberEmail: "member@e2e.test",
+  // A deliberately NON-default accent (the default is #e8590c). White-labeling
+  // bugs are invisible on a workspace that happens to use the fallback color —
+  // that blind spot is exactly how dialogs shipped unbranded — so the e2e org is
+  // branded and `branding.spec.ts` asserts the accent reaches portalled surfaces.
+  accent: "#4338ca",
+  accentRgb: "rgb(67, 56, 202)",
   // A pending invitation the accept-flow spec drives. The invitee registers via
   // the real Better Auth sign-up (so the e2e env needs SMTP/Mailpit).
   inviteId: "e2e-invite",
@@ -37,8 +43,8 @@ export default async function globalSetup() {
     await sql`delete from "user" where email = ${E2E.inviteeEmail}`;
     await sql`delete from organization where id = 'e2e-org'`;
 
-    await sql`insert into organization (id, name, slug, type)
-              values ('e2e-org', 'E2E Org', 'e2e-org', 'organization')`;
+    await sql`insert into organization (id, name, slug, type, accent_color)
+              values ('e2e-org', 'E2E Org', 'e2e-org', 'organization', ${E2E.accent})`;
 
     for (const [uid, name, email, role] of SEED) {
       await sql`insert into "user" (id, name, email, email_verified)

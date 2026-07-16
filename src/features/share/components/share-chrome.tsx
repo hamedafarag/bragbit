@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
+import { AccentStyle } from "@/components/shared/accent-style";
 import type { ShareBrand } from "@/features/share/queries";
-import { accentVars, thumbUrl } from "@/lib/utils";
+import { thumbUrl } from "@/lib/utils";
 
 /**
  * The branded outer chrome for a public share page — a per-workspace accent
@@ -13,7 +14,8 @@ export function ShareChrome({ brand, children }: { brand: ShareBrand; children: 
   const logoUrl = brand.logoKey ? `/api/files/${brand.logoKey}` : null;
 
   return (
-    <div className="relative z-10 flex min-h-screen flex-col" style={accentVars(brand.accentColor)}>
+    <div className="relative z-10 flex min-h-screen flex-col">
+      <AccentStyle accent={brand.accentColor} />
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-[760px] items-center gap-3 px-6 py-4">
           {logoUrl ? (

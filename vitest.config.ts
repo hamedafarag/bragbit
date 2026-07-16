@@ -43,11 +43,11 @@ export default defineConfig({
       // jsdom`); the logic dirs (`*.ts`, unaffected by `.tsx` tests) hold a
       // higher floor.
       thresholds: {
-        statements: 34,
+        statements: 35,
         branches: 26,
         functions: 36,
-        lines: 34,
-        "src/lib/**/*.ts": { statements: 43, branches: 33, functions: 42, lines: 47 },
+        lines: 35,
+        "src/lib/**/*.ts": { statements: 45, branches: 34, functions: 44, lines: 49 },
         "src/features/**/*.ts": { statements: 68, branches: 62, functions: 65, lines: 69 },
       },
     },

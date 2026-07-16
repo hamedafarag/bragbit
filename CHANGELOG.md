@@ -66,6 +66,13 @@ on `0.x` until the deployment modes and core stabilize.
   and the primary-button text now auto-selects white or ink to stay readable on any workspace accent.
   (ENH-UX-02)
 
+### Fixed
+
+- Dialogs and toasts now use your workspace's accent color. On a white-labeled workspace the share
+  dialog's button and the brag editor's focus rings still rendered in the default orange, because
+  dialogs and toasts are rendered outside the element the accent was set on. The accent is now
+  published for the whole page, so every surface is branded. (ENH-CQ-09)
+
 ### Security
 
 - Added a `script-src` Content-Security-Policy with per-request nonces (emitted by `src/proxy.ts`):
