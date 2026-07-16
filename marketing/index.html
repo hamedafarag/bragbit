@@ -1,0 +1,2240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>BragBit — Your promotion evidence, on your own Postgres.</title>
+    <meta
+      name="description"
+      content="An open-source, self-hostable brag document for developers. Log a win in under 30 seconds, keep a month-grouped timeline of your year, and share a read-only link with your manager at review time. Runs on your own Postgres."
+    />
+    <meta name="author" content="BragBit" />
+    <meta
+      name="keywords"
+      content="brag document, promotion evidence, performance review, engineering career, self-hosted, open source, developer tools, work log, accomplishments tracker"
+    />
+    <!-- The page's own URL, not the repo's: canonical tells search engines which
+         URL owns this content, and pointing it at github.com would hand them the
+         repo instead. Deployed by .github/workflows/pages.yml. -->
+    <link rel="canonical" href="https://hamedafarag.github.io/bragbit/" />
+    <meta name="theme-color" content="#f6f2e9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#15120d" media="(prefers-color-scheme: dark)" />
+
+    <!-- Open Graph / Twitter. og:image is the timeline shot — the clearest single
+         frame of what the product is. These URLs must be absolute: link-preview
+         scrapers don't resolve relative paths, so a `./` image renders no card. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BragBit" />
+    <meta property="og:url" content="https://hamedafarag.github.io/bragbit/" />
+    <meta property="og:title" content="BragBit — Your promotion evidence, on your own Postgres." />
+    <meta
+      property="og:description"
+      content="An open-source, self-hostable brag document for developers. Log a win in under 30 seconds, keep a timeline of your year, and share a read-only link at review time."
+    />
+    <meta
+      property="og:image"
+      content="https://hamedafarag.github.io/bragbit/screenshots/timeline.png"
+    />
+    <meta property="og:image:width" content="2560" />
+    <meta property="og:image:height" content="1660" />
+    <meta
+      property="og:image:alt"
+      content="The BragBit timeline: a 2026 document with a quick-add box and month-grouped wins."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BragBit — Your promotion evidence, on your own Postgres." />
+    <meta
+      name="twitter:description"
+      content="An open-source, self-hostable brag document for developers. Log a win in 30 seconds; share a read-only link at review time."
+    />
+    <meta
+      name="twitter:image"
+      content="https://hamedafarag.github.io/bragbit/screenshots/timeline.png"
+    />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23e8590c'/><text x='16' y='23' font-family='Georgia,serif' font-size='20' font-weight='bold' fill='white' text-anchor='middle'>B</text></svg>"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,450;0,9..144,550;0,9..144,650;1,9..144,450;1,9..144,550&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "BragBit",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Docker, Linux",
+        "description": "Your promotion evidence, on your own Postgres. An open-source, self-hostable brag-document tracker for developers.",
+        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "image": "https://hamedafarag.github.io/bragbit/screenshots/timeline.png",
+        "url": "https://hamedafarag.github.io/bragbit/",
+        "codeRepository": "https://github.com/hamedafarag/bragbit",
+        "softwareHelp": "https://github.com/hamedafarag/bragbit#readme"
+      }
+    </script>
+
+    <style>
+      /* ══════════════════════════════════════════════════════════════════════
+         BragBit — marketing page.
+         Standalone: no build step, no framework. Design tokens and the warm
+         "engineering logbook" language are lifted from design-mockup.html and
+         the app's globals.css, so this page and the product read as one thing.
+         Every screenshot is a real capture of the running app.
+         ═══════════════════════════════════════════════════════════════════ */
+
+      :root {
+        --accent: #e8590c;
+        --accent-soft: rgba(232, 89, 12, 0.08);
+        --paper: #f6f2e9;
+        --paper-deep: #efe9da;
+        --card: #fffdf7;
+        --ink: #221d16;
+        --ink-soft: #5d5547;
+        --ink-faint: #726a58; /* AA on paper (~4.8:1) — matches the app's fix */
+        --line: #ddd5c4;
+        --line-soft: #e8e1d1;
+        --dot: rgba(34, 29, 22, 0.07);
+
+        /* the eight category colors */
+        --c-shipped: #5c8a58;
+        --c-technical: #4f6d9e;
+        --c-recognition: #b08a2e;
+        --c-collab: #8b5e83;
+        --c-glue: #927e63;
+        --c-leadership: #9a5b3b;
+        --c-skills: #3f8a82;
+        --c-other: #6f6757;
+
+        --shadow: 0 1px 2px rgba(34, 29, 22, 0.04), 0 6px 24px -12px rgba(34, 29, 22, 0.18);
+        --shadow-hover: 0 2px 3px rgba(34, 29, 22, 0.05), 0 14px 36px -14px rgba(34, 29, 22, 0.28);
+
+        --serif: "Fraunces", Georgia, serif;
+        --sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+        --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+        --wrap: 1180px;
+      }
+
+      /* Dark: the app's designed ink-on-dark, not a mechanical invert. */
+      html.dark {
+        --paper: #15120d;
+        --paper-deep: #1f1a13;
+        --card: #1c1710;
+        --ink: #ece5d6;
+        --ink-soft: #b4ab98;
+        --ink-faint: #8b8270;
+        --line: #322c22;
+        --line-soft: #29241b;
+        --dot: rgba(236, 229, 214, 0.05);
+        --accent-soft: rgba(232, 89, 12, 0.14);
+
+        --c-shipped: #7fb07a;
+        --c-technical: #82a0d0;
+        --c-recognition: #d8b257;
+        --c-collab: #c08fb6;
+        --c-glue: #b9a585;
+        --c-leadership: #cd8a64;
+        --c-skills: #63b3aa;
+        --c-other: #9d9279;
+
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 24px -12px rgba(0, 0, 0, 0.6);
+        --shadow-hover: 0 2px 3px rgba(0, 0, 0, 0.45), 0 14px 36px -14px rgba(0, 0, 0, 0.7);
+        color-scheme: dark;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      body {
+        font-family: var(--sans);
+        background-color: var(--paper);
+        background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+        background-size: 26px 26px;
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        transition:
+          background-color 0.3s,
+          color 0.3s;
+        overflow-x: hidden;
+      }
+
+      /* warm atmospheric wash, following the accent — same as the app */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background:
+          radial-gradient(900px 420px at 85% -5%, var(--accent-soft), transparent 70%),
+          radial-gradient(700px 500px at -10% 100%, rgba(34, 29, 22, 0.05), transparent 70%);
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: var(--wrap);
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .eyebrow::after {
+        content: "";
+        width: 48px;
+        height: 1px;
+        background: var(--line);
+      }
+      .eyebrow.center {
+        justify-content: center;
+      }
+      .eyebrow.center::before {
+        content: "";
+        width: 48px;
+        height: 1px;
+        background: var(--line);
+      }
+
+      kbd {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 1px 6px;
+        background: var(--card);
+        color: var(--ink-soft);
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        background: var(--paper-deep);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      /* ── buttons ─────────────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--sans);
+        font-weight: 600;
+        font-size: 14px;
+        border-radius: 9px;
+        padding: 11px 20px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+        transition:
+          transform 0.15s,
+          box-shadow 0.2s,
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow:
+          0 2px 0 color-mix(in srgb, var(--accent) 70%, #000),
+          var(--shadow);
+      }
+      .btn-primary:hover {
+        box-shadow:
+          0 2px 0 color-mix(in srgb, var(--accent) 70%, #000),
+          var(--shadow-hover);
+      }
+      .btn-ghost {
+        background: var(--card);
+        border-color: var(--line);
+        color: var(--ink-soft);
+      }
+      .btn-ghost:hover {
+        border-color: var(--ink-faint);
+        color: var(--ink);
+      }
+      .btn svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      :where(a, button):focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 6px;
+      }
+
+      .skip {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 100;
+      }
+      .skip:focus {
+        left: 12px;
+        top: 12px;
+        background: var(--card);
+        color: var(--ink);
+        padding: 10px 16px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      /* ── top bar ─────────────────────────────────────────────────────────── */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: color-mix(in srgb, var(--paper) 86%, transparent);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar-in {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 62px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        text-decoration: none;
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-family: var(--serif);
+        font-weight: 650;
+        font-size: 17px;
+        box-shadow: inset 0 -8px 14px rgba(0, 0, 0, 0.18);
+      }
+      .brand-name {
+        font-family: var(--serif);
+        font-weight: 650;
+        font-size: 17.5px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .navlinks {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .navlinks a {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ink-soft);
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+      .navlinks a:hover {
+        color: var(--ink);
+      }
+      #theme {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ink-soft);
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      #theme:hover {
+        background: var(--paper-deep);
+        color: var(--ink);
+      }
+      #theme svg {
+        width: 17px;
+        height: 17px;
+      }
+      @media (max-width: 720px) {
+        .navlinks {
+          display: none;
+        }
+      }
+
+      /* ── hero ────────────────────────────────────────────────────────────── */
+      .hero {
+        padding: 74px 0 40px;
+        text-align: center;
+      }
+      .hero .eyebrow {
+        justify-content: center;
+      }
+      .hero .eyebrow::before {
+        content: "";
+        width: 48px;
+        height: 1px;
+        background: var(--line);
+      }
+
+      h1 {
+        font-family: var(--serif);
+        font-weight: 650;
+        font-size: clamp(2.4rem, 5.6vw, 4.3rem);
+        line-height: 1.04;
+        letter-spacing: -0.022em;
+        margin: 20px auto 0;
+        max-width: 15ch;
+        text-wrap: balance;
+      }
+      h1 .accent {
+        color: var(--accent);
+        position: relative;
+        display: inline-block;
+      }
+      /* hand-drawn underline; the box hugs the words so the rule tracks them */
+      h1 .accent svg {
+        position: absolute;
+        left: 0;
+        bottom: -0.12em;
+        width: 100%;
+        height: 0.16em;
+        color: color-mix(in srgb, var(--accent) 38%, transparent);
+        overflow: visible;
+      }
+
+      .lede {
+        max-width: 60ch;
+        margin: 26px auto 0;
+        color: var(--ink-soft);
+        font-size: 16px;
+      }
+      .lede b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 32px;
+      }
+      .hero-note {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 22px;
+      }
+
+      /* ── screenshot frames ───────────────────────────────────────────────── */
+      .shot {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition:
+          box-shadow 0.3s,
+          transform 0.3s;
+      }
+      .shot img {
+        cursor: zoom-in;
+      }
+      .shot:hover {
+        box-shadow: var(--shadow-hover);
+      }
+      /* On dark, a dark app screenshot sits on a dark page and the drop shadow
+         does nothing — so the frame earns its edge with a light hairline instead. */
+      html.dark .shot {
+        border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+        box-shadow:
+          0 0 0 1px rgba(236, 229, 214, 0.04),
+          0 30px 70px -30px rgba(0, 0, 0, 0.9);
+      }
+      html.dark .shot:hover {
+        border-color: color-mix(in srgb, var(--ink) 26%, transparent);
+      }
+
+      .hero-shot {
+        margin: 54px auto 0;
+        position: relative;
+        max-width: 1040px;
+      }
+      /* the shot fades into the page rather than ending on a hard edge */
+      .hero-shot::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 90px;
+        background: linear-gradient(to top, var(--paper), transparent);
+        pointer-events: none;
+        border-radius: 0 0 14px 14px;
+      }
+
+      .stamp {
+        position: absolute;
+        top: -13px;
+        right: 14px;
+        z-index: 2;
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--card) 88%, transparent);
+        backdrop-filter: blur(6px);
+        border-radius: 6px;
+        padding: 5px 10px;
+        transform: rotate(-1.2deg);
+      }
+
+      .caption {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-faint);
+        text-align: center;
+        margin-top: 14px;
+      }
+
+      /* ── section scaffolding ─────────────────────────────────────────────── */
+      section {
+        position: relative;
+        z-index: 1;
+      }
+      .band {
+        border-top: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        background: color-mix(in srgb, var(--paper-deep) 45%, transparent);
+      }
+      .sec {
+        padding: 86px 0;
+      }
+      h2 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: clamp(1.7rem, 3.1vw, 2.5rem);
+        line-height: 1.14;
+        letter-spacing: -0.015em;
+        margin-top: 16px;
+        text-wrap: balance;
+      }
+      h3 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 21px;
+        letter-spacing: -0.01em;
+        line-height: 1.3;
+      }
+      .sec-intro {
+        max-width: 62ch;
+      }
+      .sec-intro.center {
+        margin: 0 auto;
+        text-align: center;
+      }
+      .sec-intro p {
+        margin-top: 18px;
+        color: var(--ink-soft);
+      }
+      .sec-intro p b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* ── the forgetting panels ───────────────────────────────────────────── */
+      .forget-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-top: 58px;
+      }
+      @media (max-width: 860px) {
+        .forget-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 12px;
+      }
+      .panel-label .pip {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .pip-hollow {
+        border: 1px solid var(--ink-faint);
+      }
+      .pip-solid {
+        background: var(--accent);
+      }
+
+      .panel {
+        position: relative;
+        min-height: 290px;
+        border-radius: 12px;
+        padding: 22px;
+        height: 100%;
+      }
+      .panel-lost {
+        border: 1px dashed var(--line);
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent 0 9px,
+          color-mix(in srgb, var(--ink) 2%, transparent) 9px 10px
+        );
+        overflow: hidden;
+      }
+      .panel-kept {
+        border: 1px solid var(--line);
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+      .panel ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .panel-lost li {
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .panel-foot {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-faint);
+        text-align: center;
+      }
+      .panel-lost .panel-foot {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 40px 22px 18px;
+        background: linear-gradient(to top, var(--paper-deep), transparent);
+      }
+      .panel-kept .panel-foot {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--line-soft);
+      }
+
+      /* the spine + nodes share --rail, so they can't drift apart */
+      .spine {
+        position: relative;
+        --rail: 5.5px;
+      }
+      .spine::before {
+        content: "";
+        position: absolute;
+        left: calc(var(--rail) - 0.5px);
+        top: 8px;
+        bottom: 8px;
+        width: 1px;
+        background: linear-gradient(to bottom, var(--line) 85%, transparent);
+      }
+      /* Direct children only. As a descendant selector this leaked its absolutely
+         positioned node onto every nested <li> too, landing a dot on top of the
+         first character of any list inside an entry. */
+      .spine > li {
+        position: relative;
+        padding-left: 26px;
+        font-size: 14px;
+      }
+      .spine > li::before {
+        content: "";
+        position: absolute;
+        left: calc(var(--rail) - 3.5px);
+        top: 8px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid var(--accent);
+      }
+
+      /* Memory decay — the argument, animated. Delays are spread across the whole
+         loop so the panel always shows a mix instead of emptying all at once. */
+      @keyframes forget {
+        0%,
+        8% {
+          opacity: 0.92;
+          filter: blur(0);
+          transform: translate(0, 0);
+        }
+        55%,
+        100% {
+          opacity: 0.05;
+          filter: blur(4px);
+          transform: translate(6px, -8px);
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .panel-lost li {
+          animation: forget 7s ease-in infinite;
+        }
+      }
+
+      figure.proverb {
+        max-width: 46ch;
+        margin: 62px auto 0;
+        text-align: center;
+      }
+      figure.proverb blockquote {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 450;
+        font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+        line-height: 1.45;
+        color: var(--ink-soft);
+      }
+      figure.proverb figcaption {
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+
+      /* ── formula ─────────────────────────────────────────────────────────── */
+      .formula-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 60px;
+        align-items: center;
+      }
+      @media (max-width: 900px) {
+        .formula-grid {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+      }
+      .formula-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .formula-list li {
+        display: flex;
+        gap: 16px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        border-radius: 12px;
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+        transition:
+          box-shadow 0.25s,
+          transform 0.25s;
+      }
+      .formula-list li:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-1px);
+      }
+      .formula-n {
+        flex-shrink: 0;
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 7px;
+        background: var(--paper-deep);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      .formula-k {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+      }
+      .formula-v {
+        margin-top: 3px;
+        font-size: 14.5px;
+      }
+
+      /* ── alternating feature rows ────────────────────────────────────────── */
+      .feat {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
+        gap: 56px;
+        align-items: center;
+        margin-top: 72px;
+      }
+      .feat:first-of-type {
+        margin-top: 46px;
+      }
+      /* Flipped rows mirror the columns as well as the order — otherwise the copy
+         inherits the 1.25fr side and the screenshot gets squeezed into 1fr, so the
+         alternating rows disagree about how much room a shot deserves. */
+      .feat.flip {
+        grid-template-columns: 1.25fr 1fr;
+      }
+      .feat.flip .feat-copy {
+        order: 2;
+      }
+      @media (max-width: 900px) {
+        .feat,
+        .feat.flip {
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        .feat.flip .feat-copy {
+          order: 0;
+        }
+      }
+
+      /* The quick-add strip is a ~5:1 band of UI. In a side column it renders
+         ~120px tall and its text is unreadable, so it gets the full width. */
+      .feat-wide {
+        grid-template-columns: 1fr;
+        gap: 26px;
+      }
+      .feat-wide .feat-copy {
+        max-width: 64ch;
+      }
+      .feat-wide .feat-rule {
+        max-width: 320px;
+      }
+
+      /* Portrait captures (the editor) would run ~900px tall at column width and
+         swamp the row. Cap them and crop from the top, where the meaningful part
+         is; the lightbox still opens the full-length image. */
+      .shot-tall {
+        max-height: 560px;
+      }
+      .shot-tall img {
+        height: 560px;
+        object-fit: cover;
+        object-position: top center;
+      }
+      @media (max-width: 900px) {
+        .shot-tall,
+        .shot-tall img {
+          max-height: 460px;
+          height: 460px;
+        }
+      }
+      .feat-kicker {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .feat-kicker .cdot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .feat h3 {
+        margin-top: 12px;
+      }
+      .feat-rule {
+        height: 1px;
+        margin: 16px 0;
+        background: linear-gradient(to right, var(--line), transparent);
+      }
+      .feat p {
+        color: var(--ink-soft);
+        font-size: 14.5px;
+        max-width: 46ch;
+      }
+
+      /* ── light/dark showcase ─────────────────────────────────────────────── */
+      .theme-demo {
+        margin-top: 44px;
+        position: relative;
+        max-width: 1040px;
+        margin-inline: auto;
+      }
+      .theme-switch,
+      .seg {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        background: var(--card);
+        margin: 0 auto 22px;
+      }
+      .theme-switch button,
+      .seg button {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border: none;
+        background: transparent;
+        color: var(--ink-faint);
+        padding: 7px 16px;
+        border-radius: 99px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .theme-switch button[aria-pressed="true"],
+      .seg button[aria-pressed="true"] {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .center-row {
+        display: flex;
+        justify-content: center;
+      }
+
+      /* ── inventory ───────────────────────────────────────────────────────── */
+      .inv-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 28px;
+        flex-wrap: wrap;
+      }
+      .inv-count {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-faint);
+        white-space: nowrap;
+      }
+      .inv-count b {
+        display: block;
+        font-size: 30px;
+        font-weight: 500;
+        color: var(--ink);
+        font-family: var(--serif);
+      }
+      .inv-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 44px 36px;
+        margin-top: 56px;
+      }
+      @media (max-width: 1000px) {
+        .inv-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 560px) {
+        .inv-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .inv-group h3 {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 17px;
+        font-weight: 650;
+      }
+      .inv-group h3 .cdot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .inv-blurb {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--ink-faint);
+        margin-top: 6px;
+      }
+      .inv-rule {
+        height: 1px;
+        margin-top: 12px;
+        opacity: 0.4;
+      }
+      .inv-group ul {
+        list-style: none;
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .inv-group li {
+        position: relative;
+        padding-left: 14px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--ink-soft);
+      }
+      .inv-group li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--ink-faint);
+      }
+
+      /* ── ownership ───────────────────────────────────────────────────────── */
+      .own-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 48px;
+      }
+      @media (max-width: 860px) {
+        .own-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .own-card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        background: var(--card);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        transition:
+          box-shadow 0.25s,
+          transform 0.25s;
+      }
+      .own-card:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-2px);
+      }
+      .own-card p {
+        margin-top: 12px;
+        flex: 1;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+      }
+      .own-card .mono-chip {
+        margin-top: 20px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-faint);
+        background: var(--paper-deep);
+        border-radius: 7px;
+        padding: 9px 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* ── self-hosting ────────────────────────────────────────────────────── */
+      /* The mode switch is CSS-only: two radios and `:has()`, no JS. Both modes'
+         copy is in the HTML, so it's all crawlable and the switch still works with
+         scripting off — a control that silently does nothing is worse than none.
+         Without `:has()` support both variants simply stay visible: redundant,
+         but complete and never broken. */
+      .seg input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .seg label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 7px 16px;
+        border-radius: 99px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+      .seg input:checked + label {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .seg input:focus-visible + label {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      #host:has(#m-org:checked) [data-mode="solo"],
+      #host:has(#m-solo:checked) [data-mode="org"] {
+        display: none;
+      }
+
+      .sh-blurb {
+        max-width: 62ch;
+        margin: 0 auto;
+        text-align: center;
+        color: var(--ink-soft);
+        min-height: 3.2em; /* reserve both modes' copy so the switch can't jump the page */
+      }
+      .sh-blurb b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      /* The steps ride a rail of their own, echoing the timeline's spine — same
+         motif, but numbered. It doesn't reuse `.spine`: that draws its own node on
+         every entry, which would fight the step numbers here. */
+      .sh-steps {
+        list-style: none;
+        position: relative;
+        max-width: 780px;
+        margin: 44px auto 0;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        counter-reset: sh-step;
+      }
+      .sh-steps::before {
+        content: "";
+        position: absolute;
+        left: 12.5px;
+        top: 22px;
+        bottom: 22px;
+        width: 1px;
+        background: linear-gradient(to bottom, var(--line) 85%, transparent);
+      }
+      .sh-steps > li {
+        position: relative;
+        padding-left: 44px;
+      }
+      .sh-steps > li::before {
+        content: counter(sh-step);
+        counter-increment: sh-step;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .sh-step-t {
+        font-family: var(--serif);
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 26px;
+      }
+      .sh-step-n {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .sh-step-n code {
+        font-size: 11.5px;
+      }
+
+      .sh-code {
+        position: relative;
+        margin-top: 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--paper-deep);
+        overflow: hidden;
+      }
+      .sh-code pre {
+        margin: 0;
+        padding: 14px 16px;
+        overflow-x: auto; /* long commands scroll inside the block, never the page */
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.75;
+        color: var(--ink);
+      }
+      .sh-code .c {
+        color: var(--ink-faint);
+      }
+      .sh-code .k {
+        color: var(--accent);
+      }
+      .sh-copy {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink-faint);
+        border-radius: 6px;
+        padding: 3px 9px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .sh-code:hover .sh-copy,
+      .sh-copy:focus-visible {
+        opacity: 1;
+      }
+      .sh-copy:hover {
+        color: var(--ink);
+        border-color: var(--ink-faint);
+      }
+      @media (hover: none) {
+        .sh-copy {
+          opacity: 1;
+        } /* no hover to reveal it on touch */
+      }
+
+      .sh-gets {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .sh-gets li {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        border-radius: 99px;
+        padding: 4px 12px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-soft);
+      }
+      .sh-gets li::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+
+      .sh-notes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        max-width: 780px;
+        margin: 44px auto 0;
+        padding-top: 32px;
+        border-top: 1px dashed var(--line);
+      }
+      @media (max-width: 800px) {
+        .sh-notes {
+          grid-template-columns: 1fr;
+          gap: 26px;
+        }
+      }
+      .sh-note h3 {
+        font-size: 15px;
+        font-weight: 650;
+      }
+      .sh-note p {
+        margin-top: 7px;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+      }
+      .sh-note code {
+        font-size: 11px;
+      }
+
+      /* ── closing ─────────────────────────────────────────────────────────── */
+      .close {
+        text-align: center;
+        padding: 100px 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .close h2 {
+        font-size: clamp(1.9rem, 4vw, 3rem);
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      .close p {
+        max-width: 48ch;
+        margin: 20px auto 0;
+        color: var(--ink-soft);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        background: color-mix(in srgb, var(--paper-deep) 60%, transparent);
+        position: relative;
+        z-index: 1;
+      }
+      .foot-in {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        padding: 30px 0;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-faint);
+      }
+      .foot-in nav {
+        display: flex;
+        gap: 20px;
+      }
+      .foot-in a {
+        color: var(--ink-soft);
+        text-decoration: none;
+      }
+      .foot-in a:hover {
+        color: var(--ink);
+      }
+
+      /* ── reveal on scroll (IntersectionObserver adds .in) ────────────────── */
+      /* Scoped to html.js — the class is set by an inline script, so without JS
+         nothing is ever hidden. A reveal animation that fails closed leaves the
+         whole page blank, which is a bad trade for a marketing page. */
+      @media (prefers-reduced-motion: no-preference) {
+        html.js .rise {
+          opacity: 0;
+          transform: translateY(14px);
+          transition:
+            opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+            transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+        }
+        html.js .rise.in {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ── lightbox ────────────────────────────────────────────────────────── */
+      #lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display: none;
+        place-items: center;
+        padding: 32px;
+        background: color-mix(in srgb, var(--ink) 82%, transparent);
+        backdrop-filter: blur(6px);
+        cursor: zoom-out;
+      }
+      #lightbox.open {
+        display: grid;
+      }
+      #lightbox img {
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 10px;
+        box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.6);
+      }
+      #lightbox .hint {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Marks that JS is alive, so the CSS only hides content it can un-hide. -->
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar">
+      <div class="wrap topbar-in">
+        <a class="brand" href="#top">
+          <span class="brand-mark" aria-hidden="true">B</span>
+          <span class="brand-name">BragBit</span>
+        </a>
+        <div class="spacer"></div>
+        <nav class="navlinks" aria-label="Primary">
+          <a href="#tour">Tour</a>
+          <a href="#features">Features</a>
+          <a href="#own">Ownership</a>
+          <a href="#host">Self-host</a>
+        </nav>
+        <button id="theme" type="button" aria-label="Switch theme">
+          <svg
+            id="theme-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+        <a class="btn btn-primary" href="https://github.com/hamedafarag/bragbit">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 .5C5.73.5.5 5.73.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"
+            />
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ════════ HERO ════════ -->
+      <section id="top" class="hero">
+        <div class="wrap">
+          <p class="eyebrow">Open source · Self-hosted · AGPL-3.0</p>
+
+          <h1>
+            Your promotion evidence,
+            <span class="accent"
+              >on your own Postgres.<svg
+                viewBox="0 0 340 12"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 8.5C58 3.2 132 2.4 190 4.1c46 1.4 100 3.6 148 5.2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                /></svg
+            ></span>
+          </h1>
+
+          <p class="lede">
+            You shipped a hundred things this year. At review time you can name three — and two of
+            them happened last month. BragBit is a brag document that takes
+            <b>under 30 seconds</b> to feed, and runs on infrastructure you control.
+          </p>
+
+          <div class="cta-row">
+            <a class="btn btn-primary" href="https://github.com/hamedafarag/bragbit">
+              Get it on GitHub
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="btn btn-ghost" href="#tour">See it in action</a>
+          </div>
+
+          <p class="hero-note">
+            <code>docker compose up -d</code> — and it's yours. No entry caps, no vendor to outlive
+            you.
+          </p>
+        </div>
+
+        <div class="wrap">
+          <div class="hero-shot rise">
+            <span class="stamp" aria-hidden="true">Exhibit A</span>
+            <div class="shot">
+              <img
+                id="hero-shot-img"
+                src="./screenshots/timeline.png"
+                width="2560"
+                height="1660"
+                alt="The BragBit document view: a 2026 review-period document with goals, a quick-add box reading “Log a win — only a title is required”, six action-verb template chips, category and tag filters, and the start of a month-grouped timeline."
+                fetchpriority="high"
+              />
+            </div>
+          </div>
+          <p class="caption">
+            The real thing — a document, its quick-add box, and the timeline beneath it.
+          </p>
+        </div>
+      </section>
+
+      <!-- ════════ THE PROBLEM ════════ -->
+      <section class="band sec">
+        <div class="wrap">
+          <div class="sec-intro center rise">
+            <p class="eyebrow center">The problem</p>
+            <h2>&ldquo;So — what did you do this year?&rdquo;</h2>
+            <p>
+              The work that was hardest is the work that leaves the least evidence. The prevention,
+              the glue, the mentoring — none of it had a ticket, so as far as the record is
+              concerned, it never happened. Your memory is not a system of record.
+              <b>Your achievements are evidence. Evidence gets written down.</b>
+            </p>
+          </div>
+
+          <div class="forget-grid">
+            <div class="rise">
+              <p class="panel-label"><span class="pip pip-hollow"></span> Kept in your head</p>
+              <div class="panel panel-lost">
+                <ul>
+                  <li style="animation-delay: 0s">
+                    Made the flaky test suite reliable — took a week
+                  </li>
+                  <li style="animation-delay: 1.3s">Caught the gateway outage at 2 a.m.</li>
+                  <li style="animation-delay: 2.2s">
+                    Unblocked the junior every morning for a month
+                  </li>
+                  <li style="animation-delay: 3.6s">Wrote the runbook nobody wanted to write</li>
+                  <li style="animation-delay: 4.5s">Talked the team out of the rewrite</li>
+                  <li style="animation-delay: 5.8s">Cut the CI pipeline from 31 min to 9</li>
+                </ul>
+                <p class="panel-foot">gone by December</p>
+              </div>
+            </div>
+
+            <div class="rise">
+              <p class="panel-label"><span class="pip pip-solid"></span> Kept in BragBit</p>
+              <div class="panel panel-kept">
+                <ul class="spine">
+                  <li>Made the flaky test suite reliable — took a week</li>
+                  <li>Caught the gateway outage at 2 a.m.</li>
+                  <li>Unblocked the junior every morning for a month</li>
+                  <li>Wrote the runbook nobody wanted to write</li>
+                  <li>Talked the team out of the rewrite</li>
+                  <li>Cut the CI pipeline from 31 min to 9</li>
+                </ul>
+                <p class="panel-foot">still there at review time</p>
+              </div>
+            </div>
+          </div>
+
+          <figure class="proverb rise">
+            <blockquote>&ldquo;The palest ink is better than the best memory.&rdquo;</blockquote>
+            <figcaption>— Chinese proverb</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ════════ FORMULA ════════ -->
+      <section class="sec">
+        <div class="wrap formula-grid">
+          <div class="sec-intro rise">
+            <p class="eyebrow">The formula</p>
+            <h2>&ldquo;Worked on checkout&rdquo; is not evidence.</h2>
+            <p>
+              A win that survives a promotion committee has three parts. BragBit's editor keeps a
+              field for each, and its templates seed all three — so you write the useful version on
+              the first try, not the version you'll reconstruct in March.
+            </p>
+          </div>
+
+          <ol class="formula-list rise">
+            <li>
+              <span class="formula-n" aria-hidden="true">1</span>
+              <div>
+                <p class="formula-k">What you did</p>
+                <p class="formula-v">Cut the CI pipeline from 31 min to 9 min</p>
+              </div>
+            </li>
+            <li>
+              <span class="formula-n" aria-hidden="true">2</span>
+              <div>
+                <p class="formula-k">Why it mattered</p>
+                <p class="formula-v">Every engineer waited on it, every push, all day</p>
+              </div>
+            </li>
+            <li>
+              <span class="formula-n" aria-hidden="true">3</span>
+              <div>
+                <p class="formula-k">The measurable result</p>
+                <p class="formula-v">3.4× faster CI · ≈40 engineer-hours/week recovered</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ════════ TOUR ════════ -->
+      <section id="tour" class="band sec" style="scroll-margin-top: 70px">
+        <div class="wrap">
+          <div class="sec-intro rise">
+            <p class="eyebrow">The tour</p>
+            <h2>Log it in seconds. Find it in a year. Hand it over in one link.</h2>
+          </div>
+
+          <!-- capture -->
+          <div class="feat feat-wide">
+            <div class="feat-copy rise">
+              <p class="feat-kicker" style="color: var(--c-shipped)">
+                <span class="cdot" style="background: var(--c-shipped)"></span> Capture
+              </p>
+              <h3>A win takes under 30 seconds</h3>
+              <div class="feat-rule"></div>
+              <p>
+                A title is all that's required — everything else can wait. Press <kbd>N</kbd> from
+                anywhere, or start from an action-verb template when the page is blank and the words
+                won't come.
+              </p>
+            </div>
+            <div class="shot rise">
+              <img
+                src="./screenshots/capture.png"
+                width="2320"
+                height="460"
+                alt="BragBit's quick-add box reading “Log a win — only a title is required, everything else can wait…”, with an N keyboard shortcut and Add button, the formula hint beneath it, and six template chips: Shipped a project, Fixed a critical issue, Led an initiative, Mentored a teammate, Improved a process, Earned recognition."
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- editor -->
+          <div class="feat flip">
+            <div class="feat-copy rise">
+              <p class="feat-kicker" style="color: var(--c-glue)">
+                <span class="cdot" style="background: var(--c-glue)"></span> Templates
+              </p>
+              <h3>Beat the blank page</h3>
+              <div class="feat-rule"></div>
+              <p>
+                Each template opens the editor pre-filled with the right category, status, and a
+                Markdown scaffold — what you did, why it mattered, the measurable result. Add
+                collaborators, attribution, tags, links, and attachments of any type. Mark it
+                private and it never leaves your account.
+              </p>
+            </div>
+            <div class="shot shot-tall rise">
+              <img
+                src="./screenshots/editor.png"
+                width="1024"
+                height="1548"
+                alt="The BragBit editor dialog titled “Log a win”, pre-filled from a template: category “Shipped work”, status “Shipped”, a private checkbox, and a Markdown description scaffold reading “What I shipped”, “Why it mattered”, “The measurable result”, plus fields for impact, collaborators, attribution, tags and links."
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- dashboard -->
+          <div class="feat">
+            <div class="feat-copy rise">
+              <p class="feat-kicker" style="color: var(--c-technical)">
+                <span class="cdot" style="background: var(--c-technical)"></span> Cadence
+              </p>
+              <h3>A year of your logging, at a glance</h3>
+              <div class="feat-rule"></div>
+              <p>
+                A GitHub-style activity heatmap and a week streak on the dashboard, so the habit
+                stays honest. Documents are review periods — a year, a half, a promotion case — and
+                you keep as many as you like.
+              </p>
+            </div>
+            <div class="shot rise">
+              <img
+                src="./screenshots/dashboard.png"
+                width="2560"
+                height="1160"
+                alt="The BragBit dashboard showing an activity heatmap across twelve months, a 9-week streak, 30 wins this year, and a 2026 document card for the review period January 1 to December 31."
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- share -->
+          <div class="feat flip">
+            <div class="feat-copy rise">
+              <p class="feat-kicker" style="color: var(--c-collab)">
+                <span class="cdot" style="background: var(--c-collab)"></span> Share
+              </p>
+              <h3>One read-only link for your manager</h3>
+              <div class="feat-rule"></div>
+              <p>
+                Revocable, optionally password-protected, and branded to your workspace. Entries you
+                marked private are never in it — the share is a view of the record, not a copy of
+                it. Rotate the link or stop sharing at any time.
+              </p>
+            </div>
+            <div class="shot rise">
+              <img
+                src="./screenshots/share.png"
+                width="1024"
+                height="776"
+                alt="BragBit's share dialog showing a generated read-only share link with a copy button, a “Not opened yet” status, an optional password field, and controls to rotate the link or stop sharing."
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- light/dark -->
+          <div class="theme-demo">
+            <div class="center-row">
+              <div class="theme-switch rise" role="group" aria-label="Preview theme">
+                <button type="button" data-shot="light" aria-pressed="true">Light</button>
+                <button type="button" data-shot="dark" aria-pressed="false">Dark</button>
+              </div>
+            </div>
+            <div class="shot rise">
+              <img
+                id="theme-shot"
+                src="./screenshots/timeline-cards.png"
+                width="2560"
+                height="1600"
+                alt="A month-grouped BragBit timeline for July 2026 with four wins on a vertical spine: a glue-work entry about killing a duplicate-gateway alert storm, an in-progress technical entry, a leadership entry about running an incident review, and a technical entry about cutting dashboard load time."
+                loading="lazy"
+              />
+            </div>
+            <p class="caption">
+              A designed warm dark mode — not a mechanical invert. Follows your OS by default.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ INVENTORY ════════ -->
+      <section id="features" class="sec" style="scroll-margin-top: 70px">
+        <div class="wrap">
+          <div class="inv-head rise">
+            <div class="sec-intro">
+              <p class="eyebrow">The inventory</p>
+              <h2>Everything that ships today</h2>
+              <p>
+                No asterisks and no coming-soon column. If it's on this page, it's in the build you
+                can run tonight.
+              </p>
+            </div>
+            <p class="inv-count">
+              <b id="cap-count">46</b> capabilities · <span id="area-count">8</span> areas
+            </p>
+          </div>
+
+          <!-- Static on purpose: this is the most keyword-dense content on the
+               page, so it belongs in the HTML source rather than behind JS. The
+               count above is derived from these <li>s at runtime, so it can't
+               drift from the list. -->
+          <div class="inv-grid" id="inventory">
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-shipped)"></span>Capture</h3>
+              <p class="inv-blurb">Get it down before it's gone.</p>
+              <div class="inv-rule" style="background: var(--c-shipped)"></div>
+              <ul>
+                <li>Quick-add — only a title is required</li>
+                <li>Press N to log from anywhere</li>
+                <li>Six action-verb templates that pre-fill the editor</li>
+                <li>Markdown description + a separate impact line</li>
+                <li>Eight categories, from shipped work to glue work</li>
+                <li>Status: shipped or in progress</li>
+                <li>Collaborators and attribution</li>
+                <li>Private entries, hidden from every shared view</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-technical)"></span>Organize</h3>
+              <p class="inv-blurb">A year of work, navigable.</p>
+              <div class="inv-rule" style="background: var(--c-technical)"></div>
+              <ul>
+                <li>Multiple documents — one per review cycle</li>
+                <li>Month-grouped timeline with a visible spine</li>
+                <li>Tags, scoped per workspace</li>
+                <li>Full-text search across wins</li>
+                <li>Category and status filters</li>
+                <li>Dashboard activity heatmap — a year at a glance</li>
+                <li>Week streak, to keep the habit honest</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-glue)"></span>Evidence</h3>
+              <p class="inv-blurb">Claims are cheap. Receipts aren't.</p>
+              <div class="inv-rule" style="background: var(--c-glue)"></div>
+              <ul>
+                <li>Attachments of any type — screenshots, PDFs, praise emails</li>
+                <li>Labeled links to PRs, RFCs, and dashboards</li>
+                <li>Image thumbnails, downscaled to webp on demand</li>
+                <li>Files served only through an authorizing route</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-collab)"></span>Share</h3>
+              <p class="inv-blurb">Hand over the case, not the keys.</p>
+              <div class="inv-rule" style="background: var(--c-collab)"></div>
+              <ul>
+                <li>Revocable read-only share links</li>
+                <li>Optional password, hashed to the OWASP Argon2id floor</li>
+                <li>Private entries never leak into a share</li>
+                <li>Share pages carry your workspace branding</li>
+                <li>Last-accessed tracking per link</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-recognition)"></span>Export</h3>
+              <p class="inv-blurb">Leave whenever you like.</p>
+              <div class="inv-rule" style="background: var(--c-recognition)"></div>
+              <ul>
+                <li>Markdown export per document</li>
+                <li>JSON export — every document and win</li>
+                <li>PDF via a print-tuned share page</li>
+                <li>Departing members leave with their full data bundle</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-leadership)"></span>Workspace</h3>
+              <p class="inv-blurb">Make it look like yours.</p>
+              <div class="inv-rule" style="background: var(--c-leadership)"></div>
+              <ul>
+                <li>White-labeling — name, logo, and accent color</li>
+                <li>Member management and invitations</li>
+                <li>Roles, role-gated admin, and ownership transfer</li>
+                <li>Branded transactional email</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-skills)"></span>Account</h3>
+              <p class="inv-blurb">Yours, and only yours.</p>
+              <div class="inv-rule" style="background: var(--c-skills)"></div>
+              <ul>
+                <li>Profile, avatar, and account settings</li>
+                <li>Required email verification and password reset</li>
+                <li>Optional GitHub and Google sign-in</li>
+                <li>Opt-in weekly reminders, in your local hour</li>
+                <li>Account deletion that purges your files too</li>
+              </ul>
+            </section>
+
+            <section class="inv-group rise">
+              <h3><span class="cdot" style="background: var(--c-other)"></span>Platform</h3>
+              <p class="inv-blurb">Boring where it counts.</p>
+              <div class="inv-rule" style="background: var(--c-other)"></div>
+              <ul>
+                <li>PostgreSQL + Drizzle, workspace-scoped from day one</li>
+                <li>One-command Docker Compose stack</li>
+                <li>Migrations run automatically on start</li>
+                <li>Local-disk or S3-compatible storage</li>
+                <li>Per-request Content-Security-Policy nonces</li>
+                <li>A real /api/health readiness endpoint</li>
+                <li>WCAG AA contrast, skip-link, keyboard navigable</li>
+                <li>Designed light and dark themes</li>
+                <li>AGPL-3.0 — network copyleft keeps forks open</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ OWNERSHIP ════════ -->
+      <section id="own" class="band sec" style="scroll-margin-top: 70px">
+        <div class="wrap">
+          <div class="sec-intro rise">
+            <p class="eyebrow">Ownership</p>
+            <h2>
+              The most sensitive document of your career shouldn't live on someone else's server.
+            </h2>
+          </div>
+
+          <div class="own-grid">
+            <article class="own-card rise">
+              <h3>Your database</h3>
+              <p>
+                Postgres you run, on hardware or a host you picked. Career evidence — promotion
+                cases, praise, salary arguments — never sits on someone else's roadmap.
+              </p>
+              <p class="mono-chip">postgres://your-server/bragbit</p>
+            </article>
+            <article class="own-card rise">
+              <h3>Your exit</h3>
+              <p>
+                Markdown, JSON, and PDF export, in full, on demand. Nothing is trapped in a
+                proprietary shape, so leaving is a decision rather than a migration project.
+              </p>
+              <p class="mono-chip">bragbit-wins.md · data.json</p>
+            </article>
+            <article class="own-card rise">
+              <h3>Your license</h3>
+              <p>
+                AGPL-3.0. Read the code, change it, run it forever. Network copyleft means a hosted
+                fork has to stay open too — the deal can't quietly change later.
+              </p>
+              <p class="mono-chip">AGPL-3.0 · network copyleft</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ SELF-HOST ════════ -->
+      <section id="host" class="sec" style="scroll-margin-top: 70px">
+        <div class="wrap">
+          <div class="sec-intro center rise">
+            <p class="eyebrow center">Self-hosting</p>
+            <h2>One command. Your server, your Postgres.</h2>
+            <p>
+              A workspace is the tenant boundary — a freelancer is a workspace of one, a company is
+              a workspace with many. Everything beneath it is identical. You pick the shape once, at
+              deploy time.
+            </p>
+          </div>
+
+          <div class="center-row" style="margin-top: 34px">
+            <!-- A plain div, not a fieldset: `display:flex` on fieldset is a
+                 long-standing browser quirk, and same-name radios already form a
+                 group without one. -->
+            <div class="seg rise" role="radiogroup" aria-label="Instance mode">
+              <input type="radio" name="sh-mode" id="m-solo" checked />
+              <label for="m-solo">Solo</label>
+              <input type="radio" name="sh-mode" id="m-org" />
+              <label for="m-org">Org</label>
+            </div>
+          </div>
+
+          <!-- The reveal lives on the wrapper, not the variants: a hidden variant
+               only reveals once it's shown, which would fade the copy in on the
+               first switch instead of swapping instantly. -->
+          <div class="rise">
+            <p class="sh-blurb" data-mode="solo">
+              <b>private-solo</b> — one personal workspace, for a freelancer or an individual. No
+              members, no invites, no roles: a workspace of one. Branding still applies, which is
+              what your client-facing share pages use.
+            </p>
+            <p class="sh-blurb" data-mode="org">
+              <b>private-org</b> — one organization workspace, for a company self-hosting for its
+              team. Growth is invitation-only: there is no open sign-up, so an account exists only
+              by accepting a tokenized invite.
+            </p>
+          </div>
+
+          <ol class="sh-steps rise">
+            <li>
+              <p class="sh-step-t">Clone it</p>
+              <div class="sh-code">
+                <button class="sh-copy" type="button">Copy</button>
+                <pre><code>git clone https://github.com/hamedafarag/bragbit.git
+cd bragbit
+cp .env.example .env</code></pre>
+              </div>
+            </li>
+
+            <li>
+              <p class="sh-step-t">Set four things in <code>.env</code></p>
+              <div class="sh-code">
+                <button class="sh-copy" type="button">Copy</button>
+                <pre><code><span class="k">INSTANCE_MODE</span>=<span data-mode="solo">private-solo</span><span data-mode="org">private-org</span>
+<span class="k">APP_URL</span>=https://brag.example.com
+<span class="k">BETTER_AUTH_SECRET</span>=…            <span class="c"># openssl rand -base64 32</span>
+<span class="k">SMTP_HOST</span>=smtp.example.com     <span class="c"># + PORT / USER / PASSWORD / FROM</span></code></pre>
+              </div>
+              <p class="sh-step-n">
+                That's the whole list. Compose wires <code>DATABASE_URL</code> and
+                <code>STORAGE_DIR</code> for you. The secret must be at least 32 characters, and
+                <code>APP_URL</code> is baked into emails and share links — use the real origin,
+                over https.
+              </p>
+            </li>
+
+            <li>
+              <p class="sh-step-t">Bring it up</p>
+              <div class="sh-code">
+                <button class="sh-copy" type="button">Copy</button>
+                <pre><code>docker compose up -d</code></pre>
+              </div>
+              <p class="sh-step-n">
+                App and Postgres together. Migrations apply themselves on start, so a fresh
+                deployment provisions its own schema. It's serving on
+                <code>http://localhost:3000</code>.
+              </p>
+            </li>
+
+            <li>
+              <p class="sh-step-t">Open it — the wizard does the rest</p>
+              <p class="sh-step-n" data-mode="solo">
+                First run redirects to <code>/setup</code>. Create the owner account and your
+                workspace, and you're in — the wizard then closes for good. It creates a single
+                <b>personal</b> workspace and signs you straight in. If the URL is public before you
+                get there, set <code>SETUP_TOKEN</code> to keep everyone else out of it.
+              </p>
+              <p class="sh-step-n" data-mode="org">
+                First run redirects to <code>/setup</code>. Create the owner account and your
+                workspace, and you're in — the wizard then closes for good. It creates a single
+                <b>organization</b> workspace; from <code>/admin</code> you then invite your team
+                and set roles. Owners and admins manage branding, members, and invitations — but
+                never read anyone's brag content. If the URL is public before you get there, set
+                <code>SETUP_TOKEN</code> to keep everyone else out of it.
+              </p>
+              <ul class="sh-gets" data-mode="solo">
+                <li>One personal workspace</li>
+                <li>Branded share pages</li>
+                <li>No member chrome</li>
+              </ul>
+              <ul class="sh-gets" data-mode="org">
+                <li>One organization workspace</li>
+                <li>Invitations + roles</li>
+                <li>Admins can't read your wins</li>
+              </ul>
+            </li>
+          </ol>
+
+          <div class="sh-notes">
+            <article class="sh-note rise">
+              <h3>Wired for you</h3>
+              <p>
+                Compose injects the database connection and a named volume for uploads. Two knobs
+                worth setting: <code>POSTGRES_PASSWORD</code> (defaults to <code>bragbit</code> —
+                change it on anything non-local) and <code>APP_PORT</code> (defaults to 3000).
+              </p>
+            </article>
+            <article class="sh-note rise">
+              <h3>TLS &amp; health</h3>
+              <p>
+                The app serves plain HTTP — terminate TLS in front with Caddy, nginx, or Traefik
+                (the Dokploy guide does it for you). <code>/api/health</code> returns 200 when the
+                app and database are reachable and 503 when they aren't; point your uptime monitor
+                at it.
+              </p>
+            </article>
+            <article class="sh-note rise">
+              <h3>Storage &amp; your data</h3>
+              <p>
+                Attachments land on local disk by default; switch to any S3-compatible bucket — AWS,
+                R2, or the bundled MinIO — with <code>STORAGE_DRIVER=s3</code>. Postgres and uploads
+                live in Docker volumes and survive <code>docker compose down</code>.
+              </p>
+            </article>
+          </div>
+
+          <div class="center-row" style="margin-top: 38px">
+            <a
+              class="btn btn-ghost rise"
+              href="https://github.com/hamedafarag/bragbit/tree/main/docs/self-hosting"
+            >
+              Full self-hosting guides — Compose, Dokploy, Vercel, backups
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ CLOSE ════════ -->
+      <section class="close">
+        <div class="wrap">
+          <h2 class="rise">Start the record today.</h2>
+          <p class="rise">
+            Back-fill three wins from last month — it takes ninety seconds, and it's the difference
+            between remembering your year and reconstructing it.
+          </p>
+          <div class="cta-row rise">
+            <a class="btn btn-primary" href="https://github.com/hamedafarag/bragbit">
+              Get it on GitHub
+              <span aria-hidden="true">→</span>
+            </a>
+            <a
+              class="btn btn-ghost"
+              href="https://github.com/hamedafarag/bragbit#quick-start-self-host"
+            >
+              Self-host in one command
+            </a>
+          </div>
+          <p class="hero-note rise">Open source · AGPL-3.0 · Postgres · Docker</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap foot-in">
+        <p>BragBit — a brag document that respects your data. Early release (0.x).</p>
+        <nav aria-label="Footer">
+          <a href="https://github.com/hamedafarag/bragbit">GitHub</a>
+          <a href="https://github.com/hamedafarag/bragbit#readme">Docs</a>
+          <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a>
+        </nav>
+      </div>
+    </footer>
+
+    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged screenshot">
+      <img alt="" />
+      <p class="hint">Click anywhere or press Esc to close</p>
+    </div>
+
+    <script>
+      // ── Inventory count ──────────────────────────────────────────────────
+      // The list itself is static HTML (crawlable, and readable without JS); the
+      // headline count is counted off the DOM so it can never disagree with it.
+      document.getElementById("cap-count").textContent =
+        document.querySelectorAll("#inventory li").length;
+      document.getElementById("area-count").textContent =
+        document.querySelectorAll("#inventory .inv-group").length;
+
+      // ── Theme ────────────────────────────────────────────────────────────
+      // Class on <html>, persisted; falls back to the OS preference. Mirrors how
+      // the app itself does it, minus the server cookie.
+      const MOON = "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z";
+      const SUN =
+        "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42";
+      const icon = document.getElementById("theme-icon");
+      const heroImg = document.getElementById("hero-shot-img");
+      const HERO = {
+        light: "./screenshots/timeline.png",
+        dark: "./screenshots/timeline-full-dark.png",
+      };
+
+      function applyTheme(dark) {
+        document.documentElement.classList.toggle("dark", dark);
+        icon.innerHTML = (dark ? SUN : MOON)
+          .split("M")
+          .filter(Boolean)
+          .map((d) => `<path d="M${d}" />`)
+          .join("");
+        document
+          .getElementById("theme")
+          .setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+        // The hero is a real app screenshot; show the app in the theme the reader
+        // is actually in, rather than a lit page floating on a dark one.
+        heroImg.src = dark ? HERO.dark : HERO.light;
+      }
+
+      const stored = localStorage.getItem("bragbit-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      applyTheme(stored ? stored === "dark" : prefersDark);
+
+      document.getElementById("theme").addEventListener("click", () => {
+        const dark = !document.documentElement.classList.contains("dark");
+        applyTheme(dark);
+        localStorage.setItem("bragbit-theme", dark ? "dark" : "light");
+      });
+
+      // ── Light/dark screenshot switch ─────────────────────────────────────
+      const themeShot = document.getElementById("theme-shot");
+      const SHOTS = {
+        light: "./screenshots/timeline-cards.png",
+        dark: "./screenshots/timeline-dark.png",
+      };
+      document.querySelectorAll(".theme-switch button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".theme-switch button")
+            .forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+          themeShot.src = SHOTS[btn.dataset.shot];
+        });
+      });
+      // Preload the dark shot so the switch is instant.
+      new Image().src = SHOTS.dark;
+
+      // ── Copy buttons on the command blocks ───────────────────────────────
+      // (The solo/org switch needs no JS — see the `:has()` rule in the CSS.)
+      document.querySelectorAll(".sh-copy").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const code = btn.parentElement.querySelector("code");
+          try {
+            await navigator.clipboard.writeText(code.innerText);
+            btn.textContent = "Copied";
+          } catch {
+            // Clipboard needs a secure context; opened as a file:// URL it isn't
+            // available, so say so rather than silently doing nothing.
+            btn.textContent = "Select it";
+          }
+          setTimeout(() => (btn.textContent = "Copy"), 1400);
+        });
+      });
+
+      // ── Reveal on scroll ─────────────────────────────────────────────────
+      // IntersectionObserver rather than scroll-driven CSS: wider support, and
+      // it degrades to "just visible" if the API is missing.
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce && "IntersectionObserver" in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add("in");
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+        );
+        document.querySelectorAll(".rise").forEach((el) => io.observe(el));
+      } else {
+        document.querySelectorAll(".rise").forEach((el) => el.classList.add("in"));
+      }
+
+      // ── Lightbox ─────────────────────────────────────────────────────────
+      const lb = document.getElementById("lightbox");
+      const lbImg = lb.querySelector("img");
+      document.querySelectorAll(".shot img").forEach((img) => {
+        img.addEventListener("click", () => {
+          lbImg.src = img.currentSrc || img.src;
+          lbImg.alt = img.alt;
+          lb.classList.add("open");
+          document.body.style.overflow = "hidden";
+        });
+      });
+      function closeLb() {
+        lb.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+      lb.addEventListener("click", closeLb);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && lb.classList.contains("open")) closeLb();
+      });
+    </script>
+  </body>
+</html>
