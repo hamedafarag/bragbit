@@ -11,7 +11,10 @@
       name="description"
       content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds, keep a timeline of your year, and share a read-only link at review time."
     />
-    <meta name="author" content="BragBit" />
+    <meta name="author" content="Hamed Farag" />
+    <!-- rel=author points at the human behind it; rel=me is the identity claim
+         the personal site can reciprocate to verify it's the same person. -->
+    <link rel="author" href="https://hamedfarag.dev" />
     <meta
       name="keywords"
       content="brag document, promotion evidence, performance review, engineering career, self-hosted, open source, developer tools, work log, accomplishments tracker"
@@ -112,11 +115,16 @@
               "Per-workspace white-labeling (name, logo, accent)",
               "Self-hosted on your own PostgreSQL via Docker Compose"
             ],
-            "author": {
-              "@type": "Person",
-              "name": "Hamed Farag",
-              "url": "https://github.com/hamedafarag"
-            }
+            "author": { "@id": "https://hamedfarag.dev/#person" },
+            "creator": { "@id": "https://hamedfarag.dev/#person" },
+            "maintainer": { "@id": "https://hamedfarag.dev/#person" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://hamedfarag.dev/#person",
+            "name": "Hamed Farag",
+            "url": "https://hamedfarag.dev",
+            "sameAs": ["https://github.com/hamedafarag"]
           },
           {
             "@type": "WebSite",
@@ -1392,6 +1400,19 @@
         font-size: 10.5px;
         color: var(--ink-faint);
       }
+      /* Inside a sentence, a link needs to look like one — the bare `.foot-in a`
+         rule strips the underline, which reads fine in the nav row and invisibly
+         in prose. */
+      .foot-in .foot-author {
+        color: var(--ink);
+        text-decoration: underline;
+        text-decoration-color: var(--line);
+        text-underline-offset: 2px;
+        transition: text-decoration-color 0.15s;
+      }
+      .foot-in .foot-author:hover {
+        text-decoration-color: var(--accent);
+      }
       .foot-in nav {
         display: flex;
         gap: 20px;
@@ -2148,8 +2169,12 @@ cp .env.example .env</code></pre>
 
     <footer>
       <div class="wrap foot-in">
-        <p>BragBit — a brag document that respects your data. Early release (0.x).</p>
+        <p>
+          BragBit — a brag document that respects your data. Early release (0.x). Built by
+          <a class="foot-author" href="https://hamedfarag.dev" rel="author me">Hamed Farag</a>.
+        </p>
         <nav aria-label="Footer">
+          <a href="https://hamedfarag.dev" rel="me">hamedfarag.dev</a>
           <a href="https://github.com/hamedafarag/bragbit">GitHub</a>
           <a href="https://github.com/hamedafarag/bragbit#readme">Docs</a>
           <a href="https://www.gnu.org/licenses/agpl-3.0.html">AGPL-3.0</a>
