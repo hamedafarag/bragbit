@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>BragBit — Your promotion evidence, on your own Postgres.</title>
+    <!-- ≤160 chars: Google truncates around there, and the old 222-char version was
+         being cut mid-sentence. Says what it is, who it's for, and the hook. -->
     <meta
       name="description"
-      content="An open-source, self-hostable brag document for developers. Log a win in under 30 seconds, keep a month-grouped timeline of your year, and share a read-only link with your manager at review time. Runs on your own Postgres."
+      content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds, keep a timeline of your year, and share a read-only link at review time."
     />
     <meta name="author" content="BragBit" />
     <meta
@@ -21,23 +23,27 @@
     <meta name="theme-color" content="#f6f2e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#15120d" media="(prefers-color-scheme: dark)" />
 
-    <!-- Open Graph / Twitter. og:image is the timeline shot — the clearest single
-         frame of what the product is. These URLs must be absolute: link-preview
-         scrapers don't resolve relative paths, so a `./` image renders no card. -->
+    <!-- Open Graph / Twitter.
+         · Absolute URLs: scrapers don't resolve relative paths, so a `./` image
+           renders a card with no image.
+         · og.png, not the WebP the page itself uses: several scrapers (Facebook
+           and LinkedIn among them) still handle WebP badly, and this is the one
+           image that has to work in someone else's renderer.
+         · 1200x630 is the size the spec asks for. The raw 2560x1660 screenshot
+           was the wrong aspect and got cropped unpredictably per-network. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="BragBit" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content="https://hamedafarag.github.io/bragbit/" />
     <meta property="og:title" content="BragBit — Your promotion evidence, on your own Postgres." />
     <meta
       property="og:description"
-      content="An open-source, self-hostable brag document for developers. Log a win in under 30 seconds, keep a timeline of your year, and share a read-only link at review time."
+      content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds, keep a timeline of your year, and share a read-only link at review time."
     />
-    <meta
-      property="og:image"
-      content="https://hamedafarag.github.io/bragbit/screenshots/timeline.png"
-    />
-    <meta property="og:image:width" content="2560" />
-    <meta property="og:image:height" content="1660" />
+    <meta property="og:image" content="https://hamedafarag.github.io/bragbit/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
       content="The BragBit timeline: a 2026 document with a quick-add box and month-grouped wins."
@@ -46,11 +52,12 @@
     <meta name="twitter:title" content="BragBit — Your promotion evidence, on your own Postgres." />
     <meta
       name="twitter:description"
-      content="An open-source, self-hostable brag document for developers. Log a win in 30 seconds; share a read-only link at review time."
+      content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds; share a read-only link at review time."
     />
+    <meta name="twitter:image" content="https://hamedafarag.github.io/bragbit/og.png" />
     <meta
-      name="twitter:image"
-      content="https://hamedafarag.github.io/bragbit/screenshots/timeline.png"
+      name="twitter:image:alt"
+      content="The BragBit timeline: a 2026 document with a quick-add box and month-grouped wins."
     />
 
     <link
@@ -65,21 +72,62 @@
       rel="stylesheet"
     />
 
+    <!-- Structured data. Every claim here is checkable against the repo.
+         Deliberately NO aggregateRating / review: BragBit has no ratings, and
+         inventing them to win a stars-rich-result would be fabricating reviews.
+         That costs the SERP star treatment; it buys not lying. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "BragBit",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web, Docker, Linux",
-        "description": "Your promotion evidence, on your own Postgres. An open-source, self-hostable brag-document tracker for developers.",
-        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
-        "isAccessibleForFree": true,
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "image": "https://hamedafarag.github.io/bragbit/screenshots/timeline.png",
-        "url": "https://hamedafarag.github.io/bragbit/",
-        "codeRepository": "https://github.com/hamedafarag/bragbit",
-        "softwareHelp": "https://github.com/hamedafarag/bragbit#readme"
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://hamedafarag.github.io/bragbit/#app",
+            "name": "BragBit",
+            "alternateName": "BragBit brag document",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Career and performance-review tracking",
+            "operatingSystem": "Web, Docker, Linux, macOS, Windows",
+            "description": "Your promotion evidence, on your own Postgres. An open-source, self-hostable brag-document tracker for developers: log a win in under 30 seconds, keep a month-grouped timeline, and share a revocable read-only link at review time.",
+            "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "image": "https://hamedafarag.github.io/bragbit/og.png",
+            "screenshot": "https://hamedafarag.github.io/bragbit/screenshots/timeline.webp",
+            "url": "https://hamedafarag.github.io/bragbit/",
+            "codeRepository": "https://github.com/hamedafarag/bragbit",
+            "softwareHelp": "https://github.com/hamedafarag/bragbit#readme",
+            "programmingLanguage": ["TypeScript"],
+            "runtimePlatform": ["Node.js", "Docker", "PostgreSQL"],
+            "keywords": "brag document, promotion evidence, performance review, engineering career, self-hosted, open source, work log",
+            "featureList": [
+              "Log a win in under 30 seconds — only a title is required",
+              "Action-verb templates that pre-fill the editor",
+              "Month-grouped timeline with categories, tags and full-text search",
+              "Dashboard activity heatmap and week streak",
+              "Attachments of any type and labeled links as evidence",
+              "Revocable, optionally password-protected read-only share links",
+              "Private entries that never leak into a share",
+              "Markdown, JSON and PDF export",
+              "Per-workspace white-labeling (name, logo, accent)",
+              "Self-hosted on your own PostgreSQL via Docker Compose"
+            ],
+            "author": {
+              "@type": "Person",
+              "name": "Hamed Farag",
+              "url": "https://github.com/hamedafarag"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://hamedafarag.github.io/bragbit/#website",
+            "url": "https://hamedafarag.github.io/bragbit/",
+            "name": "BragBit",
+            "description": "Open-source, self-hosted brag document for developers.",
+            "inLanguage": "en",
+            "about": { "@id": "https://hamedafarag.github.io/bragbit/#app" }
+          }
+        ]
       }
     </script>
 
@@ -1505,7 +1553,7 @@
             <div class="shot">
               <img
                 id="hero-shot-img"
-                src="./screenshots/timeline.png"
+                src="./screenshots/timeline.webp"
                 width="2560"
                 height="1660"
                 alt="The BragBit document view: a 2026 review-period document with goals, a quick-add box reading “Log a win — only a title is required”, six action-verb template chips, category and tag filters, and the start of a month-grouped timeline."
@@ -1639,7 +1687,7 @@
             </div>
             <div class="shot rise">
               <img
-                src="./screenshots/capture.png"
+                src="./screenshots/capture.webp"
                 width="2320"
                 height="460"
                 alt="BragBit's quick-add box reading “Log a win — only a title is required, everything else can wait…”, with an N keyboard shortcut and Add button, the formula hint beneath it, and six template chips: Shipped a project, Fixed a critical issue, Led an initiative, Mentored a teammate, Improved a process, Earned recognition."
@@ -1665,7 +1713,7 @@
             </div>
             <div class="shot shot-tall rise">
               <img
-                src="./screenshots/editor.png"
+                src="./screenshots/editor.webp"
                 width="1024"
                 height="1548"
                 alt="The BragBit editor dialog titled “Log a win”, pre-filled from a template: category “Shipped work”, status “Shipped”, a private checkbox, and a Markdown description scaffold reading “What I shipped”, “Why it mattered”, “The measurable result”, plus fields for impact, collaborators, attribution, tags and links."
@@ -1690,7 +1738,7 @@
             </div>
             <div class="shot rise">
               <img
-                src="./screenshots/dashboard.png"
+                src="./screenshots/dashboard.webp"
                 width="2560"
                 height="1160"
                 alt="The BragBit dashboard showing an activity heatmap across twelve months, a 9-week streak, 30 wins this year, and a 2026 document card for the review period January 1 to December 31."
@@ -1715,7 +1763,7 @@
             </div>
             <div class="shot rise">
               <img
-                src="./screenshots/share.png"
+                src="./screenshots/share.webp"
                 width="1024"
                 height="776"
                 alt="BragBit's share dialog showing a generated read-only share link with a copy button, a “Not opened yet” status, an optional password field, and controls to rotate the link or stop sharing."
@@ -1735,7 +1783,7 @@
             <div class="shot rise">
               <img
                 id="theme-shot"
-                src="./screenshots/timeline-cards.png"
+                src="./screenshots/timeline-cards.webp"
                 width="2560"
                 height="1600"
                 alt="A month-grouped BragBit timeline for July 2026 with four wins on a vertical spine: a glue-work entry about killing a duplicate-gateway alert storm, an in-progress technical entry, a leadership entry about running an incident review, and a technical entry about cutting dashboard load time."
@@ -2132,8 +2180,8 @@ cp .env.example .env</code></pre>
       const icon = document.getElementById("theme-icon");
       const heroImg = document.getElementById("hero-shot-img");
       const HERO = {
-        light: "./screenshots/timeline.png",
-        dark: "./screenshots/timeline-full-dark.png",
+        light: "./screenshots/timeline.webp",
+        dark: "./screenshots/timeline-full-dark.webp",
       };
 
       function applyTheme(dark) {
@@ -2164,8 +2212,8 @@ cp .env.example .env</code></pre>
       // ── Light/dark screenshot switch ─────────────────────────────────────
       const themeShot = document.getElementById("theme-shot");
       const SHOTS = {
-        light: "./screenshots/timeline-cards.png",
-        dark: "./screenshots/timeline-dark.png",
+        light: "./screenshots/timeline-cards.webp",
+        dark: "./screenshots/timeline-dark.webp",
       };
       document.querySelectorAll(".theme-switch button").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -2175,8 +2223,18 @@ cp .env.example .env</code></pre>
           themeShot.src = SHOTS[btn.dataset.shot];
         });
       });
-      // Preload the dark shot so the switch is instant.
-      new Image().src = SHOTS.dark;
+      // Warm the dark shot on intent rather than on load. Preloading it eagerly
+      // cost every light-mode reader a screenshot they'd never look at — dead
+      // weight on the metric (LCP) that search actually ranks on. Hover/focus
+      // lands well before the click, so the swap still feels instant.
+      let warmed = false;
+      const warmDark = () => {
+        if (warmed) return;
+        warmed = true;
+        new Image().src = SHOTS.dark;
+      };
+      document.querySelector(".theme-switch")?.addEventListener("pointerenter", warmDark);
+      document.querySelector(".theme-switch")?.addEventListener("focusin", warmDark);
 
       // ── Copy buttons on the command blocks ───────────────────────────────
       // (The solo/org switch needs no JS — see the `:has()` rule in the CSS.)

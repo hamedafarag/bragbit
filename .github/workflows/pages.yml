@@ -58,6 +58,20 @@ jobs:
               missing=1
             fi
           done
+
+          # og:image and friends are absolute (scrapers can't resolve relative
+          # paths), so the loop above never sees them — and a missing social card
+          # fails silently, in someone else's renderer, where nobody notices.
+          # Resolve our own origin back to the folder and check those too.
+          for ref in $(grep -oE 'https://hamedafarag\.github\.io/bragbit/[^"]+' marketing/index.html \
+                        | sed 's|https://hamedafarag.github.io/bragbit/||' | grep -E '\.(png|webp|jpg|svg|xml)$' | sort -u); do
+            if [ -e "marketing/$ref" ]; then
+              echo "  ok       $ref (absolute)"
+            else
+              echo "::error::absolute self-reference missing: $ref"
+              missing=1
+            fi
+          done
           exit $missing
 
       - uses: actions/configure-pages@v6

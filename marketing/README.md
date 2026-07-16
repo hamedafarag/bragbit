@@ -8,13 +8,19 @@ It is deliberately **not** part of the Next.js app. The app's `/` is a mode-awar
 redirect for a private self-host; this page is product marketing and has no instance
 behind it.
 
+**Live:** <https://hamedafarag.github.io/bragbit/> — published by
+[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) on any push to `main`
+that touches this folder.
+
 ## What's here
 
-| File                                                 | What it is                                       |
-| ---------------------------------------------------- | ------------------------------------------------ |
-| [`index.html`](index.html)                           | The whole page — inline CSS + JS, self-contained |
-| [`screenshots/`](screenshots)                        | Real captures of the running app (2× for retina) |
-| [`capture-screenshots.mjs`](capture-screenshots.mjs) | Regenerates those captures from the live app     |
+| File                                                 | What it is                                         |
+| ---------------------------------------------------- | -------------------------------------------------- |
+| [`index.html`](index.html)                           | The whole page — inline CSS + JS, self-contained   |
+| [`screenshots/`](screenshots)                        | Real captures of the running app (2× retina, WebP) |
+| [`og.png`](og.png)                                   | 1200×630 social card (PNG on purpose — see below)  |
+| [`sitemap.xml`](sitemap.xml)                         | One entry; submit it in Search Console             |
+| [`capture-screenshots.mjs`](capture-screenshots.mjs) | Regenerates the captures + the card                |
 
 The design tokens, type (Fraunces / IBM Plex), and the warm "engineering logbook"
 language are lifted from [`design-mockup.html`](../design-mockup.html) and the app's
@@ -56,3 +62,26 @@ Add extra wins across the year first if you want the heatmap and streak to look 
   inline script sets — a reveal animation that fails closed would leave the page blank.
 - **Keep the inventory honest.** Everything listed ships on this branch. A landing page
   that overstates the product is a bug.
+
+## SEO notes (the non-obvious ones)
+
+- **Screenshots are WebP q82, the social card is PNG.** The page's images are its LCP —
+  the metric search actually ranks on — and WebP cut them ~72% (1.94 MB → 0.54 MB). At
+  2× captured / 1× displayed, q82 measures a 0.48% mean channel difference from the PNG
+  at display scale: invisible. `og.png` stays PNG at the spec'd 1200×630 because several
+  link-preview scrapers (Facebook, LinkedIn) still handle WebP badly, and that image has
+  to render in someone else's client.
+- **All social/canonical URLs are absolute.** Scrapers don't resolve relative paths — a
+  `./` og:image renders a card with no image. The page's own `<img>` srcs stay relative
+  so it still works off disk or from any host.
+- **No `robots.txt`, deliberately.** robots.txt is origin-root-only, and this is a
+  _project_ page: a file at `/bragbit/robots.txt` would never be fetched. The origin root
+  (`hamedafarag.github.io/robots.txt`) 404s, which crawlers read as "crawl everything" —
+  which is what we want. Adding one here would be cargo cult.
+- **The sitemap can't be auto-announced** for the same reason (no origin robots.txt to
+  reference it), so submit it in Search Console by hand. Keep `lastmod` truthful; a
+  lastmod that lies about freshness teaches crawlers to ignore it.
+- **No `aggregateRating` / `review` in the structured data.** BragBit has no ratings.
+  Inventing them would win the SERP stars and would be fabricating reviews. Don't.
+- **The dark screenshot warms on hover, not on load** — preloading it eagerly charged
+  every light-mode reader for an image they'd never see.
