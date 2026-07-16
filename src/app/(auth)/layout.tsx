@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { AccentStyle } from "@/components/shared/accent-style";
 import { isInstanceSetup } from "@/features/setup/queries";
 import { getInstanceBranding } from "@/features/workspace/queries";
 import { auth } from "@/lib/auth";
 import { isPrivate } from "@/lib/instance";
-import { accentVars, thumbUrl } from "@/lib/utils";
+import { thumbUrl } from "@/lib/utils";
 
 // Shared chrome + gating for the auth pages. Before setup (private modes) there's
 // no one to sign in → /setup; already signed in → the app. Pre-auth surfaces show
@@ -21,10 +22,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const logoUrl = brand?.logoKey ? `/api/files/${brand.logoKey}` : null;
 
   return (
-    <main
-      className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12"
-      style={accentVars(brand?.accentColor)}
-    >
+    <main className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+      <AccentStyle accent={brand?.accentColor} />
       <div className="mb-8 flex items-center gap-3">
         {logoUrl ? (
           // Plain <img> served as a `?w=` webp thumbnail (ENH-PERF-02); next/image can't fetch the session-gated files route.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { accentVars, cn, thumbUrl } from "./utils";
+import { accentCss, accentVars, cn, thumbUrl } from "./utils";
 
 describe("cn", () => {
   it("joins class names", () => {
@@ -49,5 +49,37 @@ describe("accentVars", () => {
     expect((accentVars("#b08a2e") as Record<string, string>)["--primary-foreground"]).toBe(
       "#221d16",
     );
+  });
+});
+
+describe("accentCss", () => {
+  it("returns undefined for a missing or malformed hex, so the default palette stands", () => {
+    expect(accentCss(null)).toBeUndefined();
+    expect(accentCss(undefined)).toBeUndefined();
+    expect(accentCss("e8590c")).toBeUndefined();
+    expect(accentCss("#fff")).toBeUndefined();
+  });
+
+  it("emits the accent variables as a :root rule", () => {
+    // :root, not a wrapper's inline style: dialogs portal into document.body and
+    // the toaster mounts in the root layout, so both sit outside any wrapper and
+    // would otherwise fall back to the default accent.
+    // (Ink wins the foreground here — it out-contrasts white on a mid-tone green.)
+    const css = accentCss("#5c8a58");
+    expect(css).toBe(":root{--primary:#5c8a58;--ring:#5c8a58;--primary-foreground:#221d16}");
+  });
+
+  it("carries the luminance-picked foreground through from accentVars", () => {
+    expect(accentCss("#b08a2e")).toContain("--primary-foreground:#221d16");
+    expect(accentCss("#4338ca")).toContain("--primary-foreground:#ffffff");
+  });
+
+  it("cannot emit anything but a validated hex and a literal foreground", () => {
+    // The value is interpolated into a stylesheet, so the regex in accentVars is
+    // the injection guard — anything that isn't #rrggbb must produce no CSS.
+    expect(accentCss("#5c8a58;} body{display:none}")).toBeUndefined();
+    expect(accentCss("red")).toBeUndefined();
+    expect(accentCss("</style><script>alert(1)</script>")).toBeUndefined();
+    expect(accentCss("#5c8a58 ")).toBeUndefined();
   });
 });

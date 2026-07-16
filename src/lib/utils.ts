@@ -20,10 +20,14 @@ function luminance(hex: string): number {
 /**
  * Inline style overriding the accent CSS variables for a per-workspace brand.
  * Returns undefined for a missing/invalid hex so the default palette stands.
- * Applied on a layout wrapper, it cascades to all `--primary` / `--ring` users.
  * `--primary-foreground` is set to whichever of white / ink contrasts better with
  * the chosen accent, so a light accent never leaves the button text unreadable
  * (WCAG; ENH-UX-02).
+ *
+ * Element-scoped: use this only where the accent really is confined to a subtree
+ * (e.g. the branding form's live preview swatch). For a page's own brand use
+ * `accentCss` / `<AccentStyle>` — an inline style stops at the portal boundary,
+ * and dialogs/toasts render outside the tree entirely.
  */
 export function accentVars(hex?: string | null): CSSProperties | undefined {
   if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return undefined;
@@ -32,6 +36,29 @@ export function accentVars(hex?: string | null): CSSProperties | undefined {
   const onInk = (L + 0.05) / (luminance("#221d16") + 0.05); // ink text on the accent
   const foreground = onWhite >= onInk ? "#ffffff" : "#221d16";
   return { "--primary": hex, "--ring": hex, "--primary-foreground": foreground } as CSSProperties;
+}
+
+/**
+ * The same accent variables as a `:root` rule, for a page-level brand.
+ *
+ * Why `:root` rather than an inline style on a layout wrapper: Radix portals
+ * dialog content into `document.body`, and the sonner `Toaster` is mounted in the
+ * root layout — both outside any wrapper a page or layout can reach. A wrapper's
+ * variables therefore stopped at the portal boundary and every dialog, plus every
+ * toast action button, silently fell back to the default palette. `:root` is
+ * inherited by `body`, so portalled content is branded too.
+ *
+ * Returns undefined for a missing/invalid hex (same contract as `accentVars`).
+ * The output is safe to inject: the hex is regex-validated above and the
+ * foreground is one of two literals, so no caller-controlled text reaches the CSS.
+ */
+export function accentCss(hex?: string | null): string | undefined {
+  const vars = accentVars(hex);
+  if (!vars) return undefined;
+  const decls = Object.entries(vars)
+    .map(([prop, value]) => `${prop}:${value}`)
+    .join(";");
+  return `:root{${decls}}`;
 }
 
 /**

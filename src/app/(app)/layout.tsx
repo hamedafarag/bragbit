@@ -1,13 +1,15 @@
+import { AccentStyle } from "@/components/shared/accent-style";
 import { AppHeader } from "@/components/shared/app-header";
 import { getProfile } from "@/features/profile/queries";
 import { getActiveWorkspace } from "@/features/workspace/queries";
-import { accentVars, initials } from "@/lib/utils";
+import { initials } from "@/lib/utils";
 
 // Authenticated, workspace-scoped shell (PLAN.md §6). getActiveWorkspace runs
 // the DAL guards (session + membership) and redirects out if either is missing;
 // the active-workspace-on-sign-in hook (lib/auth) guarantees a plain sign-in
-// resolves here rather than bouncing. The wrapper applies the workspace accent
-// so all `--primary` / `--ring` chrome below it is branded.
+// resolves here rather than bouncing. AccentStyle publishes the workspace accent
+// at `:root` so all `--primary` / `--ring` chrome is branded — including the
+// dialogs and toasts that portal outside this tree.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace, role } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
@@ -18,7 +20,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const canAdminister = role === "owner" || role === "admin";
 
   return (
-    <div className="relative z-10 min-h-screen" style={accentVars(workspace.accentColor)}>
+    <div className="relative z-10 min-h-screen">
+      <AccentStyle accent={workspace.accentColor} />
       {/* Keyboard users can jump past the header/nav straight to the page content. */}
       <a
         href="#main-content"
