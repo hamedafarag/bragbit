@@ -42,8 +42,12 @@ jobs:
       - name: Check the page and its assets are present
         run: |
           test -f marketing/index.html || { echo "::error::marketing/index.html is missing"; exit 1; }
-          count=$(find marketing/screenshots -name '*.png' | wc -l)
-          echo "screenshots found: $count"
+          # Format-agnostic on purpose. This used to count '*.png' and broke the
+          # moment the screenshots became WebP — it asserted an encoding nobody
+          # had promised it. What matters is that the folder isn't empty; the
+          # loops below are what actually check the page's references resolve.
+          count=$(find marketing/screenshots -type f 2>/dev/null | wc -l)
+          echo "assets in screenshots/: $count"
           [ "$count" -gt 0 ] || { echo "::error::no screenshots to publish"; exit 1; }
           # Every local "./…" the page asks for must exist. Matches any quoted
           # relative path, not just src/href: the light/dark screenshot swaps are
