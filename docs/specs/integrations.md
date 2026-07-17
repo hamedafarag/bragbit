@@ -1,9 +1,10 @@
 # Spec — BragBit source integrations (GitHub / Linear / Jira import)
 
-> **Status:** **planned** (2026-07-17). Tracked from [PLAN.md §11](../../PLAN.md) —
-> _"GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep links)"_ — and the
-> [enhancement backlog](../enhancements.md). **v1 = GitHub only, manual import, OAuth + PAT.**
-> Linear, Jira, and weekly auto-import are deferred (see [Deferred](#deferred-post-v1)).
+> **Status:** **GitHub v1 implemented** (2026-07-17, slices 1a–1e on `feat/source-integrations`) —
+> PAT + OAuth connect, manual import, dedup, review queue, approve/dismiss/disconnect. Tracked from
+> [PLAN.md §11](../../PLAN.md) — _"GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep
+> links)"_ — and the [enhancement backlog](../enhancements.md). Linear, Jira, and weekly auto-import
+> are deferred (see [Deferred](#deferred-post-v1)).
 
 ## Goal
 
@@ -232,8 +233,9 @@ node id. Scope: `public_repo` (safer default) or `repo` (includes private) — d
       PAT / import / disconnect) + candidate list (approve / dismiss, choose target document).
       Verified in-browser + jsdom render tests. _Inline edit-then-approve deferred (the
       `approveCandidate` action already accepts `edits`; only the edit form is missing)._
-- [ ] **1e** — tests (adapter mapping, dedup, DAL scoping, disconnect) + docs
-      (`docs/self-hosting/integrations.md` operator guide; user guide note)
+- [x] **1e** — tests (adapter mapping, dedup, DAL scoping, disconnect — landed with 1b/1c) + docs:
+      operator guide [`docs/self-hosting/integrations.md`](../self-hosting/integrations.md), env
+      reference, a [user-guide](../user-guide.md#importing-from-github) section, CHANGELOG + README.
 
 ## Deferred (post-v1)
 

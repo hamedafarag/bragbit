@@ -121,6 +121,22 @@ In Settings, opt in to a weekly reminder. Pick a day and your time zone, and Bra
 "What did you ship this week?" nudge — workspace-branded, with a one-tap link to log a win — on your
 chosen day, in your zone. Every reminder has a one-click unsubscribe.
 
+## Importing from GitHub
+
+Turn the pull requests you've already merged into brags, without retyping them. In **Settings →
+Integrations**, connect GitHub one of two ways:
+
+- **Connect with GitHub** — one click, if your instance has it set up.
+- **Paste a token** — always available: create a read-only GitHub
+  [fine-grained token](https://github.com/settings/personal-access-tokens) (Pull requests: Read-only)
+  and paste it.
+
+Then press **Import now**. Your merged PRs appear as a **review queue** — nothing is logged yet.
+For each one, choose the document and **Approve** (it becomes a brag with a link back to the PR, ready
+for you to add the _why it mattered_), or **Dismiss** it. Importing again only ever adds new PRs, so
+you can re-run it safely. Disconnect anytime; your token is stored encrypted and never shared with
+your workspace admins. Private-repo PRs import via the token path when the token can see them.
+
 ## Trying the demo
 
 Evaluating BragBit locally? The repo ships a demo seed that fills a fresh database with a sample

@@ -29,6 +29,8 @@ can always leave.
 - **Multiple documents** per user, each with its own revocable, optionally password-protected
   **share link** — private brags never leak into a share.
 - **Attachments of any type** (screenshots, PDFs, praise emails) and labeled links.
+- **Import from GitHub** — connect an account (one-click OAuth or a pasted read-only token) and turn
+  merged pull requests into reviewable brags, each linked back to the PR; nothing logs until you approve.
 - **Markdown / PDF / JSON export** — your data is always portable.
 - **Per-workspace white-labeling** (name, logo, accent) and **weekly email reminders**.
 - **A dashboard activity heatmap** — a year of your logging cadence at a glance, with a week streak.
