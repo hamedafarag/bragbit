@@ -4,6 +4,18 @@ import { buttonVariants } from "@/components/ui/button";
 import { ChangeEmailForm } from "@/features/account/components/change-email-form";
 import { ChangePasswordForm } from "@/features/account/components/change-password-form";
 import { DeleteAccountForm } from "@/features/account/components/delete-account-form";
+import { listDocuments } from "@/features/document/queries";
+import {
+  IntegrationCards,
+  type ProviderCardData,
+} from "@/features/integrations/components/integration-cards";
+import {
+  ReviewQueue,
+  type CandidateView,
+  type DocumentOption,
+} from "@/features/integrations/components/review-queue";
+import { availableProviderDescriptors } from "@/features/integrations/providers";
+import { listCandidates, listConnections } from "@/features/integrations/queries";
 import { ConnectedApps } from "@/features/oauth-clients/components/connected-apps";
 import { listConnectedApps } from "@/features/oauth-clients/queries";
 import { getProfile } from "@/features/profile/queries";
@@ -17,6 +29,39 @@ export default async function SettingsPage() {
   const connectedApps = await listConnectedApps(user.id);
   // The only thing an MCP client needs — it discovers the rest from here.
   const instanceUrl = env.BETTER_AUTH_URL ?? env.APP_URL;
+
+  // Integrations (docs/specs/integrations.md): the available providers plus the
+  // caller's connections and pending imports, shaped into plain props for the cards.
+  const providers = availableProviderDescriptors();
+  const [connections, candidates, documents] = await Promise.all([
+    listConnections(user.id, workspace.id),
+    listCandidates(user.id, workspace.id),
+    listDocuments(),
+  ]);
+  const integrationCards: ProviderCardData[] = providers.map((p) => {
+    const conn = connections.find((c) => c.provider === p.id) ?? null;
+    return {
+      id: p.id,
+      label: p.label,
+      supportsPat: p.supportsPat,
+      oauthConfigured: p.oauthConfigured,
+      connection: conn
+        ? {
+            authType: conn.authType,
+            externalAccountLabel: conn.externalAccountLabel,
+            lastSyncedAt: conn.lastSyncedAt ? conn.lastSyncedAt.toISOString() : null,
+          }
+        : null,
+    };
+  });
+  const candidateViews: CandidateView[] = candidates.map((c) => ({
+    id: c.id,
+    provider: c.provider,
+    title: c.title,
+    externalUrl: c.externalUrl,
+    occurredAt: c.occurredAt ? c.occurredAt.toISOString() : null,
+  }));
+  const documentOptions: DocumentOption[] = documents.map((d) => ({ id: d.id, title: d.title }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -75,6 +120,25 @@ export default async function SettingsPage() {
           <Download className="size-3.5" aria-hidden />
           Download JSON
         </a>
+      </section>
+
+      <section
+        id="integrations"
+        className="rounded-xl border border-line bg-card p-6 shadow-card"
+        style={{ scrollMarginTop: "80px" }}
+      >
+        <h2 className="mb-1 font-serif text-lg font-semibold">Integrations</h2>
+        <p className="mb-5 text-[13px] text-ink-soft">
+          Connect your tools and let BragBit pull in your shipped work. Imports land in a review
+          queue — nothing is logged until you approve it.
+        </p>
+        <IntegrationCards cards={integrationCards} />
+        {candidateViews.length > 0 && (
+          <div className="mt-6 border-t border-line pt-6">
+            <h3 className="mb-4 font-serif text-base font-semibold">Review imported items</h3>
+            <ReviewQueue candidates={candidateViews} documents={documentOptions} />
+          </div>
+        )}
       </section>
 
       {/* id: the dashboard's connector hint links straight here. */}

@@ -22,4 +22,22 @@ export function availableProviders(): IntegrationProvider[] {
   return Object.values(REGISTRY).filter(isProviderAvailable);
 }
 
+/** Plain, serializable provider info (no functions) for passing to client components. */
+export type ProviderDescriptor = {
+  id: Provider;
+  label: string;
+  oauthConfigured: boolean;
+  supportsPat: boolean;
+};
+
+/** The available providers as plain descriptors — what a Server Component hands the UI. */
+export function availableProviderDescriptors(): ProviderDescriptor[] {
+  return availableProviders().map((p) => ({
+    id: p.id,
+    label: p.label,
+    oauthConfigured: p.oauthConfigured(),
+    supportsPat: p.supportsPat,
+  }));
+}
+
 export type { IntegrationProvider } from "./types";

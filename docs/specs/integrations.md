@@ -225,8 +225,10 @@ node id. Scope: `public_repo` (safer default) or `repo` (includes private) — d
       dedup → review-queue reads → approve (reuses `createBrag` + source `bragLink`) / dismiss /
       disconnect. Server vertical + integration tests (real Postgres); the browser UI is **1d**.
 - [ ] **1c** — GitHub **OAuth path**: `authorize` + `callback` routes, the "Connect with GitHub" button
-- [ ] **1d** — **Settings → Integrations** section + review-queue UI (approve / edit-then-approve /
-      dismiss, choose target document)
+- [x] **1d** — **Settings → Integrations** section + review-queue UI: provider cards (connect via
+      PAT / import / disconnect) + candidate list (approve / dismiss, choose target document).
+      Verified in-browser + jsdom render tests. _Inline edit-then-approve deferred (the
+      `approveCandidate` action already accepts `edits`; only the edit form is missing)._
 - [ ] **1e** — tests (adapter mapping, dedup, DAL scoping, disconnect) + docs
       (`docs/self-hosting/integrations.md` operator guide; user guide note)
 

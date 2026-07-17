@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 process.env.DATABASE_URL ??= "postgres://localhost/bragbit_test";
 process.env.BETTER_AUTH_SECRET ??= "0123456789abcdef0123456789abcdef";
 
-const { getProvider, availableProviders } = await import("./index");
+const { getProvider, availableProviders, availableProviderDescriptors } = await import("./index");
 const { isProviderAvailable } = await import("./types");
 
 describe("provider registry", () => {
@@ -18,5 +18,11 @@ describe("provider registry", () => {
     expect(available.map((p) => p.id)).toContain("github");
     // supportsPat makes it reachable regardless of OAuth config
     expect(isProviderAvailable(getProvider("github"))).toBe(true);
+  });
+
+  it("exposes plain, serializable descriptors for client components", () => {
+    const d = availableProviderDescriptors().find((p) => p.id === "github");
+    expect(d).toMatchObject({ id: "github", label: "GitHub", supportsPat: true });
+    expect(typeof d!.oauthConfigured).toBe("boolean");
   });
 });
