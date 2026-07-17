@@ -18,6 +18,7 @@ import * as schema from "@/lib/db/schema";
 import { member } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
+import { isHosted } from "@/lib/instance";
 import { MCP_SUPPORTED_SCOPES } from "@/lib/mcp/scopes";
 
 import { trustedProxyIpConfig } from "./ip-config";
@@ -39,7 +40,8 @@ export const auth = betterAuth({
   // /sign-in, /sign-up, /change-password, /change-email, and 3 / 60s on
   // password-reset + verification-email — backed by an in-memory store. We enable
   // it explicitly (it's production-only by default; left off in dev/test so local
-  // flows and the e2e suite aren't throttled).
+  // flows and the e2e suite aren't throttled). A shared store (secondaryStorage)
+  // is the multi-instance upgrade for the hosted mode (Phase 10).
   rateLimit: {
     enabled: env.RATE_LIMIT_ENABLED ?? env.NODE_ENV === "production",
   },
@@ -57,10 +59,10 @@ export const auth = betterAuth({
         // caller's earliest membership and pin it as the session's active
         // organization. Without this, a plain email/password sign-in leaves
         // activeOrganizationId null and requireWorkspace() bounces to "/"
-        // (only setup/accept-invite set it explicitly). An instance has exactly
-        // one workspace, so the earliest membership is the only one. During
-        // setup/invite the membership doesn't exist yet at session-create time,
-        // so this no-ops and those flows set it.
+        // (only setup/accept-invite set it explicitly). In private-solo the
+        // user has exactly one membership; multi-workspace selection (hosted)
+        // refines this later. During setup/invite the membership doesn't exist
+        // yet at session-create time, so this no-ops and those flows set it.
         before: async (session) => {
           const [m] = await db
             .select({ organizationId: member.organizationId })
@@ -126,17 +128,18 @@ export const auth = betterAuth({
     },
   },
 
-  // Optional GitHub/Google sign-in (PLAN.md §4/§6). OAuth only signs in
-  // already-provisioned accounts — `disableSignUp` blocks creating a new user
-  // from an unrecognized OAuth identity, which would otherwise defeat
-  // invitation-only.
+  // Optional GitHub/Google sign-in (PLAN.md §4/§6). In the private modes OAuth
+  // only signs in already-provisioned accounts — `disableSignUp` blocks creating
+  // a new user from an unrecognized OAuth identity, which would otherwise defeat
+  // invitation-only. Hosted may create an account (its personal-workspace
+  // provisioning lands in Phase 10).
   socialProviders: {
     ...(githubConfigured
       ? {
           github: {
             clientId: env.GITHUB_CLIENT_ID!,
             clientSecret: env.GITHUB_CLIENT_SECRET!,
-            disableSignUp: true,
+            disableSignUp: !isHosted(),
           },
         }
       : {}),
@@ -145,7 +148,7 @@ export const auth = betterAuth({
           google: {
             clientId: env.GOOGLE_CLIENT_ID!,
             clientSecret: env.GOOGLE_CLIENT_SECRET!,
-            disableSignUp: true,
+            disableSignUp: !isHosted(),
           },
         }
       : {}),

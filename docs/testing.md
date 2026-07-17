@@ -1,7 +1,8 @@
 # BragBit — Manual Test Plan (v0.1.1, Phases 1–9)
 
 A step-by-step manual test catalogue for the v1 (self-host) scope: the two private deployment modes,
-`private-solo` and `private-org`.
+`private-solo` and `private-org`. Hosted multi-tenant mode (`INSTANCE_MODE=hosted`) is v1.1 and is
+out of scope here.
 
 ## How to use this document
 
@@ -83,16 +84,17 @@ A step-by-step manual test catalogue for the v1 (self-host) scope: the two priva
 - **TC-AUTH-08 · OAuth button appears only when configured** — P2 · both
   - Pre: configure `GITHUB_CLIENT_ID`/`SECRET` (or Google). Expected: a "Continue with…" button
     appears only when both halves are set.
-- **TC-AUTH-09 · OAuth signs in existing accounts only** — P2 · both
+- **TC-AUTH-09 · OAuth signs in existing accounts only (private modes)** — P2 · both
   - Steps: attempt OAuth with an identity whose email has no account.
   - Expected: it does **not** create an account; it only links/sign-ins an existing verified email.
 - **TC-AUTH-10 · Sign out** — P1 · both — Expected: session cleared; protected routes bounce to
   `/sign-in`.
-- **TC-AUTH-11 · Public sign-up disabled** — P1 · both — security
-  - Steps: `POST /api/auth/sign-up/email` with a fresh email/password.
+- **TC-AUTH-11 · Public sign-up disabled (private modes)** — P1 · both — security
+  - Steps: in a private mode, `POST /api/auth/sign-up/email` with a fresh email/password.
   - Expected: rejected (403 `EMAIL_PASSWORD_SIGN_UP_DISABLED`), **no** account created and **no**
     verification email sent. The setup wizard and invitation-accept still create accounts (they call
-    `auth.api.signUpEmail` server-side, which bypasses the route guard).
+    `auth.api.signUpEmail` server-side, which bypasses the route guard). Hosted mode keeps open
+    sign-up.
 
 ## C. Profile & account settings
 

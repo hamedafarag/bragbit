@@ -63,6 +63,10 @@ const schema = z.object({
   // Uploads
   MAX_UPLOAD_MB: z.coerce.number().int().positive().default(25),
 
+  // Hosted-mode abuse controls
+  BLOCK_DISPOSABLE_EMAIL: bool(true),
+  WORKSPACE_QUOTA_MB: z.coerce.number().int().positive().default(2048),
+
   // Reminder cron (external-cron fallback)
   CRON_SECRET: z.string().optional(),
 

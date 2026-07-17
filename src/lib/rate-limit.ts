@@ -1,7 +1,7 @@
 /**
- * A tiny in-memory sliding-window rate limiter. Single-process — fine for the
- * self-host (one container); a shared store (Redis) would be the multi-instance
- * upgrade. Keyed by an arbitrary string (e.g. `share-unlock:<id>`).
+ * A tiny in-memory sliding-window rate limiter. Single-process — fine for the v1
+ * self-host (one container); a shared store (Redis) is Phase 9 hardening for the
+ * hosted instance. Keyed by an arbitrary string (e.g. `share-unlock:<id>`).
  *
  * `now` is injectable so the limiter is deterministically unit-testable.
  */
