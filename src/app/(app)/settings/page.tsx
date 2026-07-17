@@ -18,6 +18,7 @@ import {
 import { availableProviderDescriptors } from "@/features/integrations/providers";
 import { listCandidates, listConnections } from "@/features/integrations/queries";
 import { ConnectedApps } from "@/features/oauth-clients/components/connected-apps";
+import { RefreshOnReturn } from "@/features/oauth-clients/components/refresh-on-return";
 import { listConnectedApps } from "@/features/oauth-clients/queries";
 import { getProfile } from "@/features/profile/queries";
 import { env } from "@/lib/env";
@@ -33,8 +34,10 @@ export default async function SettingsPage({
   const { user, workspace } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
   const connectedApps = await listConnectedApps(user.id);
-  // The only thing an MCP client needs — it discovers the rest from here.
-  const instanceUrl = env.BETTER_AUTH_URL ?? env.APP_URL;
+  // The MCP server endpoint a client connects to (NOT the bare origin — that
+  // serves the app's HTML). It returns the 401 challenge from which the client
+  // discovers the OAuth flow; that's the only URL a client needs.
+  const mcpServerUrl = `${env.BETTER_AUTH_URL ?? env.APP_URL}/api/mcp`;
 
   // Integrations (docs/specs/integrations.md): the available providers plus the
   // caller's connections and pending imports, shaped into plain props for the cards.
@@ -159,7 +162,8 @@ export default async function SettingsPage({
           AI assistants you&apos;ve authorized to log brags on your behalf through the MCP
           connector. Revoking an app invalidates its access immediately.
         </p>
-        <ConnectedApps apps={connectedApps} instanceUrl={instanceUrl} />
+        <RefreshOnReturn />
+        <ConnectedApps apps={connectedApps} mcpServerUrl={mcpServerUrl} />
       </section>
 
       <section className="rounded-xl border border-dashed border-destructive/40 bg-card p-6 shadow-card">
