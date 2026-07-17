@@ -2,10 +2,23 @@ import { toNextJsHandler } from "better-auth/next-js";
 
 import { auth } from "@/lib/auth";
 import { isHosted } from "@/lib/instance";
+import { mcpCorsPreflight, withMcpCors } from "@/lib/mcp/cors";
 
 const handlers = toNextJsHandler(auth.handler);
 
-export const GET = handlers.GET;
+/**
+ * The MCP OAuth endpoints (/api/auth/mcp/token, /register) are called cross-origin
+ * by browser-based clients, so their responses need CORS. The rest of Better Auth
+ * is same-origin from the app and is left untouched.
+ */
+function isMcpAuthPath(req: Request): boolean {
+  return new URL(req.url).pathname.startsWith("/api/auth/mcp/");
+}
+
+export async function GET(req: Request): Promise<Response> {
+  const res = await handlers.GET(req);
+  return isMcpAuthPath(req) ? withMcpCors(res) : res;
+}
 
 /**
  * Close the open email/password sign-up endpoint in the private (invitation-only)
@@ -23,5 +36,11 @@ export async function POST(req: Request): Promise<Response> {
       { status: 403 },
     );
   }
-  return handlers.POST(req);
+  const res = await handlers.POST(req);
+  return isMcpAuthPath(req) ? withMcpCors(res) : res;
+}
+
+/** Answer the CORS preflight for the cross-origin MCP OAuth endpoints. */
+export function OPTIONS(req: Request): Response {
+  return isMcpAuthPath(req) ? mcpCorsPreflight() : new Response(null, { status: 204 });
 }

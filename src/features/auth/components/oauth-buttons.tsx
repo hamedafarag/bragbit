@@ -9,7 +9,15 @@ import type { OAuthProvider } from "@/lib/oauth";
 
 const LABELS: Record<OAuthProvider, string> = { github: "GitHub", google: "Google" };
 
-export function OAuthButtons({ providers }: { providers: OAuthProvider[] }) {
+export function OAuthButtons({
+  providers,
+  callbackURL = "/",
+}: {
+  providers: OAuthProvider[];
+  // Where to land after social sign-in. Defaults to the app; set to the MCP
+  // authorize endpoint to resume an OAuth connect flow.
+  callbackURL?: string;
+}) {
   const [pending, setPending] = useState<OAuthProvider | null>(null);
   if (providers.length === 0) return null;
 
@@ -21,7 +29,7 @@ export function OAuthButtons({ providers }: { providers: OAuthProvider[] }) {
     // /sign-in?error=… via errorCallbackURL.
     const { error } = await authClient.signIn.social({
       provider,
-      callbackURL: "/",
+      callbackURL,
       errorCallbackURL: "/sign-in",
     });
     if (error) {

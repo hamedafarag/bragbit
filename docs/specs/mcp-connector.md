@@ -1,8 +1,36 @@
 # Spec — BragBit MCP connector (v2)
 
-> **Status:** proposed (2026-06-16). Targets **v2 / Phase 11**. Depends on the REST API + personal
-> access tokens (PLAN §11). Tracked from [PLAN.md §11](../../PLAN.md) and the
+> **Status:** **implemented 2026-07-16.** Tracked from [PLAN.md §11](../../PLAN.md) and the
 > [enhancement backlog](../enhancements.md).
+
+## Implementation note (2026-07-16) — OAuth 2.1, not PATs
+
+The MVP shipped with **OAuth 2.1** instead of the personal-access-token design sketched below. Better
+Auth (already a dependency) ships an `mcp` plugin that turns BragBit into a full OAuth 2.1 / OIDC
+provider, giving Claude Desktop / claude.ai a "paste the instance URL → click Authorize" connect flow
+with no token to copy. What that changed versus the PAT sketch further down:
+
+- **Auth** — the Better Auth `mcp` plugin ([src/lib/auth/index.ts](../../src/lib/auth/index.ts))
+  registers `/api/auth/mcp/{authorize,token,register,get-session}` plus the `.well-known` discovery
+  docs (re-exported at the origin root:
+  [src/app/.well-known/](../../src/app/.well-known/)). Dynamic client registration (RFC 7591) + PKCE
+  are on. Scopes: `openid profile offline_access brags:write documents:read`
+  ([src/lib/mcp/scopes.ts](../../src/lib/mcp/scopes.ts)).
+- **Tables** — three OIDC tables (`oauth_application`, `oauth_access_token`, `oauth_consent`) in
+  [src/lib/db/schema/oauth.ts](../../src/lib/db/schema/oauth.ts) (migration `0008`), _not_ a `tokens`
+  table.
+- **Transport** — the MCP endpoint at [src/app/api/mcp/route.ts](../../src/app/api/mcp/route.ts) uses
+  Vercel's `mcp-handler` (wraps the official SDK), stateless (no Redis). `withMcpAuth` validates the
+  Bearer access token via `auth.api.getMcpSession` and hands the tools the user id.
+- **Consent + login** — an OAuth consent screen at [/oauth/consent](../../src/app/oauth/consent/) and
+  a sign-in round-trip that resumes the authorize flow.
+- **Settings** — instead of "generate/revoke a token", Settings → **Connected apps** lists authorized
+  clients with a **Revoke** ([src/features/oauth-clients/](../../src/features/oauth-clients/)).
+- **Tenant scoping** — the tools resolve the workspace through the DAL per call (list = across the
+  user's memberships; add = derived from the target document), never trusting the token, so isolation
+  is identical to the UI. A token is _not_ pre-bound to one workspace (the PAT sketch's model).
+
+The original PAT design is kept below as the historical proposal.
 
 ## Goal
 
