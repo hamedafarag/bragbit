@@ -25,6 +25,8 @@ export type ConnectionTokens = {
 export type DecryptedConnection = {
   id: string;
   provider: Provider;
+  /** The connected account's provider handle (e.g. GitHub login) — e.g. for `author:` search. */
+  externalAccountLabel: string | null;
   accessToken: string;
   refreshToken: string | null;
   accessTokenExpiresAt: Date | null;

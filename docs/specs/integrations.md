@@ -218,11 +218,12 @@ node id. Scope: `public_repo` (safer default) or `repo` (includes private) — d
 
 ## Slice checklist (v1)
 
-- [ ] **1a** — schema (`integration_connection`, `import_candidate`) + migration; token-crypto helper;
+- [x] **1a** — schema (`integration_connection`, `import_candidate`) + migration; token-crypto helper;
       `features/integrations` skeleton + provider registry; env vars in
       [`env.ts`](../../src/lib/env.ts) + [`.env.example`](../../.env.example)
-- [ ] **1b** — GitHub **PAT path end-to-end**: validate → `Import now` → fetch merged PRs → dedup →
-      review queue → approve (brag + source `bragLink`) / dismiss _(smallest complete vertical)_
+- [x] **1b** — GitHub **PAT path**: `validatePat` + `fetchCandidates` (merged PRs) → `Import now` →
+      dedup → review-queue reads → approve (reuses `createBrag` + source `bragLink`) / dismiss /
+      disconnect. Server vertical + integration tests (real Postgres); the browser UI is **1d**.
 - [ ] **1c** — GitHub **OAuth path**: `authorize` + `callback` routes, the "Connect with GitHub" button
 - [ ] **1d** — **Settings → Integrations** section + review-queue UI (approve / edit-then-approve /
       dismiss, choose target document)
