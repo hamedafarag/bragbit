@@ -6,6 +6,7 @@
 //   document.ts   documents (review periods, workspace + user scoped)
 //   brag.ts       brags / brag_links / tags / brag_tags (the brag domain)
 //   share.ts      share_links (revocable public links to a document)
+//   oauth.ts      OAuth 2.1 provider tables (Better Auth mcp plugin) for the MCP connector
 //   (column helpers in ./columns)
 //
 // Convention (PLAN.md §6): every workspace-scoped table carries a workspace
@@ -17,4 +18,5 @@ export * from "./profile";
 export * from "./document";
 export * from "./brag";
 export * from "./share";
+export * from "./oauth";
 export * from "./rate-limit";

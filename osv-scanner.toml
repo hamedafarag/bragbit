@@ -1,0 +1,28 @@
+# Dependency-advisory gate (ENH-SEC-04). Read by `osv-scanner` in the CI `verify`
+# job, which scans `pnpm-lock.yaml` — the actual resolved tree.
+#
+# Why not `pnpm audit`: npm retired the registry audit endpoints it calls, so
+# `pnpm audit` now fails with a 410 on every branch (reproduced on pnpm 10.30.3
+# and on 11.13.1 — pnpm has not migrated to the bulk advisory endpoint). `npm
+# audit` isn't an option either: it needs a package-lock.json, which a pnpm repo
+# doesn't have.
+#
+# One behaviour change worth knowing: `pnpm audit --prod` only ever looked at
+# production dependencies. osv-scanner reads the whole lockfile, so a new
+# *dev-tool* advisory will now fail CI too. That's stricter, not looser — but it
+# means an accepted dev advisory has to be listed here rather than silently
+# skipped. Anything genuinely fixable should be fixed, not ignored.
+
+[[IgnoredVulns]]
+id = "GHSA-67mh-4wv8-2f99"
+reason = """
+esbuild 0.18.20 dev-server CORS issue. Not exploitable here and not fixable from \
+this repo: it arrives only as better-auth -> drizzle-kit -> @esbuild-kit/esm-loader \
+-> esbuild@0.18.20, and @esbuild-kit is deprecated and pinned by drizzle-kit. The \
+advisory is about esbuild's *dev server*, which this project never runs — \
+drizzle-kit is a CLI used for migrations at build time, and the standalone \
+production image applies migrations with the drizzle-orm runtime migrator \
+(scripts/migrate.mjs), so esbuild is never present at runtime. drizzle-kit also \
+resolves a modern esbuild (0.25.12) for its own use; only the @esbuild-kit path \
+is stuck on 0.18.20. Remove this entry once drizzle-kit drops @esbuild-kit.
+"""

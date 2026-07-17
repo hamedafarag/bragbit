@@ -1,0 +1,88 @@
+name: Deploy marketing page
+
+# Publishes marketing/ to GitHub Pages → https://hamedafarag.github.io/bragbit/
+#
+# The page is plain HTML/CSS/JS with no build step, so this uploads the folder
+# as-is. Path-filtered: the app and the marketing page are independent, and a
+# change to src/ has no business redeploying a static page (or vice versa).
+#
+# Repo Settings → Pages → Source must be "GitHub Actions" (already is).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "marketing/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. `cancel-in-progress: false` so a queued run waits its
+# turn rather than killing a publish half-way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build · deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Fail loudly if the entrypoint or the screenshots ever go missing: Pages
+      # would otherwise happily publish a 404, or a page with broken images.
+      - name: Check the page and its assets are present
+        run: |
+          test -f marketing/index.html || { echo "::error::marketing/index.html is missing"; exit 1; }
+          # Format-agnostic on purpose. This used to count '*.png' and broke the
+          # moment the screenshots became WebP — it asserted an encoding nobody
+          # had promised it. What matters is that the folder isn't empty; the
+          # loops below are what actually check the page's references resolve.
+          count=$(find marketing/screenshots -type f 2>/dev/null | wc -l)
+          echo "assets in screenshots/: $count"
+          [ "$count" -gt 0 ] || { echo "::error::no screenshots to publish"; exit 1; }
+          # Every local "./…" the page asks for must exist. Matches any quoted
+          # relative path, not just src/href: the light/dark screenshot swaps are
+          # referenced from the inline JS, so an attribute-only check would miss
+          # them and let a broken toggle ship.
+          missing=0
+          for ref in $(grep -oE '"\./[^"]+"' marketing/index.html | tr -d '"' | sed 's|^\./||' | sort -u); do
+            if [ -e "marketing/$ref" ]; then
+              echo "  ok       $ref"
+            else
+              echo "::error::referenced asset missing: $ref"
+              missing=1
+            fi
+          done
+
+          # og:image and friends are absolute (scrapers can't resolve relative
+          # paths), so the loop above never sees them — and a missing social card
+          # fails silently, in someone else's renderer, where nobody notices.
+          # Resolve our own origin back to the folder and check those too.
+          for ref in $(grep -oE 'https://hamedafarag\.github\.io/bragbit/[^"]+' marketing/index.html \
+                        | sed 's|https://hamedafarag.github.io/bragbit/||' | grep -E '\.(png|webp|jpg|svg|xml)$' | sort -u); do
+            if [ -e "marketing/$ref" ]; then
+              echo "  ok       $ref (absolute)"
+            else
+              echo "::error::absolute self-reference missing: $ref"
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: marketing
+
+      - id: deployment
+        uses: actions/deploy-pages@v5

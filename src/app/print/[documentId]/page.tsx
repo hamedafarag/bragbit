@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { AccentStyle } from "@/components/shared/accent-style";
 import { Markdown } from "@/components/shared/markdown";
 import type { BragWithRelations } from "@/features/brag/queries";
 import { BRAG_CATEGORIES } from "@/features/brag/schema";
 import { PrintButton } from "@/features/export/components/print-button";
 import { getDocumentForExport } from "@/features/export/queries";
 import { getActiveWorkspace } from "@/features/workspace/queries";
-import { accentVars } from "@/lib/utils";
 
 // A print view is reached intentionally; no reason to index it.
 export const metadata: Metadata = { title: "Print", robots: { index: false, follow: false } };
@@ -146,10 +146,8 @@ export default async function PrintPage({
   const logoUrl = workspace.logoKey ? `/api/files/${workspace.logoKey}` : null;
 
   return (
-    <div
-      className="mx-auto max-w-[760px] px-8 py-10 print:px-0"
-      style={accentVars(workspace.accentColor)}
-    >
+    <div className="mx-auto max-w-[760px] px-8 py-10 print:px-0">
+      <AccentStyle accent={workspace.accentColor} />
       <div className="mb-6 flex items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (

@@ -12,7 +12,7 @@ import { authClient } from "@/lib/auth/client";
 
 import { signInSchema } from "../schema";
 
-export function SignInForm() {
+export function SignInForm({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -35,6 +35,13 @@ export function SignInForm() {
       });
       if (error) {
         toast.error(error.message ?? "Sign in failed.");
+        return;
+      }
+      // Resuming an OAuth authorize flow (MCP connector): hand back to the
+      // authorize endpoint (an API route) with a full navigation so the new
+      // session cookie rides along. Otherwise, into the app.
+      if (redirectTo) {
+        window.location.href = redirectTo;
         return;
       }
       toast.success("Welcome back.");

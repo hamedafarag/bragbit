@@ -5,13 +5,38 @@ import { SignInForm } from "@/features/auth/components/sign-in-form";
 import { isHosted } from "@/lib/instance";
 import { configuredOAuthProviders } from "@/lib/oauth";
 
+// Where Better Auth's mcp plugin serves the OAuth authorize endpoint.
+const MCP_AUTHORIZE_PATH = "/api/auth/mcp/authorize";
+
+/**
+ * When an unauthenticated user hits /api/auth/mcp/authorize, the mcp plugin
+ * redirects them to /sign-in with the original authorize query appended. If those
+ * OAuth markers are present, build the URL to hand back to after sign-in so the
+ * connect flow resumes; otherwise return null (normal sign-in → app).
+ */
+function buildMcpAuthorizeResume(
+  params: Record<string, string | string[] | undefined>,
+): string | null {
+  if (typeof params.client_id !== "string" || typeof params.response_type !== "string") {
+    return null;
+  }
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (key === "error") continue;
+    if (typeof value === "string") qs.set(key, value);
+  }
+  return `${MCP_AUTHORIZE_PATH}?${qs.toString()}`;
+}
+
 // Next 16: searchParams is async.
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { error } = await searchParams;
+  const params = await searchParams;
+  const error = typeof params.error === "string" ? params.error : undefined;
+  const resumeUrl = buildMcpAuthorizeResume(params);
   const providers = configuredOAuthProviders();
 
   return (
@@ -27,8 +52,8 @@ export default async function SignInPage({
         </p>
       ) : null}
 
-      <SignInForm />
-      <OAuthButtons providers={providers} />
+      <SignInForm redirectTo={resumeUrl ?? undefined} />
+      <OAuthButtons providers={providers} callbackURL={resumeUrl ?? undefined} />
 
       {isHosted() ? (
         <p className="mt-6 text-center text-[12.5px] text-ink-soft">

@@ -3,6 +3,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { mcp } from "better-auth/plugins";
 import { organization } from "better-auth/plugins/organization";
 import { asc, eq } from "drizzle-orm";
 
@@ -20,6 +21,7 @@ import { assertSignupEmailAllowed } from "@/lib/disposable-email";
 import { sendEmail } from "@/lib/email/send";
 import { env } from "@/lib/env";
 import { isHosted } from "@/lib/instance";
+import { MCP_SUPPORTED_SCOPES } from "@/lib/mcp/scopes";
 
 import { trustedProxyIpConfig } from "./ip-config";
 
@@ -206,6 +208,31 @@ export const auth = betterAuth({
             brand: emailBrandFromOrg(data.organization),
           }),
         });
+      },
+    }),
+    // MCP connector (docs/specs/mcp-connector.md): turns BragBit into an OAuth 2.1
+    // provider so an AI client (Claude Desktop / claude.ai) can connect with just a
+    // URL + one "Authorize" click — no token paste. Registers /api/auth/mcp/{authorize,
+    // token,register,get-session} and the .well-known discovery docs; issues tokens
+    // into the oauth_* tables (schema/oauth.ts). The tools live at /api/mcp.
+    mcp({
+      loginPage: "/sign-in",
+      // The protected resource identifier clients present tokens for — the MCP endpoint.
+      resource: `${env.BETTER_AUTH_URL ?? env.APP_URL}/api/mcp`,
+      oidcConfig: {
+        loginPage: "/sign-in",
+        consentPage: "/oauth/consent",
+        // AI clients self-register via RFC 7591 dynamic client registration.
+        allowDynamicClientRegistration: true,
+        // Confidential clients' secrets are hashed at rest (like share passwords).
+        storeClientSecret: "hashed",
+        // Grantable scopes. `metadata.scopes_supported` advertises them in the
+        // RFC 9728 protected-resource document (the plugin doesn't derive that
+        // from `scopes`), so a client can discover and request the BragBit scopes.
+        scopes: MCP_SUPPORTED_SCOPES,
+        metadata: {
+          scopes_supported: MCP_SUPPORTED_SCOPES,
+        },
       },
     }),
     // nextCookies() MUST be last — it writes Set-Cookie via an after-hook.
