@@ -14,8 +14,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
-The app comes up on `http://localhost:${APP_PORT:-3000}`. On first run it redirects to the `/setup`
-wizard — create the owner account and your workspace, and you're in.
+The app comes up on `http://localhost:${APP_PORT:-3000}`. On first run (private modes) it redirects
+to the `/setup` wizard — create the owner account and your workspace, and you're in.
 
 > Generate the auth secret with `openssl rand -base64 32`, and set `APP_URL` to the public origin
 > you'll serve from — it's baked into emails and share links.

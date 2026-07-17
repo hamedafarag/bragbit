@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { session as sessionTable, user as userTable } from "@/lib/db/schema";
 import { env } from "@/lib/env";
-import { isPrivateSolo } from "@/lib/instance";
+import { isHosted, isPrivateSolo } from "@/lib/instance";
 
 import { isInstanceSetup } from "./queries";
 import { setupSchema, type SetupInput } from "./schema";
@@ -23,13 +23,15 @@ function slugify(name: string): string {
 }
 
 /**
- * First-run wizard action. Creates the owner account and the first workspace,
- * then signs the owner in. Ordering is load-bearing (Better Auth): sign-up
- * creates no session under required verification, so we flip emailVerified, sign
- * in (nextCookies sets the cookie), then create the organization via the
- * server-only userId path and set it active by session row.
+ * First-run wizard action (private modes only). Creates the owner account and
+ * the first workspace, then signs the owner in. Ordering is load-bearing
+ * (Better Auth): sign-up creates no session under required verification, so we
+ * flip emailVerified, sign in (nextCookies sets the cookie), then create the
+ * organization via the server-only userId path and set it active by session row.
  */
 export async function completeSetup(input: SetupInput): Promise<SetupResult> {
+  if (isHosted()) return { ok: false, error: "Setup is not available on this instance." };
+
   const parsed = setupSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };

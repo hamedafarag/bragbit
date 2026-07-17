@@ -63,6 +63,15 @@ const schema = z.object({
   // Uploads
   MAX_UPLOAD_MB: z.coerce.number().int().positive().default(25),
 
+  // Hosted-mode abuse controls
+  BLOCK_DISPOSABLE_EMAIL: bool(true),
+  WORKSPACE_QUOTA_MB: z.coerce.number().int().positive().default(2048),
+
+  // Hosted instance superadmin — a comma/space-separated allowlist of emails
+  // granted the /super console (empty = no superadmin, so /super stays closed).
+  // Seeded via env (PLAN §10).
+  SUPERADMIN_EMAILS: z.string().optional(),
+
   // Reminder cron (external-cron fallback)
   CRON_SECRET: z.string().optional(),
 

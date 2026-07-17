@@ -22,7 +22,52 @@ export const E2E = {
   // the real Better Auth sign-up (so the e2e env needs SMTP/Mailpit).
   inviteId: "e2e-invite",
   inviteeEmail: "invitee@e2e.test",
+  // A personal workspace whose one document carries enough brags across enough
+  // months to split the timeline into two cursor-paged pages (PERF-01).
+  paginate: {
+    email: "paginate@e2e.test",
+    userId: "e2e-paginate",
+    wsId: "e2e-paginate-ws",
+    docId: "e2e-paginate-doc",
+    docPath: "/documents/e2e-paginate-doc",
+  },
+  // Throwaway personal-workspace accounts for the settings flows, so the shared
+  // owner/member fixture is never mutated: changePw flips its own password, delete
+  // destroys itself — both re-seeded fresh each run.
+  accounts: {
+    changePw: { email: "acct-pw@e2e.test", userId: "e2e-acct-pw", wsId: "e2e-acct-pw-ws" },
+    del: { email: "acct-del@e2e.test", userId: "e2e-acct-del", wsId: "e2e-acct-del-ws" },
+    reset: { email: "acct-reset@e2e.test", userId: "e2e-acct-reset", wsId: "e2e-acct-reset-ws" },
+  },
+  // A dedicated org + owner + two members for the member-management flows (role
+  // change, removal, ownership transfer) — kept off the shared e2e-org.
+  memberMgmt: {
+    orgId: "e2e-mm-org",
+    ownerEmail: "mm-owner@e2e.test",
+    ownerId: "e2e-mm-owner",
+    aliceEmail: "mm-alice@e2e.test",
+    aliceId: "e2e-mm-alice",
+    bobEmail: "mm-bob@e2e.test",
+    bobId: "e2e-mm-bob",
+  },
+  // A dedicated org + owner for the settings cluster (profile, avatar, reminders,
+  // branding, logo). Branding mutates the workspace name, so it stays off e2e-org
+  // (which invitation.spec asserts by name).
+  settings: {
+    orgId: "e2e-settings-org",
+    ownerEmail: "settings-owner@e2e.test",
+    ownerId: "e2e-settings-owner",
+  },
 };
+
+// Brags per month for the pagination document, newest first. 16 + 16 fills the
+// first page (target 30, whole months); the older month (with a quiet gap before
+// it) spills onto page two via "load more".
+const PAGINATE_MONTHS: [string, number, string][] = [
+  ["2026-06", 16, "June win"],
+  ["2026-05", 16, "May win"],
+  ["2026-03", 6, "March win"],
+];
 
 const SEED = [
   ["e2e-owner", "E2E Owner", E2E.ownerEmail, "owner"],
@@ -59,6 +104,81 @@ export default async function globalSetup() {
     await sql`insert into invitation (id, organization_id, email, role, status, expires_at, inviter_id)
               values (${E2E.inviteId}, 'e2e-org', ${E2E.inviteeEmail}, 'member', 'pending',
                       now() + interval '7 days', 'e2e-owner')`;
+
+    // The pagination fixture: a personal workspace, its owner, one document, and
+    // brags spread across months (explicit deletes — no reliance on cascade order).
+    const pg = E2E.paginate;
+    await sql`delete from brags where document_id = ${pg.docId}`;
+    await sql`delete from documents where id = ${pg.docId}`;
+    await sql`delete from "user" where id = ${pg.userId}`;
+    await sql`delete from organization where id = ${pg.wsId}`;
+
+    await sql`insert into organization (id, name, slug, type)
+              values (${pg.wsId}, 'Pagination WS', ${pg.wsId}, 'personal')`;
+    await sql`insert into "user" (id, name, email, email_verified)
+              values (${pg.userId}, 'Paginate User', ${pg.email}, true)`;
+    await sql`insert into account (id, account_id, provider_id, user_id, password)
+              values (${`${pg.userId}-acc`}, ${pg.userId}, 'credential', ${pg.userId}, ${password})`;
+    await sql`insert into member (id, organization_id, user_id, role)
+              values (${`${pg.userId}-mem`}, ${pg.wsId}, ${pg.userId}, 'owner')`;
+    await sql`insert into documents (id, workspace_id, user_id, title)
+              values (${pg.docId}, ${pg.wsId}, ${pg.userId}, 'Pagination Log')`;
+
+    let n = 0;
+    for (const [month, count, label] of PAGINATE_MONTHS) {
+      for (let j = 0; j < count; j++) {
+        await sql`insert into brags (id, document_id, title, date)
+                  values (${`e2e-pg-${n}`}, ${pg.docId}, ${`${label} ${j + 1}`}, ${`${month}-15`})`;
+        n++;
+      }
+    }
+
+    // Settings-flow accounts: each a personal workspace of one (owner).
+    for (const a of [E2E.accounts.changePw, E2E.accounts.del, E2E.accounts.reset]) {
+      await sql`delete from "user" where id = ${a.userId}`;
+      await sql`delete from organization where id = ${a.wsId}`;
+      await sql`insert into organization (id, name, slug, type)
+                values (${a.wsId}, 'Settings WS', ${a.wsId}, 'personal')`;
+      await sql`insert into "user" (id, name, email, email_verified)
+                values (${a.userId}, 'Settings User', ${a.email}, true)`;
+      await sql`insert into account (id, account_id, provider_id, user_id, password)
+                values (${`${a.userId}-acc`}, ${a.userId}, 'credential', ${a.userId}, ${password})`;
+      await sql`insert into member (id, organization_id, user_id, role)
+                values (${`${a.userId}-mem`}, ${a.wsId}, ${a.userId}, 'owner')`;
+    }
+
+    // Member-management org: an owner plus two members to manage.
+    const mm = E2E.memberMgmt;
+    await sql`delete from "user" where id in (${mm.ownerId}, ${mm.aliceId}, ${mm.bobId})`;
+    await sql`delete from organization where id = ${mm.orgId}`;
+    await sql`insert into organization (id, name, slug, type)
+              values (${mm.orgId}, 'Member Mgmt Org', ${mm.orgId}, 'organization')`;
+    const mmSeed = [
+      [mm.ownerId, "MM Owner", mm.ownerEmail, "owner"],
+      [mm.aliceId, "MM Alice", mm.aliceEmail, "member"],
+      [mm.bobId, "MM Bob", mm.bobEmail, "member"],
+    ] as const;
+    for (const [uid, name, email, role] of mmSeed) {
+      await sql`insert into "user" (id, name, email, email_verified)
+                values (${uid}, ${name}, ${email}, true)`;
+      await sql`insert into account (id, account_id, provider_id, user_id, password)
+                values (${`${uid}-acc`}, ${uid}, 'credential', ${uid}, ${password})`;
+      await sql`insert into member (id, organization_id, user_id, role)
+                values (${`${uid}-mem`}, ${mm.orgId}, ${uid}, ${role})`;
+    }
+
+    // Settings-cluster org: one owner of a dedicated organization workspace.
+    const st = E2E.settings;
+    await sql`delete from "user" where id = ${st.ownerId}`;
+    await sql`delete from organization where id = ${st.orgId}`;
+    await sql`insert into organization (id, name, slug, type)
+              values (${st.orgId}, 'Settings Org', ${st.orgId}, 'organization')`;
+    await sql`insert into "user" (id, name, email, email_verified)
+              values (${st.ownerId}, 'Settings Owner', ${st.ownerEmail}, true)`;
+    await sql`insert into account (id, account_id, provider_id, user_id, password)
+              values (${`${st.ownerId}-acc`}, ${st.ownerId}, 'credential', ${st.ownerId}, ${password})`;
+    await sql`insert into member (id, organization_id, user_id, role)
+              values (${`${st.ownerId}-mem`}, ${st.orgId}, ${st.ownerId}, 'owner')`;
   } finally {
     await sql.end();
   }

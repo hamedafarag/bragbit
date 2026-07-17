@@ -25,3 +25,15 @@ export const inviteSchema = z.object({
 });
 
 export type InviteInput = z.infer<typeof inviteSchema>;
+
+// Create-organization form (hosted only). Name is required; the accent is optional
+// at creation (it can be set later via branding). Mirrors the branding/setup rules.
+export const createOrgSchema = z.object({
+  name: z.string().trim().min(1, "Organization name is required").max(120),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Use a hex color like #e8590c")
+    .optional(),
+});
+
+export type CreateOrgInput = z.infer<typeof createOrgSchema>;

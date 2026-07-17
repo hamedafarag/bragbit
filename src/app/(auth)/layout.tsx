@@ -5,13 +5,14 @@ import { AccentStyle } from "@/components/shared/accent-style";
 import { isInstanceSetup } from "@/features/setup/queries";
 import { getInstanceBranding } from "@/features/workspace/queries";
 import { auth } from "@/lib/auth";
+import { isPrivate } from "@/lib/instance";
 import { thumbUrl } from "@/lib/utils";
 
-// Shared chrome + gating for the auth pages. Before setup there's no one to sign
-// in → /setup; already signed in → the app. Pre-auth surfaces show the instance
-// brand (the sole workspace).
+// Shared chrome + gating for the auth pages. Before setup (private modes) there's
+// no one to sign in → /setup; already signed in → the app. Pre-auth surfaces show
+// the instance brand (the sole workspace in the private modes).
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  if (!(await isInstanceSetup())) redirect("/setup");
+  if (isPrivate() && !(await isInstanceSetup())) redirect("/setup");
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) redirect("/");

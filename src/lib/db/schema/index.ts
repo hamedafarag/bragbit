@@ -19,3 +19,4 @@ export * from "./document";
 export * from "./brag";
 export * from "./share";
 export * from "./oauth";
+export * from "./rate-limit";

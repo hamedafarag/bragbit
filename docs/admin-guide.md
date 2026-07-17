@@ -1,8 +1,9 @@
 # Admin guide
 
-For workspace **owners** and **admins** (organizations). Workspace
-administration — branding, members, invitations, roles, removal, and ownership
-transfer — is complete for the self-hosted modes.
+For workspace **owners** and **admins** (organizations), plus the hosted
+**instance superadmin**. Workspace administration — branding, members,
+invitations, roles, removal, and ownership transfer — is complete for the
+self-hosted modes; the hosted superadmin console ships in v1.1.
 
 ## Workspace branding
 
@@ -22,15 +23,16 @@ freelancer's client-facing share pages) but no member/invite surface.
 
 Every workspace has three roles:
 
-- **Owner** — the workspace creator (the setup user). Exactly one per workspace;
-  transferable, but never demotable or removable by an admin.
+- **Owner** — the workspace creator (the setup user, or the org creator on a
+  hosted instance). Exactly one per workspace; transferable, but never demotable
+  or removable by an admin.
 - **Admin** — manages the workspace: branding, members, and invitations.
 - **Member** — uses the product.
 
 **Admins manage the workspace, never members' brag content.** Brags are private
-to each member regardless of role — an admin can never read another person's
-entries. A personal (`private-solo`) workspace has a single owner and no
-member/invite surface at all.
+to each member regardless of role — an admin, and the hosted superadmin, can
+never read another person's entries. A personal (`private-solo`) workspace has a
+single owner and no member/invite surface at all.
 
 ## Invitations (organizations)
 
@@ -74,3 +76,9 @@ ownership. You can't remove yourself through these controls.
 > Until it lands, ask the member to export their own data first (Settings →
 > Download JSON, plus per-document Markdown), since admins can't read member
 > content on their behalf.
+
+## Hosted: instance superadmin
+
+On a `hosted` instance a seeded **superadmin** manages workspaces, users, and
+storage quotas for abuse control — and, like workspace admins, never reads brag
+content. Ships in v1.1.

@@ -42,13 +42,18 @@ export default defineConfig({
       // climbs as components gain jsdom render tests (`// @vitest-environment
       // jsdom`); the logic dirs (`*.ts`, unaffected by `.tsx` tests) hold a
       // higher floor.
+      // Re-baselined 2026-07-17 when main was merged in: the MCP connector's route
+      // handler, consent page and components arrived from a branch whose own floor
+      // was 35%, which arithmetically diluted this branch's aggregate (~77% → ~75%)
+      // without any test being removed — 458 still pass. These are the post-merge
+      // actuals; raise them as the MCP surfaces gain tests here.
       thresholds: {
-        statements: 35,
-        branches: 26,
-        functions: 36,
-        lines: 35,
-        "src/lib/**/*.ts": { statements: 45, branches: 34, functions: 44, lines: 49 },
-        "src/features/**/*.ts": { statements: 68, branches: 62, functions: 65, lines: 69 },
+        statements: 74,
+        branches: 57,
+        functions: 68,
+        lines: 76,
+        "src/lib/**/*.ts": { statements: 74, branches: 54, functions: 73, lines: 74 },
+        "src/features/**/*.ts": { statements: 90, branches: 78, functions: 91, lines: 91 },
       },
     },
   },

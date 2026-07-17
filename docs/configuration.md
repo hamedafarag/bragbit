@@ -10,10 +10,10 @@ the auth secret, and SMTP.
 
 ## Instance shape
 
-| Variable        | Default        | Notes                                                                                                   |
-| --------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
-| `INSTANCE_MODE` | `private-solo` | `private-org` \| `private-solo` — picks the deployment shape. See [Instance modes](instance-modes.md).  |
-| `SETUP_TOKEN`   | _(unset)_      | Optional secret gating the first-run `/setup` wizard. Set it if the URL is reachable before you finish. |
+| Variable        | Default        | Notes                                                                                                                   |
+| --------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `INSTANCE_MODE` | `private-solo` | `private-org` \| `private-solo` \| `hosted` — picks the deployment shape. See [Instance modes](instance-modes.md).      |
+| `SETUP_TOKEN`   | _(unset)_      | Optional secret gating the first-run `/setup` wizard (private modes). Set it if the URL is reachable before you finish. |
 
 ## Core
 
@@ -35,7 +35,9 @@ Auth endpoints are rate-limited in production (3 requests/10s on sign-in and sig
 password reset and verification email). Better Auth reads the client IP from `X-Forwarded-For` by
 default, so per-client limiting works behind the reference reverse proxy; set
 `TRUSTED_PROXY_IP_HEADER` if your proxy uses a different header (e.g. `cf-connecting-ip`). Only trust
-that header when a proxy sets it — a directly-exposed app could let a client spoof it.
+that header when a proxy sets it — a directly-exposed app could let a client spoof it. On a `hosted`
+instance the limiter state is shared across app instances via Postgres (ENH-SEC-02), so limits hold
+even with more than one container running; the private single-container modes use an in-process limiter.
 
 ## Email (SMTP)
 
@@ -68,8 +70,9 @@ workspace logos and avatars are public.
 ## OAuth (optional)
 
 Set both halves of a provider to enable its sign-in button. Register the callback URL
-`{APP_URL}/api/auth/callback/{github|google}` with the provider. OAuth only signs in an
-already-provisioned, email-verified account — it never creates one (preserving invitation-only).
+`{APP_URL}/api/auth/callback/{github|google}` with the provider. In the private modes OAuth only
+signs in an already-provisioned, email-verified account — it never creates one (preserving
+invitation-only).
 
 | Variable                                    | Notes                |
 | ------------------------------------------- | -------------------- |
@@ -81,6 +84,16 @@ already-provisioned, email-verified account — it never creates one (preserving
 | Variable        | Default | Notes                                                                               |
 | --------------- | ------- | ----------------------------------------------------------------------------------- |
 | `MAX_UPLOAD_MB` | `25`    | Per-attachment size cap. Avatars (5 MB) and workspace logos (2 MB) have fixed caps. |
+
+## Hosted-mode abuse controls
+
+Relevant only when `INSTANCE_MODE=hosted` (ships in v1.1).
+
+| Variable                 | Default | Notes                                                                                                 |
+| ------------------------ | ------- | ----------------------------------------------------------------------------------------------------- |
+| `BLOCK_DISPOSABLE_EMAIL` | `true`  | Block known disposable-email domains at sign-up.                                                      |
+| `WORKSPACE_QUOTA_MB`     | `2048`  | Per-workspace storage quota (default; the `/super` console can override it per workspace).            |
+| `SUPERADMIN_EMAILS`      | —       | Comma/space-separated allowlist of emails granted the `/super` instance-admin console (empty = none). |
 
 ## Reminders
 

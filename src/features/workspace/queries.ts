@@ -8,6 +8,9 @@ import { isAcceptableInvitation } from "@/features/invitation/validity";
 import { requireRole, requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { invitation, member, organization, session, user } from "@/lib/db/schema";
+import { isHosted } from "@/lib/instance";
+
+import type { UserWorkspace } from "./components/workspace-switcher";
 
 export type Workspace = typeof organization.$inferSelect;
 
@@ -44,14 +47,49 @@ export async function getActiveWorkspace() {
     .limit(1);
   // requireWorkspace proved membership (FK-backed), so the row exists; guard anyway.
   if (!workspace) redirect("/");
+
+  // Instance-superadmin suspension (PLAN §10): a suspended workspace OR a suspended
+  // account is frozen out of the whole app — bounced to a terminal page. This is the
+  // single (app) gate, so the check covers every authenticated page.
+  const [account] = await db
+    .select({ suspendedAt: user.suspendedAt })
+    .from(user)
+    .where(eq(user.id, caller.id))
+    .limit(1);
+  if (workspace.suspendedAt || account?.suspendedAt) redirect("/suspended");
+
   return { user: caller, workspace, role: membership.role };
 }
 
 /**
- * Branding for the pre-auth surfaces (the login pages). An instance has exactly
- * one workspace, so its brand reads as instance-wide.
+ * Every workspace the caller belongs to (their personal one + any orgs), each with
+ * their role and whether it's the active one — the data behind the header workspace
+ * switcher (PLAN §10). Ordered personal-first, then by name.
+ */
+export async function listUserWorkspaces(): Promise<UserWorkspace[]> {
+  const { user: caller, workspaceId } = await requireWorkspace();
+  const rows = await db
+    .select({
+      id: organization.id,
+      name: organization.name,
+      type: organization.type,
+      role: member.role,
+    })
+    .from(member)
+    .innerJoin(organization, eq(organization.id, member.organizationId))
+    .where(eq(member.userId, caller.id))
+    .orderBy(sql`${organization.type} <> 'personal'`, organization.name);
+  return rows.map((r) => ({ ...r, isActive: r.id === workspaceId }));
+}
+
+/**
+ * Branding for the pre-auth surfaces (the login pages). The private modes have
+ * exactly one workspace, so its brand reads as instance-wide. On a hosted
+ * instance there are many workspaces and no active one before sign-in, so login
+ * uses the BragBit default (null) and per-workspace branding applies post-auth.
  */
 export async function getInstanceBranding(): Promise<WorkspaceBrand | null> {
+  if (isHosted()) return null;
   // Live per-instance branding — defer out of prerendering (like isInstanceSetup)
   // so the production image builds with no database reachable.
   await connection();

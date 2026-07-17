@@ -45,8 +45,9 @@ A single concept absorbs every scenario: a **workspace** is the tenant boundary,
   |---|---|---|---|---|
   | `private-org` | a company self-hosting | setup wizard + invitations | exactly one organization | **v1** |
   | `private-solo` | a freelancer self-hosting | setup wizard | exactly one personal | **v1** |
-- **Branding is per-workspace** (name/logo/accent). An instance has exactly one workspace, so its branding reads as instance-wide — single-org white-label is just the one-workspace special case of the general model.
-- **Build order:** v1 delivers the two private (self-host) modes. `hosted` multi-tenant (v1.1) is developed on the `phase-10/hosted-multitenant` branch, not on main; the schema is workspace-scoped from day one so it stays purely additive (open-signup route, user-created orgs, superadmin, quotas) — never a rewrite.
+  | `hosted` | us, on our VPS | open signup (email-verified) + user-created orgs | many (personal + orgs) | **v1.1** |
+- **Branding is per-workspace** (org name/logo/accent). Personal workspaces use the instance default. In the `private-org`/`private-solo` modes there is exactly one workspace, so its branding reads as instance-wide — single-org white-label is just the one-workspace special case of the general model.
+- **Build order:** v1 delivers the two private (self-host) modes; `hosted` multi-tenant is a **v1.1 fast-follow**. The schema is workspace-scoped from day one so hosted is purely additive (open-signup route, user-created orgs, superadmin, quotas) — never a rewrite.
 
 ## 4. Locked decisions
 
@@ -57,9 +58,9 @@ A single concept absorbs every scenario: a **workspace** is the tenant boundary,
 | Database | PostgreSQL |
 | ORM | **Drizzle ORM** + drizzle-kit migrations |
 | Auth | **Better Auth** (+ organization plugin); email+password; **required email verification**; optional GitHub/Google OAuth via env |
-| Tenancy | **Workspace = tenant** (`personal` \| `organization`); `INSTANCE_MODE` = `private-org` \| `private-solo` |
-| Membership | Organizations: **invitation-only**. Personal: solo |
-| Roles | Per workspace: **Owner + Admin + Member** (owner transferable, not removable by admins) |
+| Tenancy | **Workspace = tenant** (`personal` \| `organization`); `INSTANCE_MODE` = `private-org` \| `private-solo` \| `hosted` |
+| Membership | Organizations: **invitation-only**. Personal: solo. Hosted instance: **open signup (email-verified) + any user can create orgs** |
+| Roles | Per workspace: **Owner + Admin + Member** (owner transferable, not removable by admins). Hosted adds an **instance superadmin** for abuse/quota ops |
 | Member removal | **Export-then-delete** — removed member receives a portable export, then their data is purged from the workspace |
 | Branding | **Per-workspace** name + logo + accent color on login/app/share/emails; small "Powered by BragBit" stays on share pages |
 | File storage | **Storage adapter**: local disk default (Docker volume), S3-compatible (MinIO/R2/S3) via env; keys prefixed per workspace |
@@ -88,7 +89,7 @@ Better Auth owns `user`, `session`, `account`, `verification` and provides the o
 ```
 workspaces       id, type (personal|organization), name, slug?, logo_key?,
                  accent_color?, created_at, updated_at
-                 -- exactly one row per instance.
+                 -- private-* modes: exactly one row. hosted: many.
                  -- personal: exactly one member (owner); invite/member UI suppressed.
 
 members          user_id FK, workspace_id FK, role (owner|admin|member), created_at
@@ -97,6 +98,8 @@ members          user_id FK, workspace_id FK, role (owner|admin|member), created
 invitations      id, workspace_id FK, email, role (admin|member), token (unique),
                  invited_by FK, expires_at (+7d), accepted_at?, created_at
                  -- organizations only; single-use; re-invite revokes prior token
+
+instance_admins  user_id FK   -- hosted mode only: superadmin(s); seeded via env/CLI
 
 profiles         user_id PK/FK, display_name, role_title, team, bio, avatar_key,
                  reminder_enabled, reminder_day, timezone
@@ -121,7 +124,7 @@ share_links      id, document_id FK, token (unique, 128-bit random),
                  password_hash?, revoked_at?, created_at, last_accessed_at?
 ```
 
-**Workspace scoping is load-bearing:** every domain query filters by the caller's workspace membership, enforced from day one even though an instance has exactly one workspace — the tenant-isolation foundation any multi-tenant build inherits unchanged.
+**Workspace scoping is load-bearing:** every domain query filters by the caller's workspace membership; this is what isolates tenants in `hosted` mode and is enforced from day one even in single-workspace modes.
 
 **Category taxonomy** (fixed list in code, optional per brag — merges Julia Evans' sections with BragBook's template; doubles as render-time sections for a structured review doc later):
 `shipped-work · technical-contribution · collaboration-mentoring · leadership · recognition-feedback · skills-learning · glue-process-work · other`
@@ -130,28 +133,29 @@ share_links      id, document_id FK, token (unique, 128-bit random),
 
 ### Runtime architecture
 
-- **App structure:** App Router. `/setup` (first-run wizard); `(auth)/` for sign-in, invitation acceptance, password reset; authenticated app under `(app)/` (dashboard, documents, brag editor, profile, settings); workspace admin under `(app)/admin` (role-gated); public share view under `share/[token]`. Mutations via Server Actions validated with Zod; uploads/downloads and share access via Route Handlers.
+- **App structure:** App Router. `/setup` (first-run wizard, private modes only); `(auth)/` for sign-in, **open signup (hosted only)**, invitation acceptance, password reset; authenticated app under `(app)/` (dashboard, documents, brag editor, profile, settings, workspace switcher); workspace admin under `(app)/admin` (role-gated); instance superadmin under `(app)/super` (hosted, superadmin-gated); public share view under `share/[token]`. Mutations via Server Actions validated with Zod; uploads/downloads and share access via Route Handlers.
 - **`INSTANCE_MODE` behavior:**
   - `private-org` → all routes redirect to `/setup` until an organization workspace exists; wizard creates org + owner (SMTP test, optional `SETUP_TOKEN`); then `/setup` is permanently disabled. No public signup; growth via invitations only.
   - `private-solo` → `/setup` creates a single **personal** workspace + owner; no invitation/member UI anywhere; otherwise identical app.
+  - `hosted` → no setup wizard; **open signup** (email verification required) creates a personal workspace per user; any user can later create an organization workspace and invite a team; first instance superadmin seeded via env/CLI.
 - **Invitation flow (organizations):** admins create invitations; invitee gets a branded tokenized email; the registration form is reachable only with a valid, unexpired, unused token and binds the account to the invited email. Email verification is satisfied by construction for invitees (they registered via a link sent to that address).
-- **No public signup:** every instance is invitation-only — accounts come from the setup wizard or an invite, both of which call `auth.api.signUpEmail` server-side; the public sign-up route is blocked. OAuth (if configured) only signs in already-provisioned accounts.
-- **Roles & permissions:** Owner = workspace creator (the setup user); transferable; not demotable/removable by admins. Admins manage branding, members, invitations. Members use the product. **Admins manage the workspace, never members' brag content** — brags are private per user regardless of role.
+- **Open signup (hosted only):** email+password with required verification as the gate; signup rate-limiting and per-workspace storage quotas bound abuse. Disposable-email domains are **blocked by default** (`BLOCK_DISPOSABLE_EMAIL`, on; env-toggle off); per-workspace storage quota defaults to **2 GB** (`WORKSPACE_QUOTA_MB=2048`). OAuth (if configured) may create a personal workspace in `hosted` mode; in private modes OAuth only signs in already-provisioned accounts.
+- **Roles & permissions:** Owner = workspace creator (setup user, or org creator in hosted); transferable; not demotable/removable by admins. Admins manage branding, members, invitations. Members use the product. **Admins manage the workspace, never members' brag content** — brags are private per user regardless of role. The hosted **instance superadmin** manages workspaces/users/quotas for abuse control and likewise never reads brag content.
 - **White-labeling:** name/logo/accent stored on `workspaces`; logo via storage adapter; accent as a validated hex applied through CSS custom properties (Tailwind theme tokens) at the root layout — login, app chrome, share pages, and all emails render the active workspace's branding. Share pages keep a small "Powered by BragBit" footer.
 - **Storage adapter:** one interface (`put/get/delete/stream`); `LocalDiskStorage` (default, `STORAGE_DIR` volume) and `S3Storage` (any S3-compatible endpoint), selected by `STORAGE_DRIVER`. Keys are prefixed per workspace (isolation + quota accounting). Attachments are **never** publicly addressable — streamed through an authorizing route (owner session, or valid share token for shared brags). Org logos and avatars are the deliberate public exceptions.
 - **Sharing security:** token = 16+ random bytes, base64url. Revoke = rotate/delete row. Optional password checked against argon2 hash, success stored in an httpOnly cookie scoped to that share; rate-limit attempts. Share queries filter `visibility = 'shared'` at the query layer so private brags never leak into shared views or exports. Share links work for anyone with the URL (read-only, no login).
-- **Data isolation:** a membership-guard helper wraps every workspace-scoped query; cross-workspace access returns 404. A dedicated test suite (added with Phase 10) asserts no workspace can read another's documents, brags, attachments, search results, or share links.
+- **Data isolation:** a membership-guard helper wraps every workspace-scoped query; cross-workspace access returns 404. A dedicated test suite (added with `hosted`) asserts no workspace can read another's documents, brags, attachments, search results, or share links.
 - **Search:** Postgres FTS — generated `tsvector` over title/description/impact, GIN index, searched across the caller's documents **within the active workspace**.
 - **Email:** required infrastructure (verification, invitations, password reset, reminders). Nodemailer + SMTP env config, React Email templates, workspace-branded. Reminder scheduler: `node-cron` from `instrumentation.ts` in the standalone server (Docker); external cron hitting a secured route as the serverless fallback.
 - **Export:** Markdown first (string assembly, high-trust). PDF via a print-optimized view + optional headless Chromium (`puppeteer-core` against a `browserless/chromium` compose service); graceful fallback to browser print. Exports carry workspace branding.
-- **Instance config:** `INSTANCE_MODE`, `SETUP_TOKEN`, SMTP, storage, OAuth, upload limits — all via env, documented in `.env.example`.
+- **Instance config:** `INSTANCE_MODE`, `SETUP_TOKEN`, `BLOCK_DISPOSABLE_EMAIL`, `WORKSPACE_QUOTA_MB`, SMTP, storage, OAuth, upload limits — all via env, documented in `.env.example`.
 
 ### Layering (the file structure is a security decision)
 
 Three rules:
 1. **`app/` is routing only** — thin files that gate access and delegate to a feature; no business logic, no inline DB queries.
 2. **Code lives in feature modules** grouped by domain (`brag`, `document`, `workspace`, `share`), not by technical type — cohesion over parallel `components/`+`actions/` trees.
-3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through guards (`requireSession` / `requireWorkspace` / `requireRole`) that verify session **and** workspace membership; nothing outside the DAL imports the Drizzle client. This is what makes tenant isolation airtight.
+3. **One hard boundary — the Data Access Layer (DAL).** Every DB read/write passes through guards (`requireSession` / `requireWorkspace` / `requireRole`) that verify session **and** workspace membership; nothing outside the DAL imports the Drizzle client. This is what makes tenant isolation airtight in `hosted` mode.
 
 **Authorization lives in the DAL and server components/layouts, never in middleware** (per Next.js security guidance — middleware does optimistic cookie/mode redirects only). `import 'server-only'` on `lib/db` and queries keeps DB code out of client bundles.
 
@@ -167,13 +171,15 @@ bragbit/
 │  │  ├─ globals.css                    # Tailwind v4 tokens (the "logbook" palette)
 │  │  ├─ setup/                         # first-run wizard (private-org / private-solo)
 │  │  ├─ (auth)/                        # sign-in, reset-password, verify-email,
+│  │  │                                 #   sign-up (mounts only when instance.allowsSignup()),
 │  │  │                                 #   invite/[token] (accept org invitation)
 │  │  ├─ (app)/                         # authenticated + workspace-scoped
 │  │  │  ├─ layout.tsx                  # requireSession() → active workspace → branding
 │  │  │  ├─ dashboard/
 │  │  │  ├─ documents/[documentId]/     # the month-grouped timeline
 │  │  │  ├─ profile/ · settings/
-│  │  │  └─ admin/{branding,members}/   # workspace owner/admin (gated in layout)
+│  │  │  ├─ admin/{branding,members}/   # workspace owner/admin (gated in layout)
+│  │  │  └─ super/                      # instance superadmin (hosted only)
 │  │  ├─ share/[token]/                 # PUBLIC read-only (no session)
 │  │  └─ api/                           # Route Handlers (thin)
 │  │     ├─ auth/[...all]/              # Better Auth
@@ -187,7 +193,7 @@ bragbit/
 │  │  ├─ workspace/   components/  actions.ts  queries.ts  schema.ts   # members, invites, branding
 │  │  ├─ share/       components/  actions.ts  queries.ts  schema.ts
 │  │  ├─ timeline/    components/                                       # month grouping, filters
-│  │  ├─ auth/ · setup/ · export/ · reminder/
+│  │  ├─ auth/ · setup/ · export/ · reminder/ · superadmin/
 │  │
 │  ├─ components/
 │  │  ├─ ui/                            # shadcn primitives
@@ -205,7 +211,7 @@ bragbit/
 │  │  ├─ storage/  index.ts (interface + factory)  local.ts  s3.ts
 │  │  ├─ email/    client.ts (nodemailer)  send.ts
 │  │  ├─ env.ts                         # Zod-validated process.env (fails fast at boot)
-│  │  ├─ instance.ts                    # INSTANCE_MODE helpers: isPrivateOrg(), isPrivateSolo()
+│  │  ├─ instance.ts                    # INSTANCE_MODE helpers: allowsSignup(), isHosted()…
 │  │  └─ utils.ts
 │  │
 │  └─ emails/                           # React Email templates (invitation, verify, reminder…)
@@ -232,7 +238,7 @@ bragbit/
 - **DAL is the security model** — authz in the data layer and server components, not middleware; `server-only` guarantees no DB code in client bundles.
 - **Server Actions for mutations, Route Handlers for HTTP** — forms call `'use server'` actions validated by Zod at the boundary (consider `next-safe-action` / `zsa` for typed ergonomics); Route Handlers only for Better Auth, upload, file streaming, export, cron.
 - **Drizzle schema split by domain**, drizzle-kit migrations run on container start so a fresh deploy self-provisions.
-- **`INSTANCE_MODE` centralized in `lib/instance.ts`** — the same tree serves both modes; mode only decides which routes mount and which setup path runs.
+- **`INSTANCE_MODE` centralized in `lib/instance.ts`** — the same tree serves all three modes; mode only decides which routes mount and which setup path runs.
 - **Storage as a Strategy adapter** behind one interface; **`output: 'standalone'` + `instrumentation.ts`** for the Docker-first / Dokploy story.
 
 ### References
@@ -265,7 +271,7 @@ Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1 — enforced by Lighthouse CI budget
 Documentation is a first-class deliverable, written alongside the code — not deferred to release. Decisions: **repo-native markdown** (`README` + `/docs`), **Keep a Changelog + SemVer**, **Conventional Commits enforced**.
 
 ### Repo-root documents
-- `README.md` — the front door: one-line pitch, hero screenshot, the two modes, feature highlights, a 5-minute quick start (Dokploy + Docker Compose), links into `/docs`, and badges (CI, license, release) + a demo link when available.
+- `README.md` — the front door: one-line pitch, hero screenshot, the three modes, feature highlights, a 5-minute quick start (Dokploy + Docker Compose), links into `/docs`, and badges (CI, license, release) + a demo link when available.
 - `CHANGELOG.md` — Keep a Changelog format, SemVer. An `[Unreleased]` section is updated in every feature/fix PR (Added / Changed / Fixed / Removed / Security); on release it is promoted to a dated version heading.
 - `CONTRIBUTING.md` — local dev setup, the Docker dev stack, branch & PR workflow, the Conventional Commits spec with examples, how to run tests/lint/typecheck, and how to add a changelog entry.
 - `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1.
@@ -275,9 +281,9 @@ Documentation is a first-class deliverable, written alongside the code — not d
 
 ### `/docs` (operator · user · contributor guides)
 - `docs/self-hosting/` — deployment guides: **Dokploy** (the reference), generic Docker Compose, and a Vercel + managed-Postgres variant; plus backup/restore and upgrade notes.
-- `docs/configuration.md` — the full environment-variable reference (`INSTANCE_MODE`, `SETUP_TOKEN`, SMTP, storage driver + S3, OAuth, upload limits).
-- `docs/instance-modes.md` — `private-org` vs `private-solo`, with the workspace/tenancy model explained for operators.
-- `docs/admin-guide.md` — workspace owner/admin tasks (branding, members, invitations).
+- `docs/configuration.md` — the full environment-variable reference (`INSTANCE_MODE`, `SETUP_TOKEN`, SMTP, storage driver + S3, OAuth, `BLOCK_DISPOSABLE_EMAIL`, `WORKSPACE_QUOTA_MB`, upload limits).
+- `docs/instance-modes.md` — `private-org` vs `private-solo` vs `hosted`, with the workspace/tenancy model explained for operators.
+- `docs/admin-guide.md` — workspace owner/admin tasks (branding, members, invitations) and the hosted instance-superadmin console.
 - `docs/user-guide.md` — using BragBit: documents, the quick-add flow, tags, sharing, export.
 - `docs/architecture.md` — the layering, file structure, and DAL boundary (kept in sync with §6).
 - `docs/api.md` — REST API reference (added with the v2 API).
@@ -289,7 +295,7 @@ Documentation is a first-class deliverable, written alongside the code — not d
 - **PR template checklist** includes "updated `CHANGELOG.md [Unreleased]`" and "updated relevant `/docs`"; a light CI check flags app-code PRs that touch neither.
 
 ### Release process
-SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the commit, and publish GitHub release notes from that section. `0.x` until the modes and API stabilize; `1.0.0` once the core is stable.
+SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the commit, and publish GitHub release notes from that section. `0.x` until the modes and API stabilize; `1.0.0` once the hosted mode and core are stable.
 
 ## 8. Phases & todos
 
@@ -319,12 +325,12 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] `/setup` first-run wizard (private modes): `private-org` → org workspace + owner (SMTP test, optional `SETUP_TOKEN`); `private-solo` → personal workspace + owner (no invite UI). Wizard disabled once a workspace exists; all routes redirect to it before then
 - [x] Invitation flow (organizations): admin invites email + role → branded tokenized email (7-day, single-use) → registration bound to invited email → member/admin created — _invite email + accept flow built & verified end-to-end; the admin invite UI lands in Phase 2_
 - [x] **Required email verification** (satisfied by invite link for invitees); password reset — _verification enforced + sign-in / forgot-password / reset / verify-email pages; the invitee-link-satisfies-verification part lands with invitations_
-- [x] Optional GitHub/Google OAuth via env — sign-in for existing accounts — _`socialProviders` configured only when a provider's id+secret are set; account linking lets a verified user attach an identity; `disableSignUp` blocks creating a new user from an unrecognized OAuth identity. Sign-in page shows a provider button only when configured; verified the GitHub authorize-URL wiring + the no-creds path._
+- [x] Optional GitHub/Google OAuth via env — sign-in for existing accounts in private modes; may create a personal workspace in `hosted` — _`socialProviders` configured only when a provider's id+secret are set; account linking lets a verified user attach an identity; `disableSignUp` in private modes blocks creating a new user from an unrecognized OAuth identity (hosted account-→-workspace provisioning lands in Phase 10). Sign-in page shows a provider button only when configured; verified the GitHub authorize-URL wiring + the no-creds path._
 - [x] Membership-guard helper for workspace-scoped queries (the isolation foundation)
 - [x] Resolve the active workspace on sign-in — set `session.activeOrganizationId` so `requireWorkspace` works after a plain sign-in (trivial for `private-solo`: the user's sole membership). _Done via a `databaseHooks.session.create.before` hook that pins the caller's earliest membership; verified a plain email/password sign-in now lands a session with the active org set._
 - [x] Profile: display name, role title, team, bio, avatar upload (build `LocalDiskStorage` here) — _`profiles` table + feature module; `LocalDiskStorage` (put/get/delete/stream, traversal-guarded) behind the storage adapter (`S3Storage` deferred to Phase 4); avatar upload route + an authorizing `/api/files/[...key]` stream (avatars-only, membership-gated in Phase 1). `display_name` mirrors to Better Auth `user.name`._
 - [x] Account settings: change email/password (re-verify on email change), delete account (cascades own data) — _Better Auth `changeEmail` (verified users confirm from their current inbox), `changePassword` (revokes other sessions), and `deleteUser` with a `beforeDelete` that also drops the sole-member workspace and the avatar file (neither cascades from the user row)._
-- [x] Tests: invitation expiry/reuse, registration impossible without a valid token (private-org), personal mode exposes no invite/member surface — _the security predicates are extracted pure and unit-tested (CI runs Vitest without a DB): `isAcceptableInvitation` (expiry + single-use, wired into the accept-page query) and `modeCapabilities` (private-org has no open signup → invite-token-only registration; private-solo hides the invite/member surface)._
+- [x] Tests: invitation expiry/reuse, registration impossible without a valid token (private-org), personal mode exposes no invite/member surface — _the security predicates are extracted pure and unit-tested (CI runs Vitest without a DB): `isAcceptableInvitation` (expiry + single-use, wired into the accept-page query) and `modeCapabilities` (private-org has no open signup → invite-token-only registration; private-solo hides the invite/member surface; hosted opens signup)._
 - [x] Write up the Phase 1 `/docs` before closing the phase: `user-guide` (sign-up / verify / sign-in / password reset), `admin-guide` (invitations), `architecture` (auth + the DAL guards) — _`user-guide` covers getting in (sign-in, OAuth, verification, reset) + profile/account; `admin-guide` covers roles + the invitation model (noting the admin UI is Phase 2); `architecture` documents the Better Auth + workspace/tenancy model, the active-workspace session hook, OAuth, and the two DAL guard flavors._
 
 ### Phase 2 — Workspace administration & white-labeling *(v1)*
@@ -375,12 +381,12 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 > **Status: complete for v1 (2026-06-15).** Timeline (5.1), tags (5.2), search (5.3),
 > filters (5.4), the expand-to-detail view (5.5), and the responsive +
 > loading/error/not-found polish (5.6) are done and committed. The one open item —
-> cursor pagination — is **deferred to v1.1** (rationale on its item below; tracked
-> in Phase 10).
+> cursor pagination — was deferred to v1.1 and **shipped in Phase 10** (2026-06-21;
+> rationale on its item below, delivery noted on the §10 item).
 
 - [x] Document timeline view: reverse-chronological, **grouped by month** with sticky month headers; cards show title, date, category badge, tags, impact highlight, attachment/link indicators — _slice 5.1: `features/timeline` groups a document's brags by month (sticky headers + per-month counts) along a vertical spine; cards show date, category badge, impact highlight, and link/attachment chips. Tag chips landed in slice 5.2._
 - [x] Card rendering details: 8 category colors (label-paired); **timeline node = status only** (solid accent = shipped · hollow = in-progress) + an "In progress" pill; **private = card treatment** (dashed border + hatch + "Private" badge), not a node ring; links (external-link icon) vs attachments (paperclip + filename) as distinct chips (size in the detail view) — _slice 5.1: the status-only node (solid/hollow) sits on the spine; the "In progress" pill, the dashed/hatched private treatment + "Private" badge, the 8 label-paired category colors, and the distinct link/attachment chips are all in (most shipped with the brag card in Phase 3). Attachment size shows in the editor manager; a read-only detail view is later._
-- [ ] Cursor pagination by date (month-windowed loading) so year-long documents stay fast; DB indexes for timeline order + FTS — _DB indexes **done** (timeline `brags(document_id, date)` in 3.1; the FTS GIN in 5.3). **Cursor pagination deferred to v1.1** (tracked in Phase 10). Rationale:_
+- [x] Cursor pagination by date (month-windowed loading) so year-long documents stay fast; DB indexes for timeline order + FTS — _DB indexes **done** (timeline `brags(document_id, date)` in 3.1; the FTS GIN in 5.3). **Cursor pagination shipped in v1.1 / Phase 10** (2026-06-21 — see §10 item 9). It was deferred from v1 for the reasons below; the enabling index made it a clean additive follow-up:_
   - _**No functional gap.** The document timeline already renders a document's full brag set in one server pass — ordered via the `(document_id, date)` index, with links/attachments/tags loaded in a few batched queries (no N+1). Every brag is already shown; pagination is a pure performance optimization, not a missing feature._
   - _**Realistic sizes are small.** A brag document is a personal log scoped to one user + one review period; even a heavy year is tens of entries, not thousands. The server-rendered HTML payload scales linearly with brag count, so it only becomes a concern in the hundreds — an edge case for v1's self-host / solo users._
   - _**Real added complexity.** Month-windowed cursor loading means a cursor query **plus** a "load more" client boundary that has to stay correct across three things v1 just built: the month grouping + sticky headers, the gap-month markers, and the category/tag/date filters (each filter changes the window). That's meaningful surface to get right and test._
@@ -454,22 +460,27 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [x] Demo seed script (demo workspace + user + sample "2026" document) — _slice 9.3: `scripts/seed-demo.mjs` + `pnpm seed:demo` seeds a personal "Riley's Logbook" workspace, an owner (`demo@bragbit.local` / `demobragbit`, email pre-verified), and a "2026" document with 5 varied brags (shipped + in-progress, shared + private, a recognition quote with attribution, collaborators, links, and tags). Raw SQL via the `postgres` driver + Better Auth's password hasher (no app modules, like the e2e seed), idempotent by fixed ids. Verified: seeds cleanly and re-runs identically, the demo user signs in (Better Auth → 200), and the generated FTS vector populates._
 - [x] Cut **`v0.1.0`**: promote `CHANGELOG.md [Unreleased]` → dated `0.1.0` section, tag the commit, publish GitHub release notes; make the repo public — _slice 9.6: filled the publish-time placeholders (`hamedafarag/bragbit`, `@hamedafarag`, and the conduct/security contact `hamed@wakecap.com`); promoted `CHANGELOG [Unreleased]` → `## [0.1.0] - 2026-06-15`; tagged `v0.1.0` (annotated). Pushed `main` + the tag to a **private** `hamedafarag/bragbit` repo and drafted the release from the changelog notes. Making the repo public is the maintainer's final manual flip (then uncomment the README CI/release badges). Release gate green: typecheck · lint · build · size (398.71 kB) · test · markdownlint · lychee._
 
-### Phase 10 — Hosted multi-tenant mode *(v1.1)*
+### Phase 10 — Hosted multi-tenant mode *(v1.1 fast-follow)*
 
-> **Developed on the `phase-10/hosted-multitenant` branch — not part of `main`.** `main` ships the
-> two private (self-host) modes only: `INSTANCE_MODE` there is `private-org` | `private-solo`, and
-> the `hosted` mode, its abuse controls, and the superadmin console live on that branch.
+> **Status: complete (2026-06-22).** All ten §10 items shipped on
+> `phase-10/hosted-multitenant` as single-commit slices: open signup → personal
+> workspaces, user-created organizations, the workspace switcher, the `/super`
+> superadmin console, the shared (Postgres) rate-limit store, quota +
+> disposable-email abuse controls, per-workspace branding (verified), the
+> cross-workspace data-isolation suite, timeline cursor pagination, and the
+> public-hosting docs. Cut as **v1.1.0** — tagged on the branch; `main` stays at
+> v0.1.x per the no-PR workflow.
 
-- [ ] `INSTANCE_MODE=hosted`: **open signup** page with required email verification; each signup → a personal workspace
-- [ ] **User-created organizations:** any user can create an org workspace (becomes owner) and invite a team — reuses the Phase 1–2 invitation/admin/branding flows
-- [ ] Workspace switcher for users in multiple workspaces (personal + orgs)
-- [ ] **Instance superadmin** (`/super`, seeded via env/CLI): list/suspend workspaces & users, view signups, set per-workspace storage quotas — never exposes brag content
-- [ ] Abuse controls: signup rate-limiting, per-workspace storage quota enforcement (default 2 GB, `WORKSPACE_QUOTA_MB`), disposable-email blocking on by default (`BLOCK_DISPOSABLE_EMAIL`)
-- [ ] Per-workspace branding verified on a shared instance (orgs self-brand; personal uses instance default)
-- [ ] **Data-isolation test suite:** cross-workspace access to documents/brags/attachments/search/share-links must fail
-- [ ] Docs: "Hosting BragBit publicly" (the Dokploy public-instance guide), quota/abuse tuning
-- [ ] **Timeline cursor pagination** (month-windowed loading) — deferred from Phase 5; only matters once a document holds hundreds of brags, which is far likelier on long-lived hosted accounts than on a fresh self-host. The `brags(document_id, date)` index already exists, so this is additive: a cursor query plus a "load more" boundary that stays correct across month grouping, gap markers, and the timeline filters. (Full rationale on the Phase 5 item.)
-- [ ] Tag the `hosted` release
+- [x] `INSTANCE_MODE=hosted`: **open signup** page with required email verification; each signup → a personal workspace — _2026-06-21: public `/sign-up` page + form (hosted-gated; redirects to sign-in in the private modes), wired to Better Auth's existing required-verification flow. A `user.create.after` hook (`features/workspace/provisioning`) gives every new hosted account — email/password, OAuth, or an accepted invite — its own `personal` workspace + owner membership (direct inserts, no nested txn). Covered by a DB-gated provisioning unit test, a jsdom form test, and a new hosted-mode e2e harness (`playwright.hosted.config.ts` + `tests/e2e-hosted`, its own `INSTANCE_MODE=hosted` DB) wired into CI._
+- [x] **User-created organizations:** any user can create an org workspace (becomes owner) and invite a team — reuses the Phase 1–2 invitation/admin/branding flows — _2026-06-21: `createOrganizationWorkspace` action (hosted-gated by `allowsOrgCreation`) reuses Better Auth's `createOrganization` (the session makes the caller the owner) + `setActiveOrganization` to switch in; slug is uniquified from the name. A `/organizations/new` page + form, reached from a hosted-only "New org" header link. The Phase 1–2 invite/admin/branding flows are unchanged and now usable in any org the user owns. Covered by DB-gated action tests (incl. the slug-collision branch), a jsdom form test, and a hosted e2e (sign in → create org → owner)._
+- [x] Workspace switcher for users in multiple workspaces (personal + orgs) — _2026-06-21: a header switcher (`WorkspaceSwitcher`, a Dialog) lists every workspace the caller belongs to (`listUserWorkspaces`, personal-first, active marked) and switches via the `switchWorkspace` action (membership-checked → `setActiveOrganization` → a refresh re-scopes/re-themes the app). Hosted-only (the private modes have one workspace); it also absorbs the "Create organization" entry. Covered by a DB-gated query test, action tests (member + non-member), a jsdom switcher test, and a hosted e2e (sign in → switch personal→org)._
+- [x] **Instance superadmin** (`/super`, seeded via env/CLI): list/suspend workspaces & users, view signups, set per-workspace storage quotas — never exposes brag content — _2026-06-21: `SUPERADMIN_EMAILS` allowlist (`src/lib/super.ts`) + `requireSuperadmin` guard (404s everyone else). `/super` (outside the (app) group, no workspace needed) lists workspaces (member count, quota, suspension) + accounts/signups with suspend toggles + per-workspace quota inputs — metadata ONLY, proven by a no-brag-content query test. Suspension columns (`organization.suspendedAt`, `user.suspendedAt`, `organization.storageQuotaMb`, migration 0008) enforced in the single (app) gate (`getActiveWorkspace` → `/suspended`). Covered by super query/action tests, the suspension-bounce test, jsdom control tests, and a hosted e2e (superadmin suspends a workspace; a non-superadmin gets 404). (Quota *enforcement* on uploads lands with the abuse-controls slice.)_
+- [x] Abuse controls: signup rate-limiting, per-workspace storage quota enforcement (default 2 GB, `WORKSPACE_QUOTA_MB`), disposable-email blocking on by default (`BLOCK_DISPOSABLE_EMAIL`) — _2026-06-21: **signup rate-limiting** via Better Auth's built-in limiter on the now-shared store (PR6/ENH-SEC-02). **Quota enforcement** on the attachment upload route (`features/workspace/quota`: effective quota = a `/super` per-workspace override or `WORKSPACE_QUOTA_MB`; hosted-only → 413 when over). **Disposable-email blocking** at signup via a `user.create.before` hook (`lib/disposable-email` — a curated embedded blocklist, since this env can't `pnpm add` the maintained package; gated by `BLOCK_DISPOSABLE_EMAIL` + hosted). Covered by DB-gated quota + disposable unit tests and a hosted e2e (disposable signup rejected; over-quota upload → 413)._
+- [x] Per-workspace branding verified on a shared instance (orgs self-brand; personal uses instance default) — _2026-06-21: verified by a hosted e2e (`tests/e2e-hosted/branding.spec.ts`) — one user in two differently-branded orgs + a personal workspace; the (app) layout applies the active workspace's accent via the `--primary` CSS var (`accentVars`, already unit-tested), so switching re-themes the app (orgs use their `accent_color`; the personal workspace falls back to the instance default `#e8590c`). No code change — the schema is per-workspace from day one. Share-page brand is covered by the share-security tests._
+- [x] **Data-isolation test suite:** cross-workspace access to documents/brags/attachments/search/share-links must fail — _2026-06-21: `src/test/data-isolation.test.ts` seeds two independent workspaces and drives the real queries / server actions / route handlers as one owner against the other's resources, asserting every cross-tenant path fails (documents · brags · full-text search · attachments · share-links owner-ops & public-token · export · the `/api/files` & `/api/export` routes · dashboard activity), each paired with an owner positive control so no deny passes vacuously. DB-gated (`describe.skipIf(!hasDb)`), proven against Postgres; lifted the `src/features` ratchet floor to 82/74/81/83 and global to 41/31/42/41._
+- [x] Docs: "Hosting BragBit publicly" (the Dokploy public-instance guide), quota/abuse tuning — _2026-06-22: `docs/self-hosting/public-instance.md` (linked from the self-hosting index) — a narrative hosted-mode guide that builds on the Compose/Dokploy deploys: switch to `INSTANCE_MODE=hosted` (no `/setup` — open signup + required verification), appoint superadmins via `SUPERADMIN_EMAILS`, tune the abuse controls (`WORKSPACE_QUOTA_MB` + per-workspace `/super` override, `BLOCK_DISPOSABLE_EMAIL`, `MAX_UPLOAD_MB`, the Postgres-backed shared signup limiter + `TRUSTED_PROXY_IP_HEADER`), operate the metadata-only `/super` console (suspend/quota), and the multi-container scaling + per-workspace branding notes. Cross-links to `instance-modes.md` / `configuration.md` / `admin-guide.md` rather than duplicating the variable tables._
+- [x] **Timeline cursor pagination** (month-windowed loading) — deferred from Phase 5; only matters once a document holds hundreds of brags, which is far likelier on long-lived hosted accounts than on a fresh self-host. The `brags(document_id, date)` index already exists, so this is additive: a cursor query plus a "load more" boundary that stays correct across month grouping, gap markers, and the timeline filters. (Full rationale on the Phase 5 item.) — _2026-06-21: `listBragsPage` windows a document's brags by whole months (newest-first) until ~30, always stopping on a month boundary so "load more" never splits a month header. The owner timeline server-renders the first page; a client island (`LoadMoreTimeline`) appends older pages via the `loadMoreTimeline` action using the **same** shared `TimelineChunk` (no card divergence, owner editor stays out of the existing bundle). A `prevMonthKey` carries the previous page's oldest month so the quiet-month marker spanning the boundary stays correct; changing a filter remounts the island back to page one. Additive — the index already existed, no migration. Covered by a DB-gated query suite (the cursor chain equals the unwindowed `listBrags` exactly; a heavy single month is never split; filters narrow the window), jsdom tests (the chunk's leading/internal gaps; the island's append/empty/error-toast), and a standard e2e (16 June + 16 May fill page one; March loads on "Load more" with the quiet April between them marked, no duplicate June header)._
+- [x] Tag the `hosted` release — _2026-06-22: cut **v1.1.0** on `phase-10/hosted-multitenant`. The no-PR phase workflow keeps the work on the branch, so (maintainer's call) the tag lives on the branch and `main` stays at v0.1.x. Promoted CHANGELOG `[Unreleased]` → `## [1.1.0] - 2026-06-22`, bumped `package.json` to 1.1.0, annotated-tagged `v1.1.0` on the branch and pushed it. **Phase 10 complete.**_
 
 ### Phase 11 — v2 backlog (explicitly later)
 - [ ] REST API + personal access tokens → CLI/shell-alias/Slack-bridge/**MCP-connector** capture (the community's strongest pattern)
@@ -515,7 +526,7 @@ All planning open-questions are now decided:
 5. A user exports a document to Markdown and walks away with everything.
 6. In `private-org`, nobody can create an account without an invitation — verified by tests.
 
-**v1.1 (hosted — on the `phase-10/hosted-multitenant` branch):**
+**v1.1 (hosted):**
 7. A freelancer signs up on our hosted instance, verifies their email, lands in a personal workspace, and logs their first brag — no admin involvement.
 8. A user creates an organization on the hosted instance and invites a teammate, who joins successfully.
 9. Data isolation is proven by tests: no workspace can read another workspace's data through any surface.

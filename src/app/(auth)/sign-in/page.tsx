@@ -1,5 +1,8 @@
+import Link from "next/link";
+
 import { OAuthButtons } from "@/features/auth/components/oauth-buttons";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
+import { isHosted } from "@/lib/instance";
 import { configuredOAuthProviders } from "@/lib/oauth";
 
 // Where Better Auth's mcp plugin serves the OAuth authorize endpoint.
@@ -51,6 +54,15 @@ export default async function SignInPage({
 
       <SignInForm redirectTo={resumeUrl ?? undefined} />
       <OAuthButtons providers={providers} callbackURL={resumeUrl ?? undefined} />
+
+      {isHosted() ? (
+        <p className="mt-6 text-center text-[12.5px] text-ink-soft">
+          New to BragBit?{" "}
+          <Link href="/sign-up" className="font-medium text-ink underline-offset-2 hover:underline">
+            Create an account
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }
