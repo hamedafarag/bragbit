@@ -12,8 +12,8 @@ developers. Log your wins all year (a "brag" takes under 30 seconds), organize t
 manager before review time.
 
 > **Early release (`0.x`).** The self-host path — a one-command Docker stack with automatic
-> migrations and complete docs — is ready. Tracking the current release, `v0.1.1`; the hosted
-> multi-tenant mode is the v1.1 fast-follow. See [PLAN.md](PLAN.md).
+> migrations and complete docs — is ready. Tracking the current release, `v0.1.1`; multi-tenant
+> hosting (v1.1) is developed on the `phase-10/hosted-multitenant` branch. See [PLAN.md](PLAN.md).
 
 ## Why
 
@@ -41,11 +41,10 @@ A static preview of the interface (the "engineering logbook" design language) is
 
 ## Deployment modes
 
-| Mode           | Who runs it                    | Accounts                        | Ships |
-| -------------- | ------------------------------ | ------------------------------- | ----- |
-| `private-org`  | a company self-hosting         | setup wizard + invitations      | v1    |
-| `private-solo` | a freelancer self-hosting      | setup wizard                    | v1    |
-| `hosted`       | a shared multi-tenant instance | open signup + user-created orgs | v1.1  |
+| Mode           | Who runs it               | Accounts                   | Ships |
+| -------------- | ------------------------- | -------------------------- | ----- |
+| `private-org`  | a company self-hosting    | setup wizard + invitations | v1    |
+| `private-solo` | a freelancer self-hosting | setup wizard               | v1    |
 
 See [Instance modes](docs/instance-modes.md) for the tenancy model.
 
@@ -90,7 +89,7 @@ shadcn/ui · Zod. The architecture and the data-access security model are in
 
 - [Self-hosting](docs/self-hosting/) — Docker Compose, Dokploy, Vercel/Neon, backup & upgrades
 - [Configuration](docs/configuration.md) — every environment variable
-- [Instance modes](docs/instance-modes.md) — `private-org` vs `private-solo` vs `hosted`
+- [Instance modes](docs/instance-modes.md) — `private-org` vs `private-solo`
 - [User guide](docs/user-guide.md) · [Admin guide](docs/admin-guide.md)
 - [Architecture](docs/architecture.md)
 

@@ -54,14 +54,13 @@ capability mapping is a pure function in `lib/instance-modes.ts`, bound to the r
 - **Invitations** are tokenized, single-use, expire after `INVITATION_TTL_DAYS` (default 7), and bind
   registration to the invited email (acceptability is the pure, unit-tested `isAcceptableInvitation`);
   see the [Admin guide](admin-guide.md).
-- **Invitation-only sign-up.** In the private modes accounts are created only by the setup wizard and
-  invitation-accept, which call `auth.api.signUpEmail` server-side. The public `POST
-/api/auth/sign-up/email` route is blocked in the catch-all auth handler (and OAuth uses
-  `disableSignUp`), so a stranger can neither create an account nor make the instance relay a
-  verification email; hosted mode keeps open sign-up.
+- **Invitation-only sign-up.** Accounts are created only by the setup wizard and invitation-accept,
+  which call `auth.api.signUpEmail` server-side. The public `POST /api/auth/sign-up/email` route is
+  blocked in the catch-all auth handler (and OAuth uses `disableSignUp`), so a stranger can neither
+  create an account nor make the instance relay a verification email.
 - **OAuth (optional).** GitHub/Google are enabled per provider via env. Account linking lets a
-  verified user attach an identity; in the private modes `disableSignUp` means OAuth only signs in
-  already-provisioned accounts — it never creates one, preserving invitation-only.
+  verified user attach an identity; `disableSignUp` means OAuth only signs in already-provisioned
+  accounts — it never creates one, preserving invitation-only.
 - **Profiles.** A per-user `profiles` row (display name, role title, team, bio, avatar key; the
   reminder fields are reserved for Phase 8) is read/written through `features/profile`; the display
   name mirrors to Better Auth `user.name`.
@@ -75,9 +74,8 @@ and `invitation`. BragBit adds `profiles` and the brag domain: `documents` (work
 scoped), `brags` (scoped through their parent document — no direct workspace column), `brag_links`,
 `tags` (unique per user per workspace), the `brag_tags` join, `attachments` (file metadata +
 storage key, scoped through their brag), and `share_links` (revocable public links to a document —
-unique token, optional password hash). Still to come: `instance_admins` (Phase 10) — see
-[PLAN.md §5](../PLAN.md) for the full target model. Every workspace-scoped query filters by the
-caller's membership through the DAL.
+unique token, optional password hash). See [PLAN.md §5](../PLAN.md) for the full data model. Every
+workspace-scoped query filters by the caller's membership through the DAL.
 
 ## Documents
 
@@ -155,7 +153,7 @@ byte range, for ranged downloads) — selected by `STORAGE_DRIVER`. `LocalDiskSt
 writes objects under `STORAGE_DIR` and rejects any key that escapes the root; `S3Storage`
 (`@aws-sdk/client-s3`) targets any S3-compatible endpoint — MinIO/R2/S3 — with path-style
 addressing on by default for MinIO. Keys are workspace-prefixed (`{workspaceId}/{kind}/…`) for
-isolation and quota accounting.
+isolation.
 
 Files upload through role-checked Route Handlers (`/api/upload/avatar`, `/api/upload/logo`) and are
 served by an authorizing one (`/api/files/[...key]`):
@@ -334,6 +332,6 @@ Rate limiting guards the credential surfaces:
 
 All three share the single-process in-memory limiter, consistent with the single-container v1
 deployment; a shared store (Better Auth's `secondaryStorage` / a Redis-backed `lib/rate-limit`) is
-the multi-instance upgrade for hosted mode. Per-client limiting keys on the client IP, which Better
-Auth reads from `X-Forwarded-For` by default — accurate behind the reference reverse proxy;
+the multi-instance upgrade. Per-client limiting keys on the client IP, which Better Auth reads from
+`X-Forwarded-For` by default — accurate behind the reference reverse proxy;
 `TRUSTED_PROXY_IP_HEADER` overrides the header for a proxy that uses a different one.

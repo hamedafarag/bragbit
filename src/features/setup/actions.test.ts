@@ -1,5 +1,5 @@
 // DB-gated tests for the first-run setup action (ENH-TEST L2-3). completeSetup's
-// guard ladder (hosted / validation / setup-token / already-setup) is covered
+// guard ladder (validation / setup-token / already-setup) is covered
 // directly; the create-owner-and-workspace path delegates to Better Auth's
 // `auth.api.*` (stubbed). `isInstanceSetup` is a GLOBAL check (any org in the DB),
 // which is non-deterministic under the parallel DB-gated suites, so it's mocked
@@ -18,7 +18,6 @@ const api = vi.hoisted(() => ({
   createOrganization: vi.fn(),
 }));
 const instance = vi.hoisted(() => ({
-  isHosted: vi.fn(() => false),
   isPrivateSolo: vi.fn(() => true),
 }));
 const setupQueries = vi.hoisted(() => ({ isInstanceSetup: vi.fn(async () => false) }));
@@ -49,7 +48,6 @@ describe.skipIf(!hasDb)("completeSetup", () => {
   });
   beforeEach(() => {
     vi.clearAllMocks();
-    instance.isHosted.mockReturnValue(false);
     instance.isPrivateSolo.mockReturnValue(true);
     setupQueries.isInstanceSetup.mockResolvedValue(false);
   });
@@ -60,14 +58,6 @@ describe.skipIf(!hasDb)("completeSetup", () => {
     ).__bragbitClient
       ?.end?.({ timeout: 5 })
       .catch(() => {});
-  });
-
-  it("refuses to run on a hosted instance", async () => {
-    instance.isHosted.mockReturnValue(true);
-    expect(await mod.completeSetup(VALID)).toEqual({
-      ok: false,
-      error: "Setup is not available on this instance.",
-    });
   });
 
   it("rejects invalid input", async () => {

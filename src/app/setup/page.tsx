@@ -1,16 +1,15 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { SetupForm } from "@/features/setup/components/setup-form";
 import { isInstanceSetup } from "@/features/setup/queries";
 import { env } from "@/lib/env";
-import { instanceMode, isHosted } from "@/lib/instance";
+import { instanceMode } from "@/lib/instance";
 
-// First-run wizard. Private modes only; closes permanently once a workspace exists.
+// First-run wizard. Closes permanently once a workspace exists.
 export default async function SetupPage() {
-  if (isHosted()) notFound();
   if (await isInstanceSetup()) redirect("/");
 
-  const mode = instanceMode as "private-org" | "private-solo";
+  const mode = instanceMode;
 
   return (
     <main className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">

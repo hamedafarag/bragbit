@@ -12,7 +12,6 @@ How you first get an account depends on how the instance is run (see
 - **Self-hosted, organization (`private-org`)** — an admin invites you by email (see the
   [Admin guide](admin-guide.md)). Open the invitation link, set your name and a password, and you're
   in. There is no open sign-up.
-- **Hosted (a shared instance)** — open sign-up with email verification (ships in v1.1).
 
 ### Signing in
 

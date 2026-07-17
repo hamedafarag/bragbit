@@ -8,7 +8,6 @@ import { isAcceptableInvitation } from "@/features/invitation/validity";
 import { requireRole, requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { invitation, member, organization, session, user } from "@/lib/db/schema";
-import { isHosted } from "@/lib/instance";
 
 export type Workspace = typeof organization.$inferSelect;
 
@@ -49,13 +48,10 @@ export async function getActiveWorkspace() {
 }
 
 /**
- * Branding for the pre-auth surfaces (the login pages). The private modes have
- * exactly one workspace, so its brand reads as instance-wide. On a hosted
- * instance there are many workspaces and no active one before sign-in, so login
- * uses the BragBit default (null) and per-workspace branding applies post-auth.
+ * Branding for the pre-auth surfaces (the login pages). An instance has exactly
+ * one workspace, so its brand reads as instance-wide.
  */
 export async function getInstanceBranding(): Promise<WorkspaceBrand | null> {
-  if (isHosted()) return null;
   // Live per-instance branding — defer out of prerendering (like isInstanceSetup)
   // so the production image builds with no database reachable.
   await connection();
