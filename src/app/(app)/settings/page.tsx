@@ -4,6 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { ChangeEmailForm } from "@/features/account/components/change-email-form";
 import { ChangePasswordForm } from "@/features/account/components/change-password-form";
 import { DeleteAccountForm } from "@/features/account/components/delete-account-form";
+import { ConnectedApps } from "@/features/oauth-clients/components/connected-apps";
+import { listConnectedApps } from "@/features/oauth-clients/queries";
 import { getProfile } from "@/features/profile/queries";
 import { ReminderSettingsForm } from "@/features/reminder/components/reminder-settings-form";
 import { getActiveWorkspace } from "@/features/workspace/queries";
@@ -11,6 +13,7 @@ import { getActiveWorkspace } from "@/features/workspace/queries";
 export default async function SettingsPage() {
   const { user, workspace } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
+  const connectedApps = await listConnectedApps(user.id);
 
   return (
     <div className="flex flex-col gap-8">
@@ -69,6 +72,15 @@ export default async function SettingsPage() {
           <Download className="size-3.5" aria-hidden />
           Download JSON
         </a>
+      </section>
+
+      <section className="rounded-xl border border-line bg-card p-6 shadow-card">
+        <h2 className="mb-1 font-serif text-lg font-semibold">Connected apps</h2>
+        <p className="mb-5 text-[13px] text-ink-soft">
+          AI assistants you&apos;ve authorized to log brags on your behalf through the MCP
+          connector. Revoking an app invalidates its access immediately.
+        </p>
+        <ConnectedApps apps={connectedApps} />
       </section>
 
       <section className="rounded-xl border border-dashed border-destructive/40 bg-card p-6 shadow-card">
