@@ -1,10 +1,16 @@
+import { cookies } from "next/headers";
+
 import { Button } from "@/components/ui/button";
 import { buildActivity, windowStart } from "@/features/dashboard/activity";
 import { ActivityHeatmap } from "@/features/dashboard/components/activity-heatmap";
 import { getActivityCounts } from "@/features/dashboard/queries";
+import { DashboardCapture } from "@/features/brag/components/dashboard-capture";
 import { DocumentCard } from "@/features/document/components/document-card";
 import { DocumentDialog } from "@/features/document/components/document-dialog";
 import { listArchivedDocuments, listDocuments } from "@/features/document/queries";
+import { ConnectHint } from "@/features/mcp/components/connect-hint";
+import { hasConnectedApp } from "@/features/oauth-clients/queries";
+import { isMcpHintDismissed, MCP_HINT_COOKIE } from "@/lib/mcp/hint";
 
 const ACTIVITY_WEEKS = 52;
 
@@ -18,12 +24,18 @@ function todayYmd(): string {
 // and scope to the user.
 export default async function DashboardPage() {
   const today = todayYmd();
-  const [documents, archived, activityCounts] = await Promise.all([
+  const [documents, archived, activityCounts, connected, cookieStore] = await Promise.all([
     listDocuments(),
     listArchivedDocuments(),
     getActivityCounts(windowStart(today, ACTIVITY_WEEKS)),
+    hasConnectedApp(),
+    cookies(),
   ]);
   const activity = buildActivity(activityCounts, today, ACTIVITY_WEEKS);
+  // The connector is invisible otherwise; nudge once, unless they've already
+  // connected something or waved it away. Decided here so it never flashes.
+  const showConnectHint =
+    !connected && !isMcpHintDismissed(cookieStore.get(MCP_HINT_COOKIE)?.value);
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,7 +52,13 @@ export default async function DashboardPage() {
         {documents.length > 0 ? <DocumentDialog trigger={<Button>New document</Button>} /> : null}
       </header>
 
+      {documents.length > 0 ? (
+        <DashboardCapture documents={documents.map((d) => ({ id: d.id, title: d.title }))} />
+      ) : null}
+
       {activity.totalWins > 0 ? <ActivityHeatmap data={activity} /> : null}
+
+      {showConnectHint ? <ConnectHint /> : null}
 
       {documents.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line bg-card/60 px-6 py-14 text-center shadow-card">

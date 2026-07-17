@@ -1,24 +1,83 @@
 "use client";
 
-import { useTransition } from "react";
+import { Check, Copy } from "lucide-react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { describeScope } from "@/lib/mcp/scopes";
 
 import { revokeConnectedApp } from "../actions";
 import type { ConnectedApp } from "../queries";
 
-/** Settings → Connected apps: the AI clients the user has authorized, with revoke. */
-export function ConnectedApps({ apps }: { apps: ConnectedApp[] }) {
-  if (apps.length === 0) {
-    return (
-      <p className="text-[13px] text-ink-soft">
-        No apps connected yet. Connect your AI assistant (Claude Desktop, or any MCP client) to log
-        wins without leaving your chat.
-      </p>
-    );
+/**
+ * How to connect, shown when nothing is authorized yet. The instance URL is the
+ * only thing a client needs (it discovers the rest and runs the OAuth flow), so
+ * hand it over ready to copy rather than describing it.
+ */
+function ConnectSteps({ instanceUrl }: { instanceUrl: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    await navigator.clipboard.writeText(instanceUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
+
+  return (
+    <div>
+      <p className="text-[13px] text-ink-soft">
+        Nothing connected yet. Add BragBit to Claude — or any MCP client — and log wins without
+        leaving your chat.
+      </p>
+      <ol className="mt-4 flex flex-col gap-3 text-[13px] text-ink-soft">
+        <li>
+          <span className="font-medium text-ink">1.</span> In your assistant, add a custom connector
+          with this URL:
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              readOnly
+              value={instanceUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="font-mono text-[12px]"
+              aria-label="Your BragBit instance URL"
+            />
+            <Button type="button" variant="outline" size="sm" onClick={copy}>
+              {copied ? (
+                <Check className="size-3.5" aria-hidden />
+              ) : (
+                <Copy className="size-3.5" aria-hidden />
+              )}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+          </div>
+        </li>
+        <li>
+          <span className="font-medium text-ink">2.</span> Sign in if it asks, then click{" "}
+          <span className="font-medium text-ink">Authorize</span>
+          {" — there's no token to paste."}
+        </li>
+        <li>
+          <span className="font-medium text-ink">3.</span> Try it:{" "}
+          <span className="italic">
+            &ldquo;Brag: shipped the realtime heatmap, cut lookup time 22 → 5 min.&rdquo;
+          </span>
+        </li>
+      </ol>
+    </div>
+  );
+}
+
+/** Settings → Connected apps: the AI clients the user has authorized, with revoke. */
+export function ConnectedApps({
+  apps,
+  instanceUrl,
+}: {
+  apps: ConnectedApp[];
+  instanceUrl: string;
+}) {
+  if (apps.length === 0) return <ConnectSteps instanceUrl={instanceUrl} />;
   return (
     <ul className="flex flex-col divide-y divide-line">
       {apps.map((app) => (

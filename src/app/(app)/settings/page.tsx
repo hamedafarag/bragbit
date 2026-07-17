@@ -7,6 +7,7 @@ import { DeleteAccountForm } from "@/features/account/components/delete-account-
 import { ConnectedApps } from "@/features/oauth-clients/components/connected-apps";
 import { listConnectedApps } from "@/features/oauth-clients/queries";
 import { getProfile } from "@/features/profile/queries";
+import { env } from "@/lib/env";
 import { ReminderSettingsForm } from "@/features/reminder/components/reminder-settings-form";
 import { getActiveWorkspace } from "@/features/workspace/queries";
 
@@ -14,6 +15,8 @@ export default async function SettingsPage() {
   const { user, workspace } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
   const connectedApps = await listConnectedApps(user.id);
+  // The only thing an MCP client needs — it discovers the rest from here.
+  const instanceUrl = env.BETTER_AUTH_URL ?? env.APP_URL;
 
   return (
     <div className="flex flex-col gap-8">
@@ -74,13 +77,18 @@ export default async function SettingsPage() {
         </a>
       </section>
 
-      <section className="rounded-xl border border-line bg-card p-6 shadow-card">
+      {/* id: the dashboard's connector hint links straight here. */}
+      <section
+        id="connected-apps"
+        className="rounded-xl border border-line bg-card p-6 shadow-card"
+        style={{ scrollMarginTop: "80px" }}
+      >
         <h2 className="mb-1 font-serif text-lg font-semibold">Connected apps</h2>
         <p className="mb-5 text-[13px] text-ink-soft">
           AI assistants you&apos;ve authorized to log brags on your behalf through the MCP
           connector. Revoking an app invalidates its access immediately.
         </p>
-        <ConnectedApps apps={connectedApps} />
+        <ConnectedApps apps={connectedApps} instanceUrl={instanceUrl} />
       </section>
 
       <section className="rounded-xl border border-dashed border-destructive/40 bg-card p-6 shadow-card">

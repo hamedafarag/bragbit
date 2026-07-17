@@ -2,6 +2,7 @@ import "server-only";
 
 import { desc, eq } from "drizzle-orm";
 
+import { requireSession } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { oauthAccessToken, oauthApplication } from "@/lib/db/schema";
 
@@ -46,3 +47,18 @@ export async function listConnectedApps(userId: string) {
 }
 
 export type ConnectedApp = Awaited<ReturnType<typeof listConnectedApps>>[number];
+
+/**
+ * Whether the caller has authorized any app — drives the dashboard's connector
+ * hint, which is pointless once they've connected one. Runs the DAL guard
+ * internally (like listDocuments) so the dashboard needn't resolve the user.
+ */
+export async function hasConnectedApp(): Promise<boolean> {
+  const { user } = await requireSession();
+  const [row] = await db
+    .select({ id: oauthAccessToken.id })
+    .from(oauthAccessToken)
+    .where(eq(oauthAccessToken.userId, user.id))
+    .limit(1);
+  return Boolean(row);
+}
