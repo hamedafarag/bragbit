@@ -10,10 +10,13 @@ import type {
 } from "./types";
 
 // GitHub adapter (docs/specs/integrations.md). v1 imports the user's merged pull
-// requests via the search API. The OAuth code exchange lands in slice 1c; the PAT
-// path and candidate fetch are implemented here (slice 1b).
+// requests. Both connect paths are here: a pasted PAT (validatePat, slice 1b) and
+// the OAuth code exchange (exchangeCode, slice 1c); both resolve to the same tokens
+// + account identity the feature layer persists (encrypted).
 
 const API = "https://api.github.com";
+const OAUTH_AUTHORIZE = "https://github.com/login/oauth/authorize";
+const OAUTH_TOKEN = "https://github.com/login/oauth/access_token";
 
 /**
  * Requested OAuth scopes. `public_repo` is the safer default (public repos only);
@@ -63,6 +66,17 @@ type GhSearchItem = {
 };
 type GhSearchResult = { items: GhSearchItem[] };
 
+/** The connected account's id + login (+ scopes for classic PATs), for a token. */
+async function fetchIdentity(
+  token: string,
+): Promise<{ externalAccountId: string; externalAccountLabel: string; scopes?: string }> {
+  const res = await ghGet("/user", token);
+  const user = (await res.json()) as GhUser;
+  // Classic PATs report granted scopes in this header; fine-grained tokens omit it.
+  const scopes = res.headers.get("x-oauth-scopes")?.trim() || undefined;
+  return { externalAccountId: String(user.id), externalAccountLabel: user.login, scopes };
+}
+
 /** "https://api.github.com/repos/<owner>/<repo>" → "<owner>/<repo>". */
 function repoFullName(repositoryUrl: string): string {
   return repositoryUrl.split("/repos/")[1] ?? "";
@@ -83,25 +97,43 @@ export const githubProvider: IntegrationProvider = {
       state,
       allow_signup: "false",
     });
-    return `https://github.com/login/oauth/authorize?${params.toString()}`;
+    return `${OAUTH_AUTHORIZE}?${params.toString()}`;
   },
 
-  // OAuth code exchange — slice 1c.
-  exchangeCode: async (): Promise<ConnectionTokens> => {
-    throw new Error("github.exchangeCode is implemented in slice 1c");
+  async exchangeCode(code: string): Promise<ConnectionTokens> {
+    const res = await fetch(OAUTH_TOKEN, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "BragBit",
+      },
+      body: JSON.stringify({
+        client_id: env.GITHUB_IMPORT_CLIENT_ID,
+        client_secret: env.GITHUB_IMPORT_CLIENT_SECRET,
+        code,
+        redirect_uri: redirectUri(),
+      }),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`GitHub token exchange failed (${res.status}).`);
+    const data = (await res.json()) as { access_token?: string; scope?: string; error?: string };
+    if (!data.access_token) {
+      throw new Error("GitHub did not return an access token — the code may have expired.");
+    }
+    const identity = await fetchIdentity(data.access_token);
+    // GitHub OAuth-app tokens don't expire, so there's no refresh token to store.
+    return {
+      accessToken: data.access_token,
+      externalAccountId: identity.externalAccountId,
+      externalAccountLabel: identity.externalAccountLabel,
+      scopes: data.scope || identity.scopes,
+    };
   },
 
   async validatePat(token: string): Promise<ConnectionTokens> {
-    const res = await ghGet("/user", token);
-    const user = (await res.json()) as GhUser;
-    // Classic PATs report granted scopes in this header; fine-grained tokens omit it.
-    const scopes = res.headers.get("x-oauth-scopes")?.trim() || undefined;
-    return {
-      accessToken: token,
-      externalAccountId: String(user.id),
-      externalAccountLabel: user.login,
-      scopes,
-    };
+    const identity = await fetchIdentity(token);
+    return { accessToken: token, ...identity };
   },
 
   async fetchCandidates(conn: DecryptedConnection, since?: Date): Promise<RawCandidate[]> {

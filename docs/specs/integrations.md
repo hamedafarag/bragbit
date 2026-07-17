@@ -224,7 +224,10 @@ node id. Scope: `public_repo` (safer default) or `repo` (includes private) — d
 - [x] **1b** — GitHub **PAT path**: `validatePat` + `fetchCandidates` (merged PRs) → `Import now` →
       dedup → review-queue reads → approve (reuses `createBrag` + source `bragLink`) / dismiss /
       disconnect. Server vertical + integration tests (real Postgres); the browser UI is **1d**.
-- [ ] **1c** — GitHub **OAuth path**: `authorize` + `callback` routes, the "Connect with GitHub" button
+- [x] **1c** — GitHub **OAuth path**: `authorize` + `callback` route handlers (CSRF state cookie,
+      `exchangeCode`, shared encrypted `upsertConnection`) + the "Connect with GitHub" button and a
+      status flash. Route + adapter unit-tested; authorize/flash verified in-browser. _(The full
+      round-trip against real GitHub needs an operator-registered OAuth app — covered by unit tests.)_
 - [x] **1d** — **Settings → Integrations** section + review-queue UI: provider cards (connect via
       PAT / import / disconnect) + candidate list (approve / dismiss, choose target document).
       Verified in-browser + jsdom render tests. _Inline edit-then-approve deferred (the

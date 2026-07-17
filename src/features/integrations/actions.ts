@@ -8,7 +8,7 @@ import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { document, importCandidate, integrationConnection } from "@/lib/db/schema";
 
-import { decryptToken, encryptToken } from "./crypto";
+import { decryptToken } from "./crypto";
 import { candidateToBragInput } from "./mapping";
 import { getProvider } from "./providers";
 import type { DecryptedConnection } from "./providers/types";
@@ -19,6 +19,7 @@ import {
   type Provider,
   type SourceType,
 } from "./schema";
+import { upsertConnection } from "./service";
 
 // Server actions for the integrations feature (docs/specs/integrations.md). Every
 // action re-derives the caller through requireWorkspace (the Next.js data-security
@@ -109,29 +110,7 @@ export async function connectPat(input: PatConnectInput): Promise<ActionResult> 
     return { ok: false, error: e instanceof Error ? e.message : "Could not verify the token." };
   }
 
-  const fields = {
-    authType: "pat" as const,
-    externalAccountId: identity.externalAccountId,
-    externalAccountLabel: identity.externalAccountLabel,
-    accessToken: encryptToken(identity.accessToken),
-    refreshToken: identity.refreshToken ? encryptToken(identity.refreshToken) : null,
-    accessTokenExpiresAt: identity.accessTokenExpiresAt ?? null,
-    scopes: identity.scopes ?? null,
-    config: identity.config ? JSON.stringify(identity.config) : null,
-  };
-
-  await db
-    .insert(integrationConnection)
-    .values({ userId: user.id, workspaceId, provider: parsed.data.provider, ...fields })
-    .onConflictDoUpdate({
-      target: [
-        integrationConnection.userId,
-        integrationConnection.workspaceId,
-        integrationConnection.provider,
-      ],
-      set: { ...fields, updatedAt: new Date() },
-    });
-
+  await upsertConnection(user.id, workspaceId, parsed.data.provider, "pat", identity);
   return { ok: true };
 }
 

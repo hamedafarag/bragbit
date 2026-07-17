@@ -9,6 +9,7 @@ import {
   IntegrationCards,
   type ProviderCardData,
 } from "@/features/integrations/components/integration-cards";
+import { IntegrationFlash } from "@/features/integrations/components/integration-flash";
 import {
   ReviewQueue,
   type CandidateView,
@@ -23,7 +24,12 @@ import { env } from "@/lib/env";
 import { ReminderSettingsForm } from "@/features/reminder/components/reminder-settings-form";
 import { getActiveWorkspace } from "@/features/workspace/queries";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ integration?: string }>;
+}) {
+  const { integration } = await searchParams;
   const { user, workspace } = await getActiveWorkspace();
   const profile = await getProfile(user.id);
   const connectedApps = await listConnectedApps(user.id);
@@ -132,6 +138,7 @@ export default async function SettingsPage() {
           Connect your tools and let BragBit pull in your shipped work. Imports land in a review
           queue — nothing is logged until you approve it.
         </p>
+        <IntegrationFlash status={integration} />
         <IntegrationCards cards={integrationCards} />
         {candidateViews.length > 0 && (
           <div className="mt-6 border-t border-line pt-6">

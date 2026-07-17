@@ -43,4 +43,12 @@ describe("IntegrationCards", () => {
     expect(screen.getByRole("button", { name: "Import now" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Disconnect" })).toBeTruthy();
   });
+
+  it("offers an OAuth connect button when the provider's OAuth app is configured", () => {
+    render(<IntegrationCards cards={[{ ...notConnected[0]!, oauthConfigured: true }]} />);
+    const link = screen.getByRole("link", { name: /Connect with GitHub/ }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/api/integrations/github/authorize");
+    // the token path is still offered, relabeled
+    expect(screen.getByRole("button", { name: "Use a token" })).toBeTruthy();
+  });
 });

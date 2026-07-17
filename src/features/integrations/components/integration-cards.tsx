@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { connectPat, disconnectProvider, importNow } from "../actions";
@@ -127,7 +127,18 @@ function ProviderCard({ data }: { data: ProviderCardData }) {
           <p className="text-[13px] text-ink-soft">
             Import your merged pull requests as brags you review before they&apos;re logged.
           </p>
+          {data.oauthConfigured && (
+            <a
+              href={`/api/integrations/${data.id}/authorize`}
+              className={buttonVariants({ size: "sm" })}
+            >
+              Connect with {data.label}
+            </a>
+          )}
           <div className="flex flex-col gap-2">
+            {data.oauthConfigured && (
+              <span className="font-mono text-[10.5px] text-ink-faint">or paste a token</span>
+            )}
             <Input
               type="password"
               value={token}
@@ -138,8 +149,13 @@ function ProviderCard({ data }: { data: ProviderCardData }) {
               disabled={pending}
             />
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={connect} disabled={pending}>
-                {pending ? "Connecting…" : "Connect"}
+              <Button
+                size="sm"
+                variant={data.oauthConfigured ? "outline" : "default"}
+                onClick={connect}
+                disabled={pending}
+              >
+                {pending ? "Connecting…" : data.oauthConfigured ? "Use a token" : "Connect"}
               </Button>
               <a
                 href={help.href}

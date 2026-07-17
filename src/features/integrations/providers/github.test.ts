@@ -51,6 +51,43 @@ describe("githubProvider.validatePat", () => {
   });
 });
 
+describe("githubProvider.exchangeCode", () => {
+  it("exchanges a code for a token, then resolves the account", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: "gho_abc", scope: "read:user,public_repo" }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 7, login: "octocat" }), { status: 200 }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const t = await githubProvider.exchangeCode("code123");
+    expect(t).toMatchObject({
+      accessToken: "gho_abc",
+      externalAccountId: "7",
+      externalAccountLabel: "octocat",
+      scopes: "read:user,public_repo",
+    });
+    expect(String(fetchMock.mock.calls[0]![0])).toContain("login/oauth/access_token");
+  });
+
+  it("throws when GitHub returns no access token", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "bad_verification_code" }), { status: 200 }),
+        ),
+    );
+    await expect(githubProvider.exchangeCode("bad")).rejects.toThrow(/access token/i);
+  });
+});
+
 describe("githubProvider.fetchCandidates", () => {
   it("normalizes merged PRs into candidates", async () => {
     stubFetch({
