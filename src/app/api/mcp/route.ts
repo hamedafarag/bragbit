@@ -16,8 +16,9 @@ import { hitRateLimit } from "@/lib/rate-limit";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Per-token request budget. Generous for interactive AI use; in-memory + single
-// process (lib/rate-limit) — a shared store is the hosted hardening (Phase 9).
+// Per-token request budget. Generous for interactive AI use. lib/rate-limit is
+// in-process for the private modes and Postgres-backed on hosted (ENH-SEC-02), so
+// the limit holds across instances there.
 const MCP_RATE_LIMIT = 60;
 const MCP_RATE_WINDOW_MS = 60_000;
 
@@ -52,7 +53,7 @@ function bearerToken(req: Request): string | null {
 export async function POST(req: Request): Promise<Response> {
   const token = bearerToken(req);
   if (token) {
-    const rl = hitRateLimit(`mcp:${token}`, MCP_RATE_LIMIT, MCP_RATE_WINDOW_MS);
+    const rl = await hitRateLimit(`mcp:${token}`, MCP_RATE_LIMIT, MCP_RATE_WINDOW_MS);
     if (!rl.ok) {
       return withMcpCors(
         Response.json(

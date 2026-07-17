@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/shared/app-header";
 import { getProfile } from "@/features/profile/queries";
 import { getActiveWorkspace, listUserWorkspaces } from "@/features/workspace/queries";
 import { allowsOrgCreation } from "@/lib/instance";
-import { accentVars, initials } from "@/lib/utils";
+import { initials } from "@/lib/utils";
 
 // Authenticated, workspace-scoped shell (PLAN.md §6). getActiveWorkspace runs
 // the DAL guards (session + membership) and redirects out if either is missing;
