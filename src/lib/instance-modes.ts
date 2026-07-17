@@ -3,40 +3,25 @@
  * import so it is unit-testable in isolation; `lib/instance.ts` applies it to
  * the runtime `INSTANCE_MODE`. `env.ts` reuses `INSTANCE_MODES` as its enum so
  * the list of modes has a single source of truth.
+ *
+ * Both modes are self-hosted, single-workspace and invitation-only (accounts come
+ * from the first-run /setup wizard or an invite) — so the only thing the mode
+ * decides is whether that workspace is personal or an organization.
  */
 
-export const INSTANCE_MODES = ["private-org", "private-solo", "hosted"] as const;
+export const INSTANCE_MODES = ["private-org", "private-solo"] as const;
 export type InstanceMode = (typeof INSTANCE_MODES)[number];
 
 export type ModeCapabilities = {
-  isHosted: boolean;
+  /** private-org: one organization workspace, grown by invitation. */
   isPrivateOrg: boolean;
-  isPrivateSolo: boolean;
-  /** Either self-hosted single-workspace mode. */
-  isPrivate: boolean;
-  /** Open, self-service signup (hosted only); otherwise growth is invite-only. */
-  allowsSignup: boolean;
-  /** Any user may create an organization workspace (hosted only). */
-  allowsOrgCreation: boolean;
-  /** The first-run /setup wizard runs in the two private modes. */
-  hasSetupWizard: boolean;
   /** private-solo: one personal workspace; org/member/invite UI is hidden. */
-  isSoloWorkspaceMode: boolean;
+  isPrivateSolo: boolean;
 };
 
 export function modeCapabilities(mode: InstanceMode): ModeCapabilities {
-  const isHosted = mode === "hosted";
-  const isPrivateOrg = mode === "private-org";
-  const isPrivateSolo = mode === "private-solo";
-  const isPrivate = isPrivateOrg || isPrivateSolo;
   return {
-    isHosted,
-    isPrivateOrg,
-    isPrivateSolo,
-    isPrivate,
-    allowsSignup: isHosted,
-    allowsOrgCreation: isHosted,
-    hasSetupWizard: isPrivate,
-    isSoloWorkspaceMode: isPrivateSolo,
+    isPrivateOrg: mode === "private-org",
+    isPrivateSolo: mode === "private-solo",
   };
 }

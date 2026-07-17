@@ -83,7 +83,8 @@ review (2026-06-16). Items here are independently pickable; they don't block a r
 ## Tracked elsewhere (big phases — see PLAN.md)
 
 - **Phase 10 — hosted multi-tenant (v1.1):** open signup, user-created orgs, the `/super` console,
-  quota/abuse controls, the data-isolation test suite. See [PLAN.md §10](../PLAN.md).
+  quota/abuse controls, the data-isolation test suite. Developed on the `phase-10/hosted-multitenant`
+  branch, not on main. See [PLAN.md §10](../PLAN.md).
 - **Phase 11 — v2 backlog:** REST API + personal access tokens (and the
   [MCP connector](specs/mcp-connector.md) for in-assistant capture from Claude Desktop), a companion
   CLI (git-history brag extraction), SSO (OIDC/SAML), optional BYO-key AI, curated sharing,
@@ -94,7 +95,7 @@ review (2026-06-16). Items here are independently pickable; they don't block a r
 Only three rows are still open; everything else in A–G is in the Done ledger.
 
 1. **ENH-SEC-02** — the shared rate-limit store. The in-memory limiter is single-process, so this
-   gates any multi-instance or hosted deployment. _M_
+   gates any multi-instance deployment. _M_
 2. **ENH-PERF-01** — timeline cursor pagination, once a workspace reaches hundreds of brags. _L_
 3. **ENH-INFRA-04** — the optional headless-Chromium PDF service; browser print stays the
    deliberate default, so this is purely additive. _P3, L_

@@ -5,7 +5,6 @@ import type { EmailBrand } from "@/emails/components/email-layout";
 import { db } from "./db";
 import { organization } from "./db/schema";
 import { env } from "./env";
-import { isHosted } from "./instance";
 
 type BrandFields = { name: string; accentColor?: string | null; logoKey?: string | null };
 
@@ -26,12 +25,10 @@ export function emailBrandFromOrg(o: BrandFields): EmailBrand {
 
 /**
  * Brand for the instance-default email surfaces (verification, password reset,
- * email-change confirmation), which carry no workspace context of their own. The
- * private modes have exactly one workspace, so its brand applies; hosted has many,
- * so fall back to the BragBit default.
+ * email-change confirmation), which carry no workspace context of their own. An
+ * instance has exactly one workspace, so its brand reads as instance-wide.
  */
 export async function instanceEmailBrand(): Promise<EmailBrand | undefined> {
-  if (isHosted()) return undefined;
   const [o] = await db
     .select({
       name: organization.name,

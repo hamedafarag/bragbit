@@ -7,11 +7,10 @@ many members. Everything beneath the workspace is identical regardless of who ru
 `INSTANCE_MODE` (set once at deploy time) picks the deployment shape. The per-mode capability mapping
 is centralized in [`src/lib/instance.ts`](../src/lib/instance.ts).
 
-| Mode           | Who runs it                    | Accounts come from              | Workspaces               | Ships |
-| -------------- | ------------------------------ | ------------------------------- | ------------------------ | ----- |
-| `private-org`  | a company self-hosting         | setup wizard + invitations      | exactly one organization | v1    |
-| `private-solo` | a freelancer self-hosting      | setup wizard                    | exactly one personal     | v1    |
-| `hosted`       | a shared multi-tenant instance | open signup + user-created orgs | many                     | v1.1  |
+| Mode           | Who runs it               | Accounts come from         | Workspaces               | Ships |
+| -------------- | ------------------------- | -------------------------- | ------------------------ | ----- |
+| `private-org`  | a company self-hosting    | setup wizard + invitations | exactly one organization | v1    |
+| `private-solo` | a freelancer self-hosting | setup wizard               | exactly one personal     | v1    |
 
 ## `private-solo` — a personal instance
 
@@ -27,19 +26,13 @@ The setup wizard creates the owner account and one **organization** workspace. G
 invite (see the [Admin guide](admin-guide.md)). Owners and admins manage branding, members, and
 invitations — but never read members' brag content.
 
-## `hosted` — a shared multi-tenant instance (v1.1)
+> **Multi-tenant hosting is not part of main.** A shared instance (open sign-up, user-created
+> organizations, an instance superadmin) is developed as **v1.1** on the `phase-10/hosted-multitenant`
+> branch; `INSTANCE_MODE` here accepts only the two modes above.
 
-The mode for a public instance: open sign-up with required email verification, each signup landing
-in a personal workspace, and any user able to create organizations and invite a team. It adds an
-instance superadmin and abuse controls (disposable-email blocking, per-workspace storage quotas).
-Hosted ships as the **v1.1** fast-follow; because the schema is workspace-scoped from day one, it's
-purely additive — not a rewrite.
+## How branding reads
 
-## How branding reads per mode
-
-Branding is per-workspace. In the two private modes there's exactly one workspace, so its
-name/accent/logo read as instance-wide — single-org white-labeling is just the one-workspace special
-case. On a hosted instance each workspace self-brands, and the pre-sign-in pages use the BragBit
-default.
+Branding is per-workspace, and an instance has exactly one workspace — so its name/accent/logo read
+as instance-wide. Single-org white-labeling is just the one-workspace special case.
 
 See [Configuration](configuration.md) for `INSTANCE_MODE` and related settings.
