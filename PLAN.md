@@ -484,7 +484,7 @@ SemVer. On release: promote `[Unreleased]` → a dated `vX.Y.Z` section, tag the
 - [ ] Drafts as a first-class state — Save-as-Draft + a Drafts view, distinct from published brags (touches the Phase 3 brag model — design the `status` field with this in mind)
 - [ ] Timeline pivots: group by category/quarter → structured 7-section review document
 - [ ] Link expiration on share links; import from Markdown/Notion/Google Docs brag docs
-- [ ] GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep links)
+- [ ] GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep links) — spec drafted 2026-07-17: [docs/specs/integrations.md](docs/specs/integrations.md). **v1 = GitHub only, manual import, OAuth + PAT**; Linear/Jira + weekly auto-import deferred
 - [ ] Full white-label toggle (remove "Powered by BragBit") if orgs ask
 - [ ] (If the hosted instance grows) billing / paid tiers — out of scope until then
 
