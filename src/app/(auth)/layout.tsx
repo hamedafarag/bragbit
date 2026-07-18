@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AccentStyle } from "@/components/shared/accent-style";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { isInstanceSetup } from "@/features/setup/queries";
 import { getInstanceBranding } from "@/features/workspace/queries";
 import { auth } from "@/lib/auth";
@@ -33,9 +34,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             className="h-9 w-auto max-w-[160px] object-contain"
           />
         ) : (
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-serif text-lg font-semibold text-primary-foreground shadow-[inset_0_-8px_14px_rgba(0,0,0,0.18)]">
-            B
-          </div>
+          <BrandMark className="h-9 w-9" />
         )}
         <div className="font-serif text-xl leading-none font-semibold">{name}</div>
       </div>

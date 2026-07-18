@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
 import { thumbUrl } from "@/lib/utils";
 
+import { BrandMark } from "./brand-mark";
 import { ThemeToggle } from "./theme-toggle";
 
 /**
@@ -28,7 +29,11 @@ export function AppHeader({
 }) {
   return (
     <header className="sticky top-0 z-50 flex h-[60px] items-center gap-4 border-b border-line bg-paper/85 px-4 backdrop-blur sm:px-6">
-      <Link href="/dashboard" className="flex items-center gap-3 no-underline">
+      <Link
+        href="/dashboard"
+        aria-label={workspaceName}
+        className="flex items-center gap-3 no-underline"
+      >
         {logoUrl ? (
           // Plain <img> with a `?w=` webp thumbnail from the files route (ENH-PERF-02). next/image
           // isn't used — the route is session-gated for avatars/attachments.
@@ -39,9 +44,7 @@ export function AppHeader({
             className="h-8 w-auto max-w-[140px] object-contain"
           />
         ) : (
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary font-serif text-[17px] font-semibold text-primary-foreground shadow-[inset_0_-8px_14px_rgba(0,0,0,0.18)]">
-            B
-          </div>
+          <BrandMark className="h-8 w-8" />
         )}
         <div className="hidden sm:block">
           <div className="font-serif text-[17.5px] leading-none font-semibold text-ink">
