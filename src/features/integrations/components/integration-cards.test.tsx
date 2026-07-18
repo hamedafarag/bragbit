@@ -1,17 +1,21 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { render, screen } from "@/test/dom";
+import { fireEvent, render, screen, waitFor } from "@/test/dom";
 
-// The card imports the server actions; stub them (and router/toast) so the client
-// component renders in jsdom without pulling server-only modules.
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock("../actions", () => ({
-  connectPat: vi.fn(async () => ({ ok: true })),
-  importNow: vi.fn(async () => ({ ok: true, imported: 0 })),
-  disconnectProvider: vi.fn(async () => ({ ok: true })),
+// Shared, assertable mocks (hoisted so the vi.mock factories can close over them).
+const nav = vi.hoisted(() => ({ refresh: vi.fn() }));
+const toastFns = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+const actions = vi.hoisted(() => ({
+  connectPat: vi.fn(async () => ({ ok: true }) as { ok: boolean; error?: string }),
+  importNow: vi.fn(
+    async () => ({ ok: true, imported: 0 }) as { ok: boolean; imported?: number; error?: string },
+  ),
+  disconnectProvider: vi.fn(async () => ({ ok: true }) as { ok: boolean; error?: string }),
 }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: nav.refresh }) }));
+vi.mock("sonner", () => ({ toast: toastFns }));
+vi.mock("../actions", () => actions);
 
 import { IntegrationCards, type ProviderCardData } from "./integration-cards";
 
@@ -28,27 +32,84 @@ const connected: ProviderCardData[] = [
   },
 ];
 
-describe("IntegrationCards", () => {
+beforeEach(() => vi.clearAllMocks());
+
+describe("IntegrationCards — rendering", () => {
   it("shows the connect form when not connected", () => {
     render(<IntegrationCards cards={notConnected} />);
-    expect(screen.getByText("Not connected")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Connect" })).toBeTruthy();
-    expect(screen.getByLabelText("GitHub personal access token")).toBeTruthy();
+    expect(screen.getByText("Not connected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect" })).toBeInTheDocument();
+    expect(screen.getByLabelText("GitHub personal access token")).toBeInTheDocument();
   });
 
   it("shows the account and import/disconnect actions when connected", () => {
     render(<IntegrationCards cards={connected} />);
-    expect(screen.getByText("Connected")).toBeTruthy();
-    expect(screen.getByText("octocat")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Import now" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Disconnect" })).toBeTruthy();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(screen.getByText("octocat")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import now" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Disconnect" })).toBeInTheDocument();
   });
 
   it("offers an OAuth connect button when the provider's OAuth app is configured", () => {
     render(<IntegrationCards cards={[{ ...notConnected[0]!, oauthConfigured: true }]} />);
     const link = screen.getByRole("link", { name: /Connect with GitHub/ }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/api/integrations/github/authorize");
-    // the token path is still offered, relabeled
-    expect(screen.getByRole("button", { name: "Use a token" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use a token" })).toBeInTheDocument();
+  });
+});
+
+describe("IntegrationCards — connecting", () => {
+  it("rejects an empty token client-side without calling the action", async () => {
+    render(<IntegrationCards cards={notConnected} />);
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+    await waitFor(() => expect(toastFns.error).toHaveBeenCalled());
+    expect(actions.connectPat).not.toHaveBeenCalled();
+    expect(nav.refresh).not.toHaveBeenCalled();
+  });
+
+  it("submits a pasted token, then toasts and refreshes on success", async () => {
+    render(<IntegrationCards cards={notConnected} />);
+    fireEvent.change(screen.getByLabelText("GitHub personal access token"), {
+      target: { value: "ghp_token" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    await waitFor(() =>
+      expect(actions.connectPat).toHaveBeenCalledWith({ provider: "github", token: "ghp_token" }),
+    );
+    expect(toastFns.success).toHaveBeenCalledWith("Connected GitHub.");
+    expect(nav.refresh).toHaveBeenCalled();
+  });
+
+  it("surfaces a failed connect and does not refresh", async () => {
+    actions.connectPat.mockResolvedValueOnce({ ok: false, error: "GitHub rejected that token." });
+    render(<IntegrationCards cards={notConnected} />);
+    fireEvent.change(screen.getByLabelText("GitHub personal access token"), {
+      target: { value: "bad" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    await waitFor(() => expect(toastFns.error).toHaveBeenCalledWith("GitHub rejected that token."));
+    expect(nav.refresh).not.toHaveBeenCalled();
+  });
+});
+
+describe("IntegrationCards — connected actions", () => {
+  it("Import now calls importNow and refreshes", async () => {
+    actions.importNow.mockResolvedValueOnce({ ok: true, imported: 3 });
+    render(<IntegrationCards cards={connected} />);
+    fireEvent.click(screen.getByRole("button", { name: "Import now" }));
+
+    await waitFor(() => expect(actions.importNow).toHaveBeenCalledWith("github"));
+    expect(nav.refresh).toHaveBeenCalled();
+  });
+
+  it("Disconnect calls disconnectProvider and refreshes", async () => {
+    render(<IntegrationCards cards={connected} />);
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+
+    await waitFor(() => expect(actions.disconnectProvider).toHaveBeenCalledWith("github"));
+    expect(toastFns.success).toHaveBeenCalledWith("Disconnected GitHub.");
+    expect(nav.refresh).toHaveBeenCalled();
   });
 });
