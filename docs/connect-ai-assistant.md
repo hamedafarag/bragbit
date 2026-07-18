@@ -10,15 +10,16 @@ connector just gives it a secure, scoped door into your account.
 
 ## Connect (claude.ai or Claude Desktop)
 
-1. In Claude, add a **custom connector** and paste your BragBit instance URL (e.g.
-   `https://bragbit.example.com`).
-2. Claude discovers the connector and opens BragBit's **Authorize** screen. Sign in if you aren't
-   already, review what it's asking for, and click **Authorize**.
+1. In Claude, add a **custom connector** and paste your BragBit **MCP server URL** — your instance
+   origin plus `/api/mcp` (e.g. `https://bragbit.example.com/api/mcp`). The bare origin won't work —
+   it serves the app, not the connector.
+2. Claude connects and opens BragBit's **Authorize** screen. Sign in if you aren't already, review
+   what it's asking for, and click **Authorize**.
 3. That's it — no token to copy. Try: _"Brag: shipped the realtime crew heatmap, cut crew-location
    time 22 → 5 min."_
 
-Other MCP clients (Cursor, VS Code, …) connect the same way: point them at the instance URL and they
-run the OAuth flow. Under the hood the MCP endpoint is `‹instance-url›/api/mcp`.
+Other MCP clients (Cursor, VS Code, the MCP Inspector, …) connect the same way: point them at the
+`/api/mcp` URL and they run the OAuth flow.
 
 ## What your assistant can do
 

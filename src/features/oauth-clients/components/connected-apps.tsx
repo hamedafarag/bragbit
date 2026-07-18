@@ -12,15 +12,15 @@ import { revokeConnectedApp } from "../actions";
 import type { ConnectedApp } from "../queries";
 
 /**
- * How to connect, shown when nothing is authorized yet. The instance URL is the
- * only thing a client needs (it discovers the rest and runs the OAuth flow), so
- * hand it over ready to copy rather than describing it.
+ * How to connect, shown when nothing is authorized yet. The MCP server URL is the
+ * only thing a client needs (it discovers the OAuth flow from there), so hand it
+ * over ready to copy rather than describing it.
  */
-function ConnectSteps({ instanceUrl }: { instanceUrl: string }) {
+function ConnectSteps({ mcpServerUrl }: { mcpServerUrl: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
-    await navigator.clipboard.writeText(instanceUrl);
+    await navigator.clipboard.writeText(mcpServerUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -34,14 +34,14 @@ function ConnectSteps({ instanceUrl }: { instanceUrl: string }) {
       <ol className="mt-4 flex flex-col gap-3 text-[13px] text-ink-soft">
         <li>
           <span className="font-medium text-ink">1.</span> In your assistant, add a custom connector
-          with this URL:
+          with this MCP server URL:
           <div className="mt-2 flex items-center gap-2">
             <Input
               readOnly
-              value={instanceUrl}
+              value={mcpServerUrl}
               onFocus={(e) => e.currentTarget.select()}
               className="font-mono text-[12px]"
-              aria-label="Your BragBit instance URL"
+              aria-label="Your BragBit MCP server URL"
             />
             <Button type="button" variant="outline" size="sm" onClick={copy}>
               {copied ? (
@@ -72,12 +72,12 @@ function ConnectSteps({ instanceUrl }: { instanceUrl: string }) {
 /** Settings → Connected apps: the AI clients the user has authorized, with revoke. */
 export function ConnectedApps({
   apps,
-  instanceUrl,
+  mcpServerUrl,
 }: {
   apps: ConnectedApp[];
-  instanceUrl: string;
+  mcpServerUrl: string;
 }) {
-  if (apps.length === 0) return <ConnectSteps instanceUrl={instanceUrl} />;
+  if (apps.length === 0) return <ConnectSteps mcpServerUrl={mcpServerUrl} />;
   return (
     <ul className="flex flex-col divide-y divide-line">
       {apps.map((app) => (

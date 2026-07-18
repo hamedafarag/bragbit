@@ -24,6 +24,22 @@ export const E2E = {
   inviteeEmail: "invitee@e2e.test",
 };
 
+// An isolated fixture for integrations.spec: its own user + personal workspace, a
+// document to approve into, a GitHub connection (placeholder token — the review /
+// approve / dismiss path never decrypts it), and two pending import candidates. Kept
+// separate from the owner/member above so it can't race the parallel org specs.
+export const E2E_INTEGRATIONS = {
+  email: "integrations@e2e.test",
+  userId: "e2e-int-user",
+  orgId: "e2e-int-org",
+  connId: "e2e-int-conn",
+  docId: "e2e-int-doc",
+  candidates: [
+    ["101", "Ship the crew heatmap"],
+    ["102", "Fix the flaky import test"],
+  ] as const,
+};
+
 const SEED = [
   ["e2e-owner", "E2E Owner", E2E.ownerEmail, "owner"],
   ["e2e-member", "E2E Member", E2E.memberEmail, "member"],
@@ -59,6 +75,35 @@ export default async function globalSetup() {
     await sql`insert into invitation (id, organization_id, email, role, status, expires_at, inviter_id)
               values (${E2E.inviteId}, 'e2e-org', ${E2E.inviteeEmail}, 'member', 'pending',
                       now() + interval '7 days', 'e2e-owner')`;
+
+    // --- Integrations fixture (see E2E_INTEGRATIONS) ---
+    const I = E2E_INTEGRATIONS;
+    await sql`delete from "user" where id = ${I.userId}`; // cascades member/document/connection/candidates
+    await sql`delete from organization where id = ${I.orgId}`;
+
+    await sql`insert into organization (id, name, slug, type)
+              values (${I.orgId}, 'Integrations E2E', 'integrations-e2e', 'personal')`;
+    await sql`insert into "user" (id, name, email, email_verified)
+              values (${I.userId}, 'Integrations E2E', ${I.email}, true)`;
+    await sql`insert into account (id, account_id, provider_id, user_id, password)
+              values ('e2e-int-acc', ${I.userId}, 'credential', ${I.userId}, ${password})`;
+    await sql`insert into member (id, organization_id, user_id, role)
+              values ('e2e-int-mem', ${I.orgId}, ${I.userId}, 'owner')`;
+    await sql`insert into documents (id, workspace_id, user_id, title)
+              values (${I.docId}, ${I.orgId}, ${I.userId}, 'Imports 2026')`;
+    await sql`insert into integration_connection
+                (id, user_id, workspace_id, provider, auth_type, external_account_id,
+                 external_account_label, access_token)
+              values (${I.connId}, ${I.userId}, ${I.orgId}, 'github', 'pat', '42', 'octocat',
+                      'seeded-placeholder')`;
+    for (const [ext, title] of I.candidates) {
+      await sql`insert into import_candidate
+                  (id, connection_id, user_id, workspace_id, provider, external_id, external_url,
+                   source_type, title, suggested_category, status)
+                values (${`e2e-int-cand-${ext}`}, ${I.connId}, ${I.userId}, ${I.orgId}, 'github',
+                        ${`PR_${ext}`}, ${`https://github.com/acme/web/pull/${ext}`}, 'pull_request',
+                        ${title}, 'shipped-work', 'pending')`;
+    }
   } finally {
     await sql.end();
   }
