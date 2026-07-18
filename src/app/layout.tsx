@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { ThemeInit } from "@/components/shared/theme-init";
 import { Toaster } from "@/components/ui/sonner";
+import { env } from "@/lib/env";
 import { THEME_COOKIE, themeClass } from "@/lib/theme";
 
 const fraunces = Fraunces({
@@ -30,9 +31,28 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const description = "Your promotion evidence, on your own Postgres.";
+
+// `opengraph-image.png` and the `icon`/`apple-icon` files in this segment are
+// picked up by Next's metadata file conventions; `metadataBase` (from APP_URL)
+// resolves them to absolute URLs for link unfurls.
 export const metadata: Metadata = {
+  metadataBase: new URL(env.APP_URL),
+  applicationName: "BragBit",
   title: "BragBit",
-  description: "Your promotion evidence, on your own Postgres.",
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "BragBit",
+    title: "BragBit",
+    description,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BragBit",
+    description,
+  },
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

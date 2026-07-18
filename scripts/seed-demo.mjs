@@ -106,7 +106,7 @@ try {
 
   // Workspace + owner.
   await sql`insert into organization (id, name, slug, type, accent_color)
-            values (${DEMO.orgId}, ${DEMO.workspace}, 'demo', ${workspaceType}, '#5c8a58')`;
+            values (${DEMO.orgId}, ${DEMO.workspace}, 'demo', ${workspaceType}, '#e8590c')`;
   await sql`insert into "user" (id, name, email, email_verified)
             values (${DEMO.userId}, ${DEMO.name}, ${DEMO.email}, true)`;
   await sql`insert into account (id, account_id, provider_id, user_id, password)
