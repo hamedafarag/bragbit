@@ -15,6 +15,12 @@ const MESSAGES: Record<string, { kind: "success" | "error"; text: string }> = {
     kind: "error",
     text: "GitHub OAuth isn't set up on this instance — paste a token instead.",
   },
+  linear_connected: { kind: "success", text: "Linear connected." },
+  linear_failed: { kind: "error", text: "Couldn't connect Linear. Please try again." },
+  linear_unavailable: {
+    kind: "error",
+    text: "Linear OAuth isn't set up on this instance — paste an API key instead.",
+  },
 };
 
 export function IntegrationFlash({ status }: { status?: string }) {

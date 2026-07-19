@@ -21,6 +21,7 @@ function stubFetch(body: unknown, init?: { status?: number; headers?: Record<str
 const conn: DecryptedConnection = {
   id: "c1",
   provider: "github",
+  authType: "pat",
   externalAccountLabel: "octocat",
   accessToken: "tok",
   refreshToken: null,

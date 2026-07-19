@@ -78,15 +78,16 @@ already-provisioned, email-verified account — it never creates one (preserving
 
 ## Source integrations (optional)
 
-Let members import shipped work (v1: GitHub merged PRs) as reviewable brags — see the
-[integrations guide](self-hosting/integrations.md). All optional: the token-paste path needs none of
-these, and with nothing set the section still appears with the token option. Use an OAuth app
-**separate** from sign-in above (least privilege); register the callback
-`{APP_URL}/api/integrations/github/callback`.
+Let members import shipped work (GitHub merged PRs, Linear completed issues) as reviewable brags — see
+the [integrations guide](self-hosting/integrations.md). All optional: the token-paste path needs none
+of these, and with nothing set the section still appears with the token option. Use an OAuth app
+**separate** from sign-in above (least privilege); register each provider's callback
+`{APP_URL}/api/integrations/<provider>/callback`.
 
 | Variable                                                  | Notes                                                                                                                                |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `GITHUB_IMPORT_CLIENT_ID` / `GITHUB_IMPORT_CLIENT_SECRET` | GitHub OAuth app for import. Both set → the "Connect with GitHub" button appears. Scopes `read:user public_repo`.                    |
+| `LINEAR_IMPORT_CLIENT_ID` / `LINEAR_IMPORT_CLIENT_SECRET` | Linear OAuth app for import. Both set → the "Connect with Linear" button appears. Scope `read`; expiring tokens are auto-refreshed.  |
 | `INTEGRATIONS_TOKEN_KEY`                                  | Secret encrypting stored provider tokens at rest. Unset → derived from `BETTER_AUTH_SECRET`. Changing it drops existing connections. |
 
 ## Uploads

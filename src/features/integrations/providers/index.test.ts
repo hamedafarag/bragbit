@@ -25,4 +25,15 @@ describe("provider registry", () => {
     expect(d).toMatchObject({ id: "github", label: "GitHub", supportsPat: true });
     expect(typeof d!.oauthConfigured).toBe("boolean");
   });
+
+  it("resolves the Linear adapter by id and lists it via its API-key path", () => {
+    expect(getProvider("linear").id).toBe("linear");
+    expect(availableProviders().map((p) => p.id)).toContain("linear");
+    expect(isProviderAvailable(getProvider("linear"))).toBe(true);
+    expect(availableProviderDescriptors().find((p) => p.id === "linear")).toMatchObject({
+      id: "linear",
+      label: "Linear",
+      supportsPat: true,
+    });
+  });
 });

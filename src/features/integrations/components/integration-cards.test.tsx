@@ -31,6 +31,9 @@ const connected: ProviderCardData[] = [
     connection: { authType: "pat", externalAccountLabel: "octocat", lastSyncedAt: null },
   },
 ];
+const linear: ProviderCardData[] = [
+  { id: "linear", label: "Linear", supportsPat: true, oauthConfigured: true, connection: null },
+];
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -55,6 +58,16 @@ describe("IntegrationCards — rendering", () => {
     const link = screen.getByRole("link", { name: /Connect with GitHub/ }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/api/integrations/github/authorize");
     expect(screen.getByRole("button", { name: "Use a token" })).toBeInTheDocument();
+  });
+
+  it("renders a Linear card with provider-specific copy and the API-key field", () => {
+    render(<IntegrationCards cards={linear} />);
+    expect(screen.getByText("Linear")).toBeInTheDocument();
+    // Linear-specific blurb + token noun (not the GitHub PR copy)
+    expect(screen.getByText(/completed issues/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Linear API key")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /Connect with Linear/ }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/api/integrations/linear/authorize");
   });
 });
 

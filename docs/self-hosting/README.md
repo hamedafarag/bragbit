@@ -13,8 +13,9 @@ up the app and Postgres, runs migrations, and serves the first-run setup wizard.
   caveats serverless brings (S3 storage, external cron, manual migrations).
 - **[Backup, restore & upgrades](backup-and-upgrades.md)** — protecting your data and moving to a
   new version.
-- **[Source integrations](integrations.md)** — let members import their GitHub merged PRs as brags
-  they review (one-click OAuth app, or a pasted read-only token that needs no setup).
+- **[Source integrations](integrations.md)** — let members import their GitHub merged PRs and Linear
+  completed issues as brags they review (one-click OAuth app, or a pasted read-only token / API key
+  that needs no setup).
 
 ## Before you start
 

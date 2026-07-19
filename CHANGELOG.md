@@ -16,6 +16,12 @@ on `0.x` until the deployment modes and core stabilize.
   (it keeps a link back to the PR; you add the "why it mattered") or dismiss it — imports are deduped
   and never publish on their own. Off until enabled; stored tokens are encrypted at rest and never
   visible to workspace admins. Docs: [integrations](docs/self-hosting/integrations.md).
+- **Linear import** — the same review-queue flow for Linear **completed issues**: connect with
+  one-click OAuth (`read` scope) or a pasted read-only Linear API key, press **Import now**, and
+  approve each issue into a document (it keeps a link back to the issue, e.g. `ENG-42`). Linear's
+  OAuth tokens expire and are refreshed automatically; disconnecting best-effort revokes the token at
+  Linear. The manual `Import now` is now rate-limited per user. Docs:
+  [integrations](docs/self-hosting/integrations.md).
 - Dark mode — a designed warm "ink-on-dark" theme (not a mechanical invert) with a header toggle;
   it follows your OS preference by default and persists your choice across reloads. (ENH-UX-01)
 - A dashboard **activity heatmap** + week streak — a year-long, accent-tinted view of your logging

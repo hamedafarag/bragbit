@@ -60,14 +60,17 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  // Source integrations (optional) — docs/specs/integrations.md. A separate OAuth
-  // app from social sign-in (different scopes, least privilege). When both id and
-  // secret are set the "Connect with GitHub" button appears; the PAT-paste path is
-  // always available and needs none of these. INTEGRATIONS_TOKEN_KEY is the secret
-  // for encrypting stored provider tokens at rest — optional; when unset the key is
+  // Source integrations (optional) — docs/specs/integrations.md. Each provider's
+  // OAuth app is separate from social sign-in (different scopes, least privilege).
+  // When a provider's id + secret are both set, its "Connect" button appears; the
+  // token-paste path (GitHub PAT, Linear API key) is always available and needs none
+  // of these. INTEGRATIONS_TOKEN_KEY (shared across providers) is the secret for
+  // encrypting stored provider tokens at rest — optional; when unset the key is
   // derived from BETTER_AUTH_SECRET (a dedicated value lets you rotate it separately).
   GITHUB_IMPORT_CLIENT_ID: z.string().optional(),
   GITHUB_IMPORT_CLIENT_SECRET: z.string().optional(),
+  LINEAR_IMPORT_CLIENT_ID: z.string().optional(),
+  LINEAR_IMPORT_CLIENT_SECRET: z.string().optional(),
   INTEGRATIONS_TOKEN_KEY: z.string().optional(),
 
   // Uploads
