@@ -7,19 +7,21 @@ import type { BragInput } from "@/features/brag/schema";
 import { requireWorkspace } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { document, importCandidate, integrationConnection } from "@/lib/db/schema";
+import { hitRateLimit } from "@/lib/rate-limit";
 
 import { decryptToken } from "./crypto";
-import { candidateToBragInput } from "./mapping";
+import { candidateToBragInput, type CandidatePayload } from "./mapping";
 import { getProvider } from "./providers";
-import type { DecryptedConnection } from "./providers/types";
+import type { DecryptedConnection, IntegrationProvider } from "./providers/types";
 import {
   patConnectSchema,
   providerSchema,
+  type AuthType,
   type PatConnectInput,
   type Provider,
   type SourceType,
 } from "./schema";
-import { upsertConnection } from "./service";
+import { refreshConnectionToken, upsertConnection } from "./service";
 
 // Server actions for the integrations feature (docs/specs/integrations.md). Every
 // action re-derives the caller through requireWorkspace (the Next.js data-security
@@ -35,6 +37,13 @@ export type ApproveResult =
 
 /** A merged PR / resolved issue is shipped work; v1 suggests this for every source. */
 const DEFAULT_CATEGORY = "shipped-work";
+
+/** Manual-import abuse bound (spec §Security): cap `Import now` per user+workspace+provider. */
+const IMPORT_RATE_LIMIT = 10;
+const IMPORT_RATE_WINDOW_MS = 60_000;
+
+/** Refresh an expiring OAuth token this many ms before expiry (clock-skew guard). */
+const TOKEN_REFRESH_SKEW_MS = 60_000;
 
 /** Load a connection and decrypt its tokens for adapter use, or null if absent. */
 async function loadConnection(
@@ -60,6 +69,7 @@ async function loadConnection(
     decrypted: {
       id: row.id,
       provider: row.provider as Provider,
+      authType: row.authType as AuthType,
       externalAccountLabel: row.externalAccountLabel,
       accessToken: decryptToken(row.accessToken),
       refreshToken: row.refreshToken ? decryptToken(row.refreshToken) : null,
@@ -67,6 +77,36 @@ async function loadConnection(
       config: row.config ? (JSON.parse(row.config) as Record<string, unknown>) : null,
     },
   };
+}
+
+/**
+ * Refresh an expiring OAuth access token in place before it's used. Only providers
+ * that issue expiring tokens implement `refreshTokens` (GitHub OAuth-app tokens and
+ * pasted PATs/API keys don't expire, so this is a no-op for them). On success the
+ * rotated token is persisted (encrypted) and the in-memory connection is updated so
+ * the caller uses the fresh token; failures propagate so the caller can prompt a
+ * reconnect. Mutates `conn.decrypted`.
+ */
+async function ensureFreshToken(
+  provider: IntegrationProvider,
+  conn: { id: string; decrypted: DecryptedConnection },
+): Promise<void> {
+  const d = conn.decrypted;
+  const expiresInMs = d.accessTokenExpiresAt ? d.accessTokenExpiresAt.getTime() - Date.now() : null;
+  if (
+    !provider.refreshTokens ||
+    !d.refreshToken ||
+    expiresInMs === null ||
+    expiresInMs > TOKEN_REFRESH_SKEW_MS
+  ) {
+    return;
+  }
+
+  const refreshed = await provider.refreshTokens(d.refreshToken);
+  await refreshConnectionToken(conn.id, refreshed);
+  d.accessToken = refreshed.accessToken;
+  if (refreshed.refreshToken) d.refreshToken = refreshed.refreshToken;
+  d.accessTokenExpiresAt = refreshed.accessTokenExpiresAt ?? null;
 }
 
 /** The caller's most-recently-updated non-archived document id, or null. */
@@ -125,15 +165,31 @@ export async function importNow(providerId: Provider): Promise<ImportResult> {
   const parsed = providerSchema.safeParse(providerId);
   if (!parsed.success) return { ok: false, error: "Unknown provider." };
 
+  const limited = hitRateLimit(
+    `import:${user.id}:${workspaceId}:${parsed.data}`,
+    IMPORT_RATE_LIMIT,
+    IMPORT_RATE_WINDOW_MS,
+  );
+  if (!limited.ok) {
+    return { ok: false, error: "Too many imports just now — wait a minute and try again." };
+  }
+
   const conn = await loadConnection(user.id, workspaceId, parsed.data);
   if (!conn) return { ok: false, error: "Connect the provider first." };
 
+  const provider = getProvider(parsed.data);
+  try {
+    await ensureFreshToken(provider, conn);
+  } catch {
+    return {
+      ok: false,
+      error: `Couldn't refresh your ${provider.label} connection — reconnect it and try again.`,
+    };
+  }
+
   let candidates;
   try {
-    candidates = await getProvider(parsed.data).fetchCandidates(
-      conn.decrypted,
-      conn.lastSyncedAt ?? undefined,
-    );
+    candidates = await provider.fetchCandidates(conn.decrypted, conn.lastSyncedAt ?? undefined);
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Import failed." };
   }
@@ -209,9 +265,7 @@ export async function approveCandidate(
     suggestedCategory: c.suggestedCategory,
     externalUrl: c.externalUrl,
     sourceType: c.sourceType as SourceType,
-    payload: c.payload
-      ? (JSON.parse(c.payload) as { number?: number; repo?: string; body?: string })
-      : null,
+    payload: c.payload ? (JSON.parse(c.payload) as CandidatePayload) : null,
   });
   const input = { ...base, ...edits };
 
@@ -252,13 +306,24 @@ export async function dismissCandidate(candidateId: string): Promise<ActionResul
 }
 
 /**
- * Disconnect a provider: delete the connection (its candidates cascade). The stored
- * token is discarded; a PAT is user-managed at the provider, so nothing to revoke.
+ * Disconnect a provider: best-effort revoke the token at the provider, then delete the
+ * connection (its candidates cascade). Only OAuth tokens are revoked — a pasted PAT /
+ * API key is user-managed at the provider, so there's nothing for us to revoke.
  */
 export async function disconnectProvider(providerId: Provider): Promise<ActionResult> {
   const { user, workspaceId } = await requireWorkspace();
   const parsed = providerSchema.safeParse(providerId);
   if (!parsed.success) return { ok: false, error: "Unknown provider." };
+
+  const provider = getProvider(parsed.data);
+  const conn = await loadConnection(user.id, workspaceId, parsed.data);
+  if (conn && conn.decrypted.authType === "oauth" && provider.revokeToken) {
+    try {
+      await provider.revokeToken(conn.decrypted.accessToken);
+    } catch {
+      // ignore — the local delete below is what actually disconnects the user
+    }
+  }
 
   await db
     .delete(integrationConnection)

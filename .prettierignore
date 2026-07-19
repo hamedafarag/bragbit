@@ -11,4 +11,5 @@ next-env.d.ts
 public
 src/lib/db/migrations
 design-mockup.html
+marketing/index.html
 PLAN.md

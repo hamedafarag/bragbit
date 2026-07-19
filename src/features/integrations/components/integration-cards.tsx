@@ -34,13 +34,38 @@ function GithubMark() {
   );
 }
 
-const ICON: Record<Provider, () => React.ReactNode> = { github: GithubMark };
+/** The Linear mark (lucide has no Linear icon in this version). */
+function LinearMark() {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden className="size-5" fill="currentColor">
+      <path d="M1.225 61.523c-.222-.95.908-1.546 1.597-.857l36.512 36.512c.69.69.092 1.819-.857 1.597C20.552 94.918 5.082 79.448 1.225 61.523zM.002 46.889a.99.99 0 00.29.76L52.35 99.71a.99.99 0 00.76.29c1.246-.05 2.477-.15 3.694-.298.868-.107 1.164-1.173.548-1.79L2.088 42.647c-.616-.616-1.682-.32-1.79.548-.147 1.217-.248 2.448-.296 3.694zM3.898 27.827a.977.977 0 00.21 1.076l66.987 66.988a.977.977 0 001.077.21 49.902 49.902 0 005.02-2.395.977.977 0 00.203-1.554L7.652 22.603a.977.977 0 00-1.554.203 49.9 49.9 0 00-2.2 5.02zM12.895 14.049a.988.988 0 00-.024 1.357l58.722 58.722a.988.988 0 001.357-.024 50.6 50.6 0 003.34-3.61.986.986 0 00-.05-1.318L17.874 10.76a.986.986 0 00-1.318-.05 50.6 50.6 0 00-3.66 3.34zM25.276 5.354c-.7-.51-.44-1.62.42-1.75A50.093 50.093 0 0150.002 0c27.615 0 50 22.386 50 50 0 8.15-1.95 15.85-5.41 22.66-.13.86-1.24 1.12-1.75.42L25.276 5.354z" />
+    </svg>
+  );
+}
+
+const ICON: Record<Provider, () => React.ReactNode> = { github: GithubMark, linear: LinearMark };
 
 /** Where the user creates a scoped token for each provider (shown on the connect form). */
 const TOKEN_HELP: Record<Provider, { href: string; scopeHint: string }> = {
   github: {
     href: "https://github.com/settings/personal-access-tokens",
     scopeHint: "read-only access to pull requests",
+  },
+  linear: {
+    href: "https://linear.app/settings/account/security",
+    scopeHint: "read-only access to your issues",
+  },
+};
+
+/** Provider-specific card copy — the source noun and the token's name differ per provider. */
+const COPY: Record<Provider, { blurb: string; tokenNoun: string }> = {
+  github: {
+    blurb: "Import your merged pull requests as brags you review before they're logged.",
+    tokenNoun: "personal access token",
+  },
+  linear: {
+    blurb: "Import your completed issues as brags you review before they're logged.",
+    tokenNoun: "API key",
   },
 };
 
@@ -50,6 +75,7 @@ function ProviderCard({ data }: { data: ProviderCardData }) {
   const [token, setToken] = useState("");
   const Icon = ICON[data.id];
   const help = TOKEN_HELP[data.id];
+  const copy = COPY[data.id];
   const connected = data.connection !== null;
 
   function run(fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) {
@@ -124,9 +150,7 @@ function ProviderCard({ data }: { data: ProviderCardData }) {
         </>
       ) : (
         <>
-          <p className="text-[13px] text-ink-soft">
-            Import your merged pull requests as brags you review before they&apos;re logged.
-          </p>
+          <p className="text-[13px] text-ink-soft">{copy.blurb}</p>
           {data.oauthConfigured && (
             <a
               href={`/api/integrations/${data.id}/authorize`}
@@ -143,9 +167,9 @@ function ProviderCard({ data }: { data: ProviderCardData }) {
               type="password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              placeholder="Paste a personal access token"
+              placeholder={`Paste your ${copy.tokenNoun}`}
               className="font-mono text-[12px]"
-              aria-label={`${data.label} personal access token`}
+              aria-label={`${data.label} ${copy.tokenNoun}`}
               disabled={pending}
             />
             <div className="flex items-center gap-2">

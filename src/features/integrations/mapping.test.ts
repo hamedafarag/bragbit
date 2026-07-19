@@ -45,3 +45,30 @@ describe("candidateToBragInput", () => {
     expect(b.links[0]!.label).toBe("Source");
   });
 });
+
+describe("candidateToBragInput — Linear issues", () => {
+  const linear: CandidateForMapping = {
+    provider: "linear",
+    title: "Harden the webhook endpoint",
+    occurredAt: new Date("2026-04-10T12:00:00Z"),
+    suggestedCategory: "shipped-work",
+    externalUrl: "https://linear.app/acme/issue/ENG-42",
+    sourceType: "issue",
+    payload: { identifier: "ENG-42", team: "Platform", body: "Retry with backoff on 5xx." },
+  };
+
+  it("labels the source link with the issue identifier and team", () => {
+    const b = candidateToBragInput(linear);
+    expect(b.status).toBe("shipped");
+    expect(b.descriptionMd).toBe("Retry with backoff on 5xx.");
+    expect(b.impactMd).toBe("");
+    expect(b.links).toEqual([
+      { url: "https://linear.app/acme/issue/ENG-42", label: "ENG-42 in Platform" },
+    ]);
+  });
+
+  it("omits the team from the label when absent", () => {
+    const b = candidateToBragInput({ ...linear, payload: { identifier: "ENG-7" } });
+    expect(b.links[0]!.label).toBe("ENG-7");
+  });
+});

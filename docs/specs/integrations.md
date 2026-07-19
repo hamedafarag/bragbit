@@ -1,10 +1,12 @@
 # Spec — BragBit source integrations (GitHub / Linear / Jira import)
 
-> **Status:** **GitHub v1 implemented** (2026-07-17, slices 1a–1e on `feat/source-integrations`) —
-> PAT + OAuth connect, manual import, dedup, review queue, approve/dismiss/disconnect. Tracked from
-> [PLAN.md §11](../../PLAN.md) — _"GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep
-> links)"_ — and the [enhancement backlog](../enhancements.md). Linear, Jira, and weekly auto-import
-> are deferred (see [Deferred](#deferred-post-v1)).
+> **Status:** **GitHub + Linear implemented** — GitHub v1 (2026-07-17, slices 1a–1e) and Linear
+> (2026-07-19, slices 2a–2e) on `feat/source-integrations`: token/OAuth connect, manual import,
+> dedup, review queue, approve/dismiss/disconnect, plus OAuth token **refresh** (Linear) and a
+> per-member import **rate-limit**. Tracked from [PLAN.md §11](../../PLAN.md) —
+> _"GitHub/Jira/Linear OAuth import (approve-each-entry UX, source deep links)"_ — and the
+> [enhancement backlog](../enhancements.md). Jira and weekly auto-import remain deferred (see
+> [Deferred](#deferred-post-v1)).
 
 ## Goal
 
@@ -100,21 +102,22 @@ org-wide enable/disable toggle per provider. The connection tables don't change;
 lookup ("env → workspace override") is added. Same "workspace-scoped from day one so hosted stays
 additive" philosophy as the rest of the schema ([PLAN §3](../../PLAN.md)).
 
-## Scope (v1)
+## Scope
 
-**GitHub only. Manual `Import now`. Connect via OAuth _or_ PAT.** No cron, no auto-import toggle, no
-Linear/Jira.
+**GitHub + Linear. Manual `Import now`. Connect via OAuth _or_ a pasted token.** No cron, no
+auto-import toggle, no Jira yet.
 
-| Capability      | v1                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| Providers       | GitHub                                                                                      |
-| Sources pulled  | Merged pull requests authored by the user (`type:pr author:@me is:merged`)                  |
-| Connect methods | GitHub **OAuth App** (operator-configured) **and** fine-grained **PAT** paste (zero-config) |
-| Trigger         | Manual **Import now** button (per connection)                                               |
-| Review          | Per-candidate **Approve / Edit-then-approve / Dismiss**; dedup across re-imports            |
-| On approve      | `features/brag` create + a `bragLink` deep link back to the PR                              |
-| Auto-import     | ❌ deferred (mockup's weekly toggle omitted in v1)                                          |
-| Commits         | ❌ deferred ("significant commits" is a noisy heuristic; merged PRs only)                   |
+| Capability      | Shipped                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Providers       | GitHub, Linear                                                                                                                        |
+| Sources pulled  | GitHub merged PRs (`type:pr author:@me is:merged`); Linear completed issues (`viewer.assignedIssues`, `completedAt`)                  |
+| Connect methods | Per provider: an **OAuth App** (operator-configured) **and** a pasted read-only **token** — GitHub PAT / Linear API key (zero-config) |
+| Trigger         | Manual **Import now** button (per connection), rate-limited per member                                                                |
+| Review          | Per-candidate **Approve / Edit-then-approve / Dismiss**; dedup across re-imports                                                      |
+| On approve      | `features/brag` create + a `bragLink` deep link back to the source                                                                    |
+| Token refresh   | GitHub OAuth tokens don't expire; **Linear** OAuth tokens (~24h) are auto-refreshed before each import                                |
+| Auto-import     | ❌ deferred (mockup's weekly toggle omitted)                                                                                          |
+| Commits         | ❌ deferred ("significant commits" is a noisy heuristic; merged PRs only)                                                             |
 
 ## Data model
 
@@ -204,6 +207,23 @@ against `node_modules/next/dist/docs/` before coding — this is Next 16.2, not 
 Fetch: `GET /search/issues?q=type:pr+author:@me+is:merged` with a `since` bound; `externalId` = the PR
 node id. Scope: `public_repo` (safer default) or `repo` (includes private) — documented tradeoff.
 
+## Linear → brag mapping
+
+| Linear (completed issue)  | Brag field                                                          |
+| ------------------------- | ------------------------------------------------------------------- |
+| issue `title`             | `title`                                                             |
+| `completedAt`             | `date`                                                              |
+| —                         | `category` = `shipped-work` (suggested; user can change)            |
+| `url`                     | a `bragLink` (`"<identifier>"` + team, e.g. `"ENG-42 in Platform"`) |
+| `description` (truncated) | `descriptionMd`                                                     |
+| —                         | `impactMd` left blank — the user adds _"why it mattered + result"_  |
+
+Fetch: a GraphQL `viewer { assignedIssues(filter: { completedAt: … }, orderBy: updatedAt) }` query
+against `https://api.linear.app/graphql`, bounded by the last sync (`completedAt.gte`); `externalId` =
+the issue node id, `sourceType` = `issue`. The **auth header differs by connect path** — OAuth is
+`Bearer <token>`, a Personal API key is the raw key (no prefix). OAuth access tokens expire (~24h) and
+are refreshed (via the stored refresh token) before the fetch; a Personal API key never expires.
+
 ## Security & privacy
 
 - **Tokens encrypted at rest** (AES-256-GCM); never logged; redacted in any error surface.
@@ -237,13 +257,34 @@ node id. Scope: `public_repo` (safer default) or `repo` (includes private) — d
       operator guide [`docs/self-hosting/integrations.md`](../self-hosting/integrations.md), env
       reference, a [user-guide](../user-guide.md#importing-from-github) section, CHANGELOG + README.
 
+## Slice checklist (Linear)
+
+- [x] **2a** — vocabulary + wiring: `provider: 'linear'` + `sourceType: 'issue'` in the zod enums (no
+      migration — the columns are free-form text); `LINEAR_IMPORT_CLIENT_ID/SECRET` env; the
+      `providers/linear.ts` adapter + registry entry; `authType` projected onto `DecryptedConnection`;
+      `refreshTokens?` / `revokeToken?` added to the adapter contract; the `linkLabel` branch + payload
+      widening in `mapping.ts`.
+- [x] **2b** — Linear **API-key path**: `validatePat` (raw-header `viewer` identity) + `fetchCandidates`
+      (GraphQL completed issues → candidates). `Import now` → dedup → review queue → approve, reusing the
+      existing action layer unchanged. Adapter unit tests + mapping/registry tests.
+- [x] **2c** — Linear **OAuth path** + refresh: the OAuth routes genericized to `[provider]` (per-provider
+      CSRF cookie + status strings; GitHub unchanged); `exchangeCode` (stores refresh + expiry);
+      `refreshTokens` + `refreshConnectionToken` (persist the rotated token) + refresh-before-import in
+      `importNow`; best-effort `revokeToken` on disconnect; a per-member import **rate-limit**. Route +
+      adapter tests (incl. DB-gated refresh/revoke).
+- [x] **2d** — UI: the Linear provider card (icon, token help, provider-specific copy — "completed
+      issues", "Linear API key") + flash messages; the settings page and review queue render it with no
+      changes (both are provider-generic). jsdom render test.
+- [x] **2e** — docs: this spec, the operator guide, a
+      [user-guide](../user-guide.md#importing-from-linear) section, `.env.example`, CHANGELOG, README,
+      PLAN §11.
+
 ## Deferred (post-v1)
 
 - **Weekly auto-import** — in-process `node-cron` + an external-cron fallback route mirroring
   [`/api/cron/reminders`](../../src/app/api/cron/reminders/route.ts) (same `CRON_SECRET`), plus the
   `autoImport` column and the mockup's toggle. Fetches into the **review queue** — never auto-publishes.
   The `import_candidate` unique key already makes it idempotent.
-- **Linear** — OAuth2 + GraphQL (`read`); completed issues on cycle close.
 - **Jira** — Atlassian 3LO (`read:jira-work`); resolved issues; `cloudId` + site picker at connect
   time into `config`.
 - **GitHub commits** — a "significant commit" heuristic (deferred as noisy).

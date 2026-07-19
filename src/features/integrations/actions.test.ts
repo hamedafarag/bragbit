@@ -11,8 +11,18 @@ const authCtx = vi.hoisted(() => ({ workspaceId: "", user: { id: "" } }));
 vi.mock("@/lib/auth/guards", () => ({ requireWorkspace: async () => authCtx }));
 
 // Stub the provider so the actions never call GitHub. `candidates` is mutable so a
-// test can control what an import returns (and prove dedup on a second run).
-const stub = vi.hoisted(() => ({ candidates: [] as Array<Record<string, unknown>> }));
+// test can control what an import returns (and prove dedup on a second run). The
+// refresh/revoke spies let the OAuth-token tests assert the actions drive the adapter.
+const stub = vi.hoisted(() => ({
+  candidates: [] as Array<Record<string, unknown>>,
+  refreshTokens: vi.fn(async () => ({
+    accessToken: "refreshed_at",
+    refreshToken: "refreshed_rt",
+    accessTokenExpiresAt: new Date(Date.now() + 3600_000),
+    scopes: "read",
+  })),
+  revokeToken: vi.fn(async () => {}),
+}));
 vi.mock("./providers", () => ({
   getProvider: () => ({
     id: "github",
@@ -29,6 +39,8 @@ vi.mock("./providers", () => ({
       externalAccountLabel: "octocat",
     }),
     fetchCandidates: async () => stub.candidates,
+    refreshTokens: stub.refreshTokens,
+    revokeToken: stub.revokeToken,
   }),
 }));
 
@@ -181,7 +193,9 @@ describe.skipIf(!hasDb)("integrations server actions", () => {
       await mod.listCandidates(authCtx.user.id, authCtx.workspaceId, "dismissed"),
     ).toHaveLength(1);
 
+    stub.revokeToken.mockClear();
     expect(await mod.disconnectProvider("github")).toEqual({ ok: true });
+    expect(stub.revokeToken).not.toHaveBeenCalled(); // a pasted token is user-managed — nothing to revoke
     const conns = await db
       .select()
       .from(schema.integrationConnection)
@@ -192,5 +206,58 @@ describe.skipIf(!hasDb)("integrations server actions", () => {
       .from(schema.importCandidate)
       .where(eq(schema.importCandidate.userId, authCtx.user.id));
     expect(cands).toHaveLength(0); // cascaded with the connection
+  });
+
+  it("importNow refreshes an expiring OAuth token in place before fetching", async () => {
+    const { db, schema, eq } = mod;
+    const { encryptToken, decryptToken } = await import("./crypto");
+    await seed("refresh");
+    // An OAuth connection whose access token expired an hour ago (so a refresh is due).
+    await db.insert(schema.integrationConnection).values({
+      id: "intact-conn-refresh",
+      userId: authCtx.user.id,
+      workspaceId: authCtx.workspaceId,
+      provider: "github",
+      authType: "oauth",
+      externalAccountId: "42",
+      externalAccountLabel: "octocat",
+      accessToken: encryptToken("stale_at"),
+      refreshToken: encryptToken("the_rt"),
+      accessTokenExpiresAt: new Date(Date.now() - 3600_000),
+    });
+    stub.candidates = [];
+    stub.refreshTokens.mockClear();
+
+    expect(await mod.importNow("github")).toEqual({ ok: true, imported: 0 });
+    expect(stub.refreshTokens).toHaveBeenCalledWith("the_rt");
+
+    const [row] = await db
+      .select()
+      .from(schema.integrationConnection)
+      .where(eq(schema.integrationConnection.id, "intact-conn-refresh"));
+    // the rotated token is persisted (encrypted) and the expiry moved into the future
+    expect(decryptToken(row!.accessToken)).toBe("refreshed_at");
+    expect(decryptToken(row!.refreshToken!)).toBe("refreshed_rt");
+    expect(row!.accessTokenExpiresAt!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("disconnect best-effort revokes an OAuth token at the provider", async () => {
+    const { db, schema } = mod;
+    const { encryptToken } = await import("./crypto");
+    await seed("revoke");
+    await db.insert(schema.integrationConnection).values({
+      id: "intact-conn-revoke",
+      userId: authCtx.user.id,
+      workspaceId: authCtx.workspaceId,
+      provider: "github",
+      authType: "oauth",
+      externalAccountId: "42",
+      externalAccountLabel: "octocat",
+      accessToken: encryptToken("oauth_at"),
+    });
+    stub.revokeToken.mockClear();
+
+    expect(await mod.disconnectProvider("github")).toEqual({ ok: true });
+    expect(stub.revokeToken).toHaveBeenCalledWith("oauth_at");
   });
 });

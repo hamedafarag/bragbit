@@ -1,4 +1,4 @@
-import type { Provider, SourceType } from "../schema";
+import type { AuthType, Provider, SourceType } from "../schema";
 
 // The provider-adapter contract (docs/specs/integrations.md §Architecture). Each
 // provider (v1: GitHub) implements this; a registry (./index.ts) maps id → adapter
@@ -21,10 +21,20 @@ export type ConnectionTokens = {
   config?: Record<string, unknown>;
 };
 
+/** Fresh tokens from an OAuth refresh — identity is unchanged, so only the token fields. */
+export type RefreshedTokens = {
+  accessToken: string;
+  refreshToken?: string;
+  accessTokenExpiresAt?: Date;
+  scopes?: string;
+};
+
 /** A connection decrypted and parsed for adapter use (never carries ciphertext). */
 export type DecryptedConnection = {
   id: string;
   provider: Provider;
+  /** How the token was obtained — picks the auth header (OAuth `Bearer` vs a raw API key). */
+  authType: AuthType;
   /** The connected account's provider handle (e.g. GitHub login) — e.g. for `author:` search. */
   externalAccountLabel: string | null;
   accessToken: string;
@@ -62,6 +72,10 @@ export type IntegrationProvider = {
   validatePat: (token: string) => Promise<ConnectionTokens>;
   /** Fetch normalized candidates newer than `since` (undefined = first import). */
   fetchCandidates: (conn: DecryptedConnection, since?: Date) => Promise<RawCandidate[]>;
+  /** Exchange a refresh token for fresh tokens (expiring-token providers only, e.g. Linear). */
+  refreshTokens?: (refreshToken: string) => Promise<RefreshedTokens>;
+  /** Best-effort revoke a token at the provider on disconnect (OAuth providers only). */
+  revokeToken?: (token: string) => Promise<void>;
 };
 
 /** Whether a provider is reachable at all (OAuth configured or PAT supported). */

@@ -1,6 +1,7 @@
 import type { Provider } from "../schema";
 
 import { githubProvider } from "./github";
+import { linearProvider } from "./linear";
 import { type IntegrationProvider, isProviderAvailable } from "./types";
 
 // Provider registry (docs/specs/integrations.md). The single source the routes and
@@ -10,6 +11,7 @@ import { type IntegrationProvider, isProviderAvailable } from "./types";
 
 const REGISTRY: Record<Provider, IntegrationProvider> = {
   github: githubProvider,
+  linear: linearProvider,
 };
 
 /** The adapter for `provider`. */

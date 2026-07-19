@@ -137,6 +137,23 @@ for you to add the _why it mattered_), or **Dismiss** it. Importing again only e
 you can re-run it safely. Disconnect anytime; your token is stored encrypted and never shared with
 your workspace admins. Private-repo PRs import via the token path when the token can see them.
 
+## Importing from Linear
+
+Turn the issues you've already **completed** into brags, the same way. In **Settings → Integrations**,
+connect Linear one of two ways:
+
+- **Connect with Linear** — one click, if your instance has it set up (it requests read-only `read`
+  access; the token refreshes itself, so you stay connected).
+- **Paste an API key** — always available: create a read-only Linear
+  [Personal API key](https://linear.app/settings/account/security) (Read access, optionally limited to
+  specific teams) and paste it.
+
+Then press **Import now**. Your completed issues appear in the same **review queue** — **Approve** each
+into a document (it becomes a brag linked back to the issue, e.g. `ENG-42`, ready for you to add the
+_why it mattered_) or **Dismiss** it. Re-running only adds newly completed issues. Disconnect anytime;
+your token is stored encrypted, never shared with workspace admins, and best-effort revoked at Linear
+when you disconnect.
+
 ## Trying the demo
 
 Evaluating BragBit locally? The repo ships a demo seed that fills a fresh database with a sample
