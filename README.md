@@ -12,7 +12,7 @@ developers. Log your wins all year (a "brag" takes under 30 seconds), organize t
 manager before review time.
 
 > **Early release (`0.x`).** The self-host path — a one-command Docker stack with automatic
-> migrations and complete docs — is ready. Tracking the current release, `v0.1.1`; multi-tenant
+> migrations and complete docs — is ready. Tracking the current release, `v0.2.0`; multi-tenant
 > hosting (v1.1) is developed on the `phase-10/hosted-multitenant` branch. See [PLAN.md](PLAN.md).
 
 ## Why

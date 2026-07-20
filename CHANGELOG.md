@@ -8,6 +8,8 @@ on `0.x` until the deployment modes and core stabilize.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-20
+
 ### Added
 
 - **GitHub import** — connect GitHub in Settings → Integrations (one-click OAuth when the operator
