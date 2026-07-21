@@ -1,10 +1,10 @@
-# bragbit marketing page — static site served by nginx on port 3000
+# bragbit marketing page — static site served by nginx on port 3002
 # Build: docker build -t bragbit-site .
-# Run:   docker run --rm -p 8080:3000 bragbit-site   ->  http://localhost:8080
+# Run:   docker run --rm -p 8080:3002 bragbit-site   ->  http://localhost:8080
 
 FROM nginx:alpine
 
-# Replace nginx's default server (listens on 80) with ours (listens on 3000)
+# Replace nginx's default server (listens on 80) with ours (listens on 3002)
 COPY default.conf /etc/nginx/conf.d/default.conf
 
 # The page and everything it serves. index.html loads ./screenshots/*.webp
@@ -12,4 +12,4 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 COPY index.html og.png sitemap.xml /usr/share/nginx/html/
 COPY screenshots/ /usr/share/nginx/html/screenshots/
 
-EXPOSE 3000
+EXPOSE 3002
