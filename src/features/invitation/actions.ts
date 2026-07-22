@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -69,19 +70,24 @@ export async function registerInvitee(
  * Step 2 — accept the invitation. Runs as a separate request, so the session
  * cookie set by registerInvitee is present in headers() here. Better Auth
  * checks the session email matches the invitation, flips status to accepted,
- * creates the member, and sets the active organization.
+ * creates the member, and sets the active organization. On success it redirects
+ * to /dashboard server-side, so the navigation can't be raced by a client-side
+ * push against this route's post-accept revalidation; it only returns to the
+ * caller when the accept fails.
  */
-export async function acceptInvitation(invitationId: string): Promise<ActionResult> {
+export async function acceptInvitation(invitationId: string): Promise<ActionResult | void> {
   try {
     await auth.api.acceptInvitation({
       body: { invitationId },
       headers: await headers(),
     });
-    return { ok: true };
   } catch (err) {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Could not accept the invitation.",
     };
   }
+  // Redirect OUTSIDE the try/catch — redirect() signals by throwing, so catching
+  // it would swallow the navigation.
+  redirect("/dashboard");
 }

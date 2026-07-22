@@ -33,9 +33,9 @@ test("an invitee sets up their account and joins the workspace", async ({ page }
   await page.fill("#password", "InviteePass123");
   await page.getByRole("button", { name: "Join E2E Org" }).click();
 
-  // The flow runs register → accept → a client-side redirect. Assert the real
-  // outcome — the invitee is now a member of the workspace — by polling the DB,
-  // which is robust to dev-server nav timing (the soft redirect can lag).
+  // The flow runs register → accept → a full-page redirect to the dashboard.
+  // Assert the real outcome — the invitee is now a member of the workspace — by
+  // polling the DB (robust to dev-server nav timing).
   await expect
     .poll(
       async () => {
@@ -48,6 +48,11 @@ test("an invitee sets up their account and joins the workspace", async ({ page }
       { timeout: 20_000 },
     )
     .toBe("member");
+
+  // …and that the redirect actually lands them in the app. Regression guard: the
+  // old soft redirect (router.push + refresh) raced the accept action's route
+  // revalidation and stranded the invitee on the form.
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
 });
 
 test("an unknown invitation shows the unavailable state", async ({ page }) => {

@@ -12,9 +12,11 @@ const api = vi.hoisted(() => ({
   signInEmail: vi.fn(),
   acceptInvitation: vi.fn(),
 }));
+const nav = vi.hoisted(() => ({ redirect: vi.fn() }));
 
 vi.mock("@/lib/auth", () => ({ auth: { api } }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
+vi.mock("next/navigation", () => ({ redirect: nav.redirect }));
 
 async function load() {
   const [dbMod, schema, drizzle, actions] = await Promise.all([
@@ -135,11 +137,14 @@ describe.skipIf(!hasDb)("invitation accept actions", () => {
     });
   });
 
-  it("acceptInvitation delegates and surfaces failures", async () => {
+  it("acceptInvitation redirects on success and surfaces failures", async () => {
     api.acceptInvitation.mockResolvedValueOnce({});
-    expect(await mod.acceptInvitation("inv-1")).toEqual({ ok: true });
+    await mod.acceptInvitation("inv-1");
+    expect(nav.redirect).toHaveBeenCalledWith("/dashboard");
 
+    nav.redirect.mockClear();
     api.acceptInvitation.mockRejectedValueOnce(new Error("email mismatch"));
     expect(await mod.acceptInvitation("inv-1")).toEqual({ ok: false, error: "email mismatch" });
+    expect(nav.redirect).not.toHaveBeenCalled();
   });
 });
