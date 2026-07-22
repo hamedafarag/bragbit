@@ -15,7 +15,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!canAdminister(role)) redirect("/dashboard");
 
   return (
-    <div className="flex flex-col gap-6">
+    // Admin is data-dense (the members table), so it breaks out of the 760px
+    // prose shell to a wider, viewport-centered column. The nav lives here too
+    // so the tabs stay aligned with the tab content below.
+    <div className="content-wide flex flex-col gap-6">
       <AdminNav isOrg={workspace.type === "organization"} />
       {children}
     </div>
