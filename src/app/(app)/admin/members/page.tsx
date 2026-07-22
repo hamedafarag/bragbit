@@ -48,61 +48,66 @@ export default async function MembersPage() {
             Members <span className="font-mono text-[12px] text-ink-faint">· {members.length}</span>
           </h2>
         </div>
-        <table className="w-full text-[13.5px]">
-          <thead>
-            <tr className="border-b border-line-soft font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
-              <th className="px-6 py-2.5 text-left font-medium">Member</th>
-              <th className="px-6 py-2.5 text-left font-medium">Role</th>
-              <th className="px-6 py-2.5 text-left font-medium">Joined</th>
-              <th className="px-6 py-2.5 text-left font-medium">Last active</th>
-              <th className="px-6 py-2.5 text-right font-medium">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => {
-              const isSelf = m.userId === user.id;
-              const manage = canManageMember(viewerRole, m.role, isSelf);
-              const transfer = canTransferOwnershipTo(viewerRole, m.role, isSelf);
-              return (
-                <tr key={m.memberId} className="border-b border-line-soft last:border-0">
-                  <td className="px-6 py-3">
-                    <div className="font-medium text-ink">{m.name}</div>
-                    <div className="font-mono text-[11px] text-ink-faint">{m.email}</div>
-                  </td>
-                  <td className="px-6 py-3">
-                    {manage ? (
-                      <MemberRoleSelect memberId={m.memberId} role={m.role} />
-                    ) : (
-                      <Badge variant="outline" className="capitalize">
-                        {m.role}
-                        {isSelf ? " · you" : ""}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
-                    {fmtDate(m.joinedAt)}
-                  </td>
-                  <td className="px-6 py-3 font-mono text-[12px] text-ink-soft">
-                    {m.lastActiveAt ? fmtDate(m.lastActiveAt) : "—"}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    {manage || transfer ? (
-                      <MemberActions
-                        memberId={m.memberId}
-                        memberName={m.name}
-                        workspaceName={workspace.name}
-                        canRemove={manage}
-                        canTransfer={transfer}
-                      />
-                    ) : null}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {/* overflow-x-auto is a safety net: the admin shell is wide (content-wide)
+            so the table fits on desktop, but a small laptop scrolls rather than
+            wrapping the nowrap date/role columns. */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[13.5px]">
+            <thead>
+              <tr className="border-b border-line-soft font-mono text-[10px] tracking-[0.12em] text-ink-faint uppercase">
+                <th className="px-6 py-2.5 text-left font-medium">Member</th>
+                <th className="px-6 py-2.5 text-left font-medium whitespace-nowrap">Role</th>
+                <th className="px-6 py-2.5 text-left font-medium whitespace-nowrap">Joined</th>
+                <th className="px-6 py-2.5 text-left font-medium whitespace-nowrap">Last active</th>
+                <th className="px-6 py-2.5 text-right font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => {
+                const isSelf = m.userId === user.id;
+                const manage = canManageMember(viewerRole, m.role, isSelf);
+                const transfer = canTransferOwnershipTo(viewerRole, m.role, isSelf);
+                return (
+                  <tr key={m.memberId} className="border-b border-line-soft last:border-0">
+                    <td className="px-6 py-3">
+                      <div className="font-medium text-ink">{m.name}</div>
+                      <div className="font-mono text-[11px] text-ink-faint">{m.email}</div>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      {manage ? (
+                        <MemberRoleSelect memberId={m.memberId} role={m.role} />
+                      ) : (
+                        <Badge variant="outline" className="capitalize">
+                          {m.role}
+                          {isSelf ? " · you" : ""}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-6 py-3 font-mono text-[12px] whitespace-nowrap text-ink-soft">
+                      {fmtDate(m.joinedAt)}
+                    </td>
+                    <td className="px-6 py-3 font-mono text-[12px] whitespace-nowrap text-ink-soft">
+                      {m.lastActiveAt ? fmtDate(m.lastActiveAt) : "—"}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      {manage || transfer ? (
+                        <MemberActions
+                          memberId={m.memberId}
+                          memberName={m.name}
+                          workspaceName={workspace.name}
+                          canRemove={manage}
+                          canTransfer={transfer}
+                        />
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {pending.length > 0 ? (

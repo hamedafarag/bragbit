@@ -196,6 +196,15 @@
 /* Rendered Markdown (brag descriptions/impact, document goals, share pages).
    Plain CSS on the logbook palette — no @tailwindcss/typography dependency. */
 @layer components {
+  /* Widen a subtree past the 760px prose `<main>` shell to a data-friendly
+     measure (e.g. the admin members table), kept centered in the viewport.
+     Capped at the viewport minus gutters so it never causes horizontal scroll,
+     even though it's nested inside the narrower shell. */
+  .content-wide {
+    width: min(64rem, 100vw - 3rem);
+    margin-inline: calc((100% - min(64rem, 100vw - 3rem)) / 2);
+  }
+
   .markdown {
     color: var(--color-ink-soft);
     font-size: 13.5px;

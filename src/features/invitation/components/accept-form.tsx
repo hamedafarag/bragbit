@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -20,7 +19,6 @@ export function AcceptForm({
   email: string;
   organizationName: string;
 }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -42,15 +40,14 @@ export function AcceptForm({
         toast.error(reg.error);
         return;
       }
-      // 2) accept — separate request, so it carries the new session cookie
+      // 2) accept — a separate request so it carries the new session cookie. On
+      //    success it redirects to /dashboard server-side (see acceptInvitation),
+      //    which avoids the client soft-nav race with this route's post-accept
+      //    revalidation; it only returns here when the accept fails.
       const acc = await acceptInvitation(invitationId);
-      if (!acc.ok) {
+      if (acc && !acc.ok) {
         toast.error(acc.error);
-        return;
       }
-      toast.success(`Welcome to ${organizationName}.`);
-      router.push("/dashboard");
-      router.refresh();
     });
   }
 
