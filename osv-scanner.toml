@@ -26,3 +26,16 @@ production image applies migrations with the drizzle-orm runtime migrator \
 resolves a modern esbuild (0.25.12) for its own use; only the @esbuild-kit path \
 is stuck on 0.18.20. Remove this entry once drizzle-kit drops @esbuild-kit.
 """
+
+[[IgnoredVulns]]
+id = "GHSA-frvp-7c67-39w9"
+reason = """
+@hono/node-server 1.19.14 arrives only through the MCP SDK \
+(@modelcontextprotocol/sdk -> @hono/node-server), which pins it at ^1.19.9. The \
+fix lands in 2.0.5, a major the SDK's declared range forbids, so there is no 1.x \
+patch to take. It is also never executed here: this project serves MCP through \
+Next.js route handlers via mcp-handler (src/app/api/mcp/route.ts), not the SDK's \
+standalone Hono/Node HTTP server, so @hono/node-server's server code never runs \
+on the request path. Remove this entry once @modelcontextprotocol/sdk allows \
+@hono/node-server 2.x.
+"""
