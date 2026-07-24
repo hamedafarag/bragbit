@@ -1,0 +1,39 @@
+# bragbit → .afk/config.yml
+# Copy this to `.afk/config.yml` in hamedafarag/bragbit (Phase 0 onboarding).
+# Machine-parsed and code-enforced — see PLAN.md §5.
+version: 1
+
+image: node:22 # corepack enables pnpm
+
+commands:
+  install: corepack enable && pnpm install --frozen-lockfile
+  test: pnpm test # plain vitest — needs no env (test:db / e2e are off-limits in v0)
+  lint: pnpm lint
+  typecheck: pnpm typecheck
+  build: pnpm build
+  dev: pnpm dev
+
+paths:
+  allowed: ["src/**", "tests/**", "docs/**", "README.md"]
+  blocked: ["scripts/**", "public/**", "marketing/**"]
+  ignore:
+    - "pnpm-lock.yaml"
+    - "marketing/screenshots/**"
+    - "**/*.snap"
+
+limits:
+  maxFilesChanged: 8
+  maxDiffLines: 500
+  maxCost: 2.00
+  maxIterations: 10
+  timeoutMinutes: 20
+
+model:
+  default: anthropic/claude-sonnet-5
+
+preview:
+  enabled: true
+  requireLabel: afk-preview # mandatory — bragbit is public
+
+pr:
+  labels: ["afkgnt"]
