@@ -17,19 +17,6 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Dependency advisories (ENH-SEC-04). Was `pnpm audit --prod`, which npm
-      # broke by retiring the registry audit endpoints it calls — it now fails
-      # with a 410 on every branch, and pnpm hasn't migrated to the bulk endpoint
-      # (reproduced on 10.30.3 and 11.13.1). `npm audit` can't stand in: it needs
-      # a package-lock.json, which a pnpm repo doesn't have. osv-scanner reads
-      # pnpm-lock.yaml, i.e. the actually-resolved tree. Accepted advisories are
-      # listed with their reasons in osv-scanner.toml; it exits non-zero on
-      # anything else. Pinned so a new advisory, not a new scanner, is what
-      # changes the result.
-      - name: Dependency advisories (osv-scanner)
-        run: |
-          docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.4.0 \
-            scan source --lockfile=/src/pnpm-lock.yaml --config=/src/osv-scanner.toml
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
@@ -40,6 +27,32 @@ jobs:
           DATABASE_URL: postgres://bragbit:bragbit@localhost:5432/bragbit
           BETTER_AUTH_SECRET: ci-build-placeholder-secret-0123456789abcdef
       - run: pnpm size
+
+  advisories:
+    name: dependency advisories (osv-scanner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Dependency advisories (ENH-SEC-04). Was `pnpm audit --prod`, which npm
+      # broke by retiring the registry audit endpoints it calls; osv-scanner reads
+      # pnpm-lock.yaml (the resolved tree) instead. Accepted advisories are listed
+      # with their reasons in osv-scanner.toml. Pinned so a new advisory, not a new
+      # scanner, is what changes the result.
+      #
+      # NON-BLOCKING on purpose: a newly-published advisory against the pinned
+      # lockfile must not red-out an unrelated code push. The scan still runs and
+      # surfaces findings as a warning here; Dependabot security updates open the
+      # actual fix PRs.
+      - name: Dependency advisories (osv-scanner)
+        id: osv
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.4.0 \
+            scan source --lockfile=/src/pnpm-lock.yaml --config=/src/osv-scanner.toml
+      - name: Surface advisories as a warning (still non-blocking)
+        if: steps.osv.outcome == 'failure'
+        run: |
+          echo "::warning title=Dependency advisories found::osv-scanner found advisories in pnpm-lock.yaml. Non-blocking — see the osv-scanner step for details; a Dependabot security update will patch them."
 
   storage:
     name: storage adapter (minio)
