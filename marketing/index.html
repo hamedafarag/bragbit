@@ -23,8 +23,8 @@
     />
     <!-- The page's own URL, not the repo's: canonical tells search engines which
          URL owns this content, and pointing it at github.com would hand them the
-         repo instead. Deployed by .github/workflows/pages.yml. -->
-    <link rel="canonical" href="https://hamedafarag.github.io/bragbit/" />
+         repo instead. Served from the marketing/ Docker image at bragbit.backtick.site. -->
+    <link rel="canonical" href="https://bragbit.backtick.site/" />
     <meta name="theme-color" content="#f6f2e9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#15120d" media="(prefers-color-scheme: dark)" />
 
@@ -39,13 +39,13 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="BragBit" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:url" content="https://hamedafarag.github.io/bragbit/" />
+    <meta property="og:url" content="https://bragbit.backtick.site/" />
     <meta property="og:title" content="BragBit — Your promotion evidence, on your own Postgres." />
     <meta
       property="og:description"
       content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds, keep a timeline of your year, and share a read-only link at review time."
     />
-    <meta property="og:image" content="https://hamedafarag.github.io/bragbit/og.png" />
+    <meta property="og:image" content="https://bragbit.backtick.site/og.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -59,7 +59,7 @@
       name="twitter:description"
       content="Open-source, self-hosted brag document for developers. Log a win in 30 seconds; share a read-only link at review time."
     />
-    <meta name="twitter:image" content="https://hamedafarag.github.io/bragbit/og.png" />
+    <meta name="twitter:image" content="https://bragbit.backtick.site/og.png" />
     <meta
       name="twitter:image:alt"
       content="The BragBit timeline: a 2026 document with a quick-add box and month-grouped wins."
@@ -87,7 +87,7 @@
         "@graph": [
           {
             "@type": "SoftwareApplication",
-            "@id": "https://hamedafarag.github.io/bragbit/#app",
+            "@id": "https://bragbit.backtick.site/#app",
             "name": "BragBit",
             "alternateName": "BragBit brag document",
             "applicationCategory": "BusinessApplication",
@@ -97,9 +97,9 @@
             "license": "https://www.gnu.org/licenses/agpl-3.0.html",
             "isAccessibleForFree": true,
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "image": "https://hamedafarag.github.io/bragbit/og.png",
-            "screenshot": "https://hamedafarag.github.io/bragbit/screenshots/timeline.webp",
-            "url": "https://hamedafarag.github.io/bragbit/",
+            "image": "https://bragbit.backtick.site/og.png",
+            "screenshot": "https://bragbit.backtick.site/screenshots/timeline.webp",
+            "url": "https://bragbit.backtick.site/",
             "codeRepository": "https://github.com/hamedafarag/bragbit",
             "softwareHelp": "https://github.com/hamedafarag/bragbit#readme",
             "programmingLanguage": ["TypeScript"],
@@ -131,12 +131,12 @@
           },
           {
             "@type": "WebSite",
-            "@id": "https://hamedafarag.github.io/bragbit/#website",
-            "url": "https://hamedafarag.github.io/bragbit/",
+            "@id": "https://bragbit.backtick.site/#website",
+            "url": "https://bragbit.backtick.site/",
             "name": "BragBit",
             "description": "Open-source, self-hosted brag document for developers.",
             "inLanguage": "en",
-            "about": { "@id": "https://hamedafarag.github.io/bragbit/#app" }
+            "about": { "@id": "https://bragbit.backtick.site/#app" }
           }
         ]
       }

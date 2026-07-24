@@ -1,0 +1,6 @@
+# BragBit marketing page. Static, single page — nothing to keep crawlers out of.
+# Allow everything and point them at the sitemap for discovery.
+User-agent: *
+Allow: /
+
+Sitemap: https://bragbit.backtick.site/sitemap.xml

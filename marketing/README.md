@@ -1,16 +1,15 @@
 # BragBit — marketing page
 
-A standalone landing page. Plain HTML, CSS, and JS: no framework, no build step, no
-server. Open [`index.html`](index.html) in a browser, or drop this folder on any static
-host (GitHub Pages, Netlify, S3 — anything that serves files).
+A standalone landing page. Plain HTML, CSS, and JS: no framework, no build step. Open
+[`index.html`](index.html) in a browser, drop this folder on any static host, or serve
+the bundled [`Dockerfile`](Dockerfile) (nginx) — which is how it's deployed in production.
 
 It is deliberately **not** part of the Next.js app. The app's `/` is a mode-aware
 redirect for a private self-host; this page is product marketing and has no instance
 behind it.
 
-**Live:** <https://hamedafarag.github.io/bragbit/> — published by
-[`.github/workflows/pages.yml`](../.github/workflows/pages.yml) on any push to `main`
-that touches this folder.
+**Live:** <https://bragbit.backtick.site/> — served from the [`Dockerfile`](Dockerfile)
+(nginx) in this folder, hosted on backtick.site at the root of its own domain.
 
 ## What's here
 
@@ -74,13 +73,14 @@ Add extra wins across the year first if you want the heatmap and streak to look 
 - **All social/canonical URLs are absolute.** Scrapers don't resolve relative paths — a
   `./` og:image renders a card with no image. The page's own `<img>` srcs stay relative
   so it still works off disk or from any host.
-- **No `robots.txt`, deliberately.** robots.txt is origin-root-only, and this is a
-  _project_ page: a file at `/bragbit/robots.txt` would never be fetched. The origin root
-  (`hamedafarag.github.io/robots.txt`) 404s, which crawlers read as "crawl everything" —
-  which is what we want. Adding one here would be cargo cult.
-- **The sitemap can't be auto-announced** for the same reason (no origin robots.txt to
-  reference it), so submit it in Search Console by hand. Keep `lastmod` truthful; a
-  lastmod that lies about freshness teaches crawlers to ignore it.
+- **`robots.txt` lives at the origin root.** The page is now served at the root of its
+  own domain (`bragbit.backtick.site`), so [`robots.txt`](robots.txt) is actually fetched
+  and honored — it allows everything and announces the sitemap. (On the old GitHub Pages
+  _project_ path, `/bragbit/robots.txt` was never fetched, so there deliberately was none;
+  moving to a root domain is what makes a real robots.txt work.)
+- **The sitemap is auto-announced** via the `Sitemap:` line in `robots.txt`. Still submit
+  it in Search Console by hand for coverage reporting and to trigger a first crawl. Keep
+  `lastmod` truthful; a lastmod that lies about freshness teaches crawlers to ignore it.
 - **No `aggregateRating` / `review` in the structured data.** BragBit has no ratings.
   Inventing them would win the SERP stars and would be fabricating reviews. Don't.
 - **The dark screenshot warms on hover, not on load** — preloading it eagerly charged
