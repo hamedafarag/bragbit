@@ -8,8 +8,10 @@ FROM nginx:alpine
 COPY default.conf /etc/nginx/conf.d/default.conf
 
 # The page and everything it serves. index.html loads ./screenshots/*.webp
-# (light + dark), and og.png / sitemap.xml are fetched by scrapers and crawlers.
-COPY index.html og.png sitemap.xml /usr/share/nginx/html/
+# (light + dark), and og.png / sitemap.xml / robots.txt are fetched by scrapers
+# and crawlers. robots.txt must be copied explicitly — without it, nginx's
+# try_files falls back to index.html and /robots.txt serves the HTML page.
+COPY index.html og.png sitemap.xml robots.txt /usr/share/nginx/html/
 COPY screenshots/ /usr/share/nginx/html/screenshots/
 
 EXPOSE 3002
