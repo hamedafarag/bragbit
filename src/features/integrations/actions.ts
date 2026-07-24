@@ -32,8 +32,7 @@ import { refreshConnectionToken, upsertConnection } from "./service";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 export type ImportResult = { ok: true; imported: number } | { ok: false; error: string };
 export type ApproveResult =
-  | { ok: true; bragId: string; documentId: string }
-  | { ok: false; error: string };
+  { ok: true; bragId: string; documentId: string } | { ok: false; error: string };
 
 /** A merged PR / resolved issue is shipped work; v1 suggests this for every source. */
 const DEFAULT_CATEGORY = "shipped-work";
